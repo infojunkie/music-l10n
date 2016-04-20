@@ -22,8 +22,6 @@
 
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
 
-- [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
-
 ## audio analysis
 
 - [Essentia](https://github.com/MTG/essentia) and [Gaia](https://github.com/MTG/gaia) - C++ libraries for audio analysis and audio-based music information retrieval.
@@ -48,3 +46,12 @@
 
 - [MIDI.js](https://github.com/mudcube/MIDI.js/) - Javascript MIDI player
 
+## synthesis
+
+- [SuperCollider](http://supercollider.github.io/), a programming language for real time audio synthesis and algorithmic composition.
+
+- [Pure Data](https://puredata.info/), a visual programming language for multimedia.
+
+- [Overtone](http://overtone.github.io/), Overtone is an open source audio environment designed to explore new musical ideas from synthesis and sampling to instrument building, live-coding and collaborative jamming.
+
+- [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
