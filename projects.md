@@ -30,7 +30,7 @@
 
 - [MuseScore](https://musescore.org) - THE open source music notation editor.
 
-- [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem. The way to go for Web=based music sheets. 
+- [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
 ## generation
 
