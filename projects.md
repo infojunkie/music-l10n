@@ -1,4 +1,4 @@
-# Interesting music projects
+# Interesting open source music projects
 
 ## theory
 
@@ -28,7 +28,9 @@
 
 ## notation
 
-- [MuseScore](https://musescore.org) - THE open source music notation editor.
+- [LilyPond](http://lilypond.org/) - The LaTeX of music notation
+
+- [MuseScore](https://musescore.org) - Great music notation editor
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
