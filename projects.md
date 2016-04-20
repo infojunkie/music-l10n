@@ -28,15 +28,17 @@
 
 ## notation
 
-- [LilyPond](http://lilypond.org/) - The LaTeX of music notation
+- [LilyPond](http://lilypond.org/) - The LaTeX of music notation.
 
-- [MuseScore](https://musescore.org) - Great music notation editor
+- [MuseScore](https://musescore.org) - Great music notation editor.
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
 ## generation
 
 - [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
+
+- [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators.
 
 - [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - very decent playalong generator à la iReal Pro. Written in Scala, packaged as a web application, so the core logic is buried deep inside the repo: [here are the core music abstractions](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/MusicRepresentation) and [here is the generator proper](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/Playback).
 
