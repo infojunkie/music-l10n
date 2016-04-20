@@ -4,9 +4,9 @@
 
 - [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
 
-- [music21](https://github.com/cuthbertlab/music21), a toolkit from MIT for "Computational Musicology". 'Nuff said.
+- [music21](https://github.com/cuthbertlab/music21), a toolkit from MIT for Computational Musicology. 'Nuff said.
 
-- [python-mingus](https://github.com/bspaans/python-mingus), "an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support".
+- [python-mingus](https://github.com/bspaans/python-mingus), an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support.
 
 - [tonal](https://github.com/danigb/tonal) - music theory in Javascript.
 
