@@ -22,6 +22,8 @@
 
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
 
+- [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
+
 ## audio analysis
 
 - [Essentia](https://github.com/MTG/essentia) and [Gaia](https://github.com/MTG/gaia) - C++ libraries for audio analysis and audio-based music information retrieval.
@@ -35,8 +37,6 @@
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
 ## generation
-
-- [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators.
 
