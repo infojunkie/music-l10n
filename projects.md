@@ -22,9 +22,11 @@
 
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
 
-## audio analysis
+## music information retrieval
 
 - [Essentia](https://github.com/MTG/essentia) and [Gaia](https://github.com/MTG/gaia) - C++ libraries for audio analysis and audio-based music information retrieval.
+
+- [Chromagram Estimation & Chord Detection](https://github.com/adamstark/Chord-Detector-and-Chromagram) - C++ code from a conference paper and PhD thesis.
 
 ## notation
 
