@@ -36,6 +36,10 @@
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
+## sheet music optical recognition
+
+- [Audiveris](https://audiveris.kenai.com/) and [libreveris](https://github.com/jlpoolen/libreveris) - Java music scanner
+
 ## generation
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators.
