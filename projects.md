@@ -50,9 +50,15 @@
 
 - [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised.
 
+- [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
+
+- [deepjazz](https://github.com/jisungk/deepjazz) - Using Keras & Theano for deep learning driven jazz generation.
+
 ## playback
 
-- [MIDI.js](https://github.com/mudcube/MIDI.js/) - Javascript MIDI player
+- [MIDI.js](https://github.com/mudcube/MIDI.js/) - Javascript MIDI player.
+
+- [FluidSynth](http://www.fluidsynth.org/) - a real-time software synthesizer based on the SoundFont 2 specifications.
 
 ## synthesis
 
