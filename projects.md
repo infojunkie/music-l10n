@@ -60,7 +60,7 @@
 
 - [FluidSynth](http://www.fluidsynth.org/) - a real-time software synthesizer based on the SoundFont 2 specifications.
 
-## synthesis
+## synthesis and composition
 
 - [SuperCollider](http://supercollider.github.io/), a programming language for real time audio synthesis and algorithmic composition.
 
@@ -69,3 +69,5 @@
 - [Overtone](http://overtone.github.io/), Overtone is an open source audio environment designed to explore new musical ideas from synthesis and sampling to instrument building, live-coding and collaborative jamming.
 
 - [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
+
+- [Leipzig](https://github.com/ctford/leipzig) - A composition library for Clojure and Clojurescript.
