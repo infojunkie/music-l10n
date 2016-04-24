@@ -20,6 +20,8 @@
 
 - [music-theory](https://github.com/go-music-theory/music-theory) - music theory in Go.
 
+- [music-theory](https://github.com/daveyarwood/music-theory) - music theory in Clojure.
+
 - [Varèse](https://github.com/WChargin/varese) - Varèse pitch space calculations as a web app.
 
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
