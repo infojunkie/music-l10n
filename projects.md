@@ -70,6 +70,6 @@
 
 - [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
 
-- [Leipzig](https://github.com/ctford/leipzig) - A composition library for Clojure and Clojurescript.
+- [Leipzig](https://github.com/ctford/leipzig), a composition library for Clojure and Clojurescript.
 
 - [Sonic Pi](https://github.com/samaaron/sonic-pi), a live coding synth environment.
