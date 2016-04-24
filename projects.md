@@ -66,8 +66,10 @@
 
 - [Pure Data](https://puredata.info/), a visual programming language for multimedia.
 
-- [Overtone](http://overtone.github.io/), Overtone is an open source audio environment designed to explore new musical ideas from synthesis and sampling to instrument building, live-coding and collaborative jamming.
+- [Overtone](http://overtone.github.io/), an open source audio environment designed to explore new musical ideas from synthesis and sampling to instrument building, live-coding and collaborative jamming.
 
 - [alda](https://github.com/alda-lang/alda), a music programming language for musicians.
 
 - [Leipzig](https://github.com/ctford/leipzig) - A composition library for Clojure and Clojurescript.
+
+- [Sonic Pi](https://github.com/samaaron/sonic-pi), a live coding synth environment.
