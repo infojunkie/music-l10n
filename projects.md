@@ -44,6 +44,8 @@
 
 - [Audiveris](https://audiveris.kenai.com/) and [libreveris](https://github.com/jlpoolen/libreveris) - Java music scanner
 
+- [Overscore](https://github.com/acieroid/overscore) - OMR system and text-based musical notation
+
 ## generation
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
