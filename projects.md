@@ -32,13 +32,15 @@
 
 - [Chromagram Estimation & Chord Detection](https://github.com/adamstark/Chord-Detector-and-Chromagram) - C++ code from a conference paper and PhD thesis.
 
-## notation
+## notation and engraving
 
 - [LilyPond](http://lilypond.org/) - The LaTeX of music notation.
 
 - [MuseScore](https://musescore.org) - Great music notation editor.
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
+
+- [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
 ## sheet music optical recognition
 
@@ -77,3 +79,7 @@
 - [Leipzig](https://github.com/ctford/leipzig), a composition library for Clojure and Clojurescript.
 
 - [Sonic Pi](https://github.com/samaaron/sonic-pi), a live coding synth environment.
+
+## cultural preservation
+
+- [Lost Voices](http://digitalduchemin.org/) - focusing on a neglected but important repertory of polyphonic songs from mid-sixteenth-century France, this unique project puts old books before a diverse audience of modern scholars and musicians in ways that will prompt renewed understanding of these cultural artifacts and their meanings. It is dedicated to sixteen sets of books expertly crafted by the Parisian printer Nicolas Du Chemin between 1549 and 1568. 
