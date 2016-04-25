@@ -40,6 +40,8 @@
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
+- [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
+
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
 ## sheet music optical recognition
