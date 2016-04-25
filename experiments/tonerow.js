@@ -1,19 +1,15 @@
 // tone row experiments
 
+require('./goodparts.js');
+var Tuning = require('./tuning.js');
+
 /**
 
   MODEL
 
   ToneRow is an ordered collection of the pitches of a given tuning.
 
- */
-
- // http://javascript.about.com/od/problemsolving/a/modulobug.htm
- Number.prototype.mod = function(n) { return ((this%n)+n)%n; }
-
-function Tuning(pitches) {
-  this.pitches = pitches;
-}
+**/
 
 function ToneRow(prime, tuning) {
   this.prime = prime;
@@ -51,20 +47,7 @@ ToneRow.prototype.rotate = function(cycle, delta) {
   return pitches.map(this._transpose(delta));
 }
 
-var edo12 = new Tuning([
-  1,
-  1.0594630943592953,
-  1.122462048309373,
-  1.189207115002721,
-  1.2599210498948732,
-  1.3348398541700344,
-  1.4142135623730951,
-  1.4983070768766815,
-  1.5874010519681994,
-  1.681792830507429,
-  1.7817974362806785,
-  1.8877486253633868
-]);
+var edo12 = new Tuning.EDO(12);
 
 // Prime tone row from Webern's Concerto for Nine Instruments, Op. 24
 // https://en.wikipedia.org/wiki/Concerto_for_Nine_Instruments_(Webern)

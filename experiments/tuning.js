@@ -21,3 +21,5 @@ EDO.prototype._pitches = function() {
 
 var edo12 = new EDO(12);
 console.log(edo12.pitches);
+
+module.exports.EDO = EDO;
