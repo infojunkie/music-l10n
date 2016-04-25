@@ -14,12 +14,12 @@ function EDO(intervals) {
 }
 
 EDO.prototype._pitches = function() {
-  return new Array(this.intervals+1).fill(0).map(function(__, degree) {
+  return new Array(this.intervals).fill(0).map(function(__, degree) {
     return Math.pow(2, degree/this.intervals);
   }.bind(this));
 }
 
 var edo12 = new EDO(12);
-console.log(edo12.pitches);
+console.log("Generating 12-EDO pitch vector\n", edo12.pitches);
 
 module.exports.EDO = EDO;
