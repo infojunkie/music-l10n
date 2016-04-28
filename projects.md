@@ -44,7 +44,7 @@
 
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
-- [Verovio](https://github.com/rism-ch/verovio) - a fast, portable and lightweight library for engraving [Music Encoding Initiative (MEI)](http://www.music-encoding.org/) music scores into SVG. Verovio can also render Plain and Easy (PAE) code and DARMS code and has a basic MusicXML import function. It is designed as a tool usable as a one-step conversion tool and it is written in pure standard C++ with no dependencies on third-party frameworks and libraries.
+- [Verovio](https://github.com/rism-ch/verovio) - a fast, portable and lightweight library for engraving [Music Encoding Initiative (MEI)](http://www.music-encoding.org/) music scores into SVG. 
 
 ## sheet music optical recognition
 
