@@ -40,6 +40,8 @@
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
+- [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
+
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
 ## sheet music optical recognition
@@ -80,8 +82,16 @@
 
 - [Sonic Pi](https://github.com/samaaron/sonic-pi), a live coding synth environment.
 
+- [Klangmeister](https://github.com/ctford/klangmeister), a musical scratchpad.
+
+- [Extempore](http://extempore.moso.com.au/), a programming language and runtime environment designed to support 'cyberphysical programming'.
+
 ## cultural preservation
 
+- [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
+
 - [Mutopia](https://github.com/MutopiaProject/MutopiaProject) - free sheet music repository
+
+- [Open Goldberg Variations](http://www.opengoldbergvariations.org/) - The Open Goldberg Variations (Johann Sebastian Bach, BWV 988), played by Kimiko Ishizaka on a Bösendorfer 290 Imperial piano, are free to download and share. They are governed by the Creative Commons Zero license, which means that they are a part of the public domain, and every use of them is allowed.
 
 - [Lost Voices](http://digitalduchemin.org/) - focusing on a neglected but important repertory of polyphonic songs from mid-sixteenth-century France, this unique project puts old books before a diverse audience of modern scholars and musicians in ways that will prompt renewed understanding of these cultural artifacts and their meanings. It is dedicated to sixteen sets of books expertly crafted by the Parisian printer Nicolas Du Chemin between 1549 and 1568. 
