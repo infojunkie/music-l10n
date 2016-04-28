@@ -56,13 +56,13 @@
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
 
-- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - very decent playalong generator à la iReal Pro. Written in Scala, packaged as a web application, so the core logic is buried deep inside the repo: [here are the core music abstractions](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/MusicRepresentation) and [here is the generator proper](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/Playback).
-
 - [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised.
 
 - [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
 
 - [deepjazz](https://github.com/jisungk/deepjazz) - Using Keras & Theano for deep learning driven jazz generation.
+
+- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - web-based playalong generator.
 
 ## playback
 
