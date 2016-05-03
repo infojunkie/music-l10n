@@ -40,6 +40,8 @@
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
+- [alphaTab](https://github.com/CoderLine/alphaTab) - a cross platform music notation and guitar tablature rendering library with GuitarPro importer.
+
 - [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
 
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
