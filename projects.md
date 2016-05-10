@@ -90,6 +90,10 @@
 
 - [Extempore](http://extempore.moso.com.au/), a programming language and runtime environment designed to support 'cyberphysical programming'.
 
+## audio digital signal processing
+
+- [SoundTouch](http://www.surina.net/soundtouch/), an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
+
 ## cultural preservation
 
 - [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
