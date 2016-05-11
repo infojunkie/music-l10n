@@ -40,9 +40,13 @@
 
 - [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
 
+- [alphaTab](https://github.com/CoderLine/alphaTab) - a cross platform music notation and guitar tablature rendering library with GuitarPro importer.
+
 - [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
 
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
+
+- [Verovio](https://github.com/rism-ch/verovio) - a fast, portable and lightweight library for engraving [Music Encoding Initiative (MEI)](http://www.music-encoding.org/) music scores into SVG. 
 
 ## sheet music optical recognition
 
@@ -54,13 +58,13 @@
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
 
-- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - very decent playalong generator à la iReal Pro. Written in Scala, packaged as a web application, so the core logic is buried deep inside the repo: [here are the core music abstractions](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/MusicRepresentation) and [here is the generator proper](https://github.com/larryoatmeal/ChordTrane/tree/master/app/models/Playback).
-
 - [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised.
 
 - [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
 
 - [deepjazz](https://github.com/jisungk/deepjazz) - Using Keras & Theano for deep learning driven jazz generation.
+
+- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - web-based playalong generator.
 
 ## playback
 
@@ -85,6 +89,10 @@
 - [Klangmeister](https://github.com/ctford/klangmeister), a musical scratchpad.
 
 - [Extempore](http://extempore.moso.com.au/), a programming language and runtime environment designed to support 'cyberphysical programming'.
+
+## audio digital signal processing
+
+- [SoundTouch](http://www.surina.net/soundtouch/), an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
 
 ## cultural preservation
 
