@@ -2,8 +2,6 @@
 
 ## music theory and musicology
 
-- [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
-
 - [music21](https://github.com/cuthbertlab/music21), a toolkit from MIT for Computational Musicology.
 
 - [Humdrum](https://github.com/kroger/humdrum), a toolkit for music research.
@@ -22,6 +20,8 @@
 
 - [music-theory](https://github.com/daveyarwood/music-theory) - music theory in Clojure.
 
+- [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
+
 - [Varèse](https://github.com/WChargin/varese) - Varèse pitch space calculations as a web app.
 
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
@@ -29,6 +29,8 @@
 ## music information retrieval
 
 - [Essentia](https://github.com/MTG/essentia) and [Gaia](https://github.com/MTG/gaia) - C++ libraries for audio analysis and audio-based music information retrieval.
+
+- [librosa](https://github.com/librosa/librosa) - a Python package for music and audio analysis. 
 
 - [Chromagram Estimation & Chord Detection](https://github.com/adamstark/Chord-Detector-and-Chromagram) - C++ code from a conference paper and PhD thesis.
 
@@ -58,7 +60,7 @@
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
 
-- [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised.
+- [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised. [Source code here](https://github.com/Impro-Visor/Impro-Visor).
 
 - [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
 
@@ -94,7 +96,7 @@
 
 - [SoundTouch](http://www.surina.net/soundtouch/), an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
 
-## cultural preservation
+## knowledge bases
 
 - [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
 
