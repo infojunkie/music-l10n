@@ -8,9 +8,9 @@
 
 - [python-mingus](https://github.com/bspaans/python-mingus), an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support.
 
-- [tonal](https://github.com/danigb/tonal) - music theory in Javascript.
+- [tonal](https://github.com/danigb/tonal) - music theory in JavaScript.
 
-- [teoria](https://github.com/saebekassebil/teoria) - music theory in Javascript.
+- [teoria](https://github.com/saebekassebil/teoria) - music theory in JavaScript.
 
 - [music_theory](https://github.com/beneggett/music_theory) - music theory in Ruby.
 
@@ -19,6 +19,8 @@
 - [music-theory](https://github.com/go-music-theory/music-theory) - music theory in Go.
 
 - [music-theory](https://github.com/daveyarwood/music-theory) - music theory in Clojure.
+
+- [sharp11](https://github.com/jsrmath/sharp11) - music theorization and improvisation engine in JavaScript.
 
 - [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
 
@@ -40,11 +42,11 @@
 
 - [MuseScore](https://musescore.org) - Great music notation editor.
 
-- [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
+- [Vexflow](https://github.com/0xfe/vexflow) - JavaScript music engraving library - great codebase, good community, budding ecosystem.
 
 - [alphaTab](https://github.com/CoderLine/alphaTab) - a cross platform music notation and guitar tablature rendering library with GuitarPro importer.
 
-- [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
+- [abcjs](https://github.com/paulrosen/abcjs) - JavaScript for rendering ABC music notation.
 
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
@@ -70,7 +72,7 @@
 
 ## playback
 
-- [MIDI.js](https://github.com/mudcube/MIDI.js/) - Javascript MIDI player.
+- [MIDI.js](https://github.com/mudcube/MIDI.js/) - JavaScript MIDI player.
 
 - [FluidSynth](http://www.fluidsynth.org/) - a real-time software synthesizer based on the SoundFont 2 specifications.
 
