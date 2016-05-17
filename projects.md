@@ -8,6 +8,8 @@
 
 - [python-mingus](https://github.com/bspaans/python-mingus), an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support.
 
+- [Euterpea](http://www.euterpea.com/) - A Haskell library for music creation
+
 - [tonal](https://github.com/danigb/tonal) - music theory in JavaScript.
 
 - [teoria](https://github.com/saebekassebil/teoria) - music theory in JavaScript.
