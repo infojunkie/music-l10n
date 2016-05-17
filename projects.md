@@ -14,13 +14,13 @@
 
 - [teoria](https://github.com/saebekassebil/teoria) - music theory in JavaScript.
 
-- [music_theory](https://github.com/beneggett/music_theory) - music theory in Ruby.
+- [music_theory](https://github.com/beneggett/music_theory) - in Ruby.
 
-- [rb-music-theory](https://github.com/chrisbratlien/rb-music-theory) - music theory in Ruby.
+- [rb-music-theory](https://github.com/chrisbratlien/rb-music-theory) - in Ruby.
 
-- [music-theory](https://github.com/go-music-theory/music-theory) - music theory in Go.
+- [music-theory](https://github.com/go-music-theory/music-theory) - in Go.
 
-- [music-theory](https://github.com/daveyarwood/music-theory) - music theory in Clojure.
+- [music-theory](https://github.com/daveyarwood/music-theory) - in Clojure.
 
 - [sharp11](https://github.com/jsrmath/sharp11) - music theorization and improvisation engine in JavaScript.
 
