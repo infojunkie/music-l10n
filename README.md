@@ -21,3 +21,5 @@ We'll use [music21](https://github.com/cuthbertLab/music21) as the framework to 
 To facilitate musicological experimentation, we'll use [Jupyter](http://jupyter.org/) notebooks, which are already supported by *music21*. 
 
 We'll also use the [Musical MIDI Accompaniment (MMA)](http://www.mellowood.ca/mma/) system, which provides a flexible model for MIDI generation, featuring rhythmic and harmonic functions. 
+
+Of course, we'll try to use standard formats and APIs: MIDI, Web MIDI, Web Audio, MusicXML, etc.
