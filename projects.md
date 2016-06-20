@@ -2,25 +2,29 @@
 
 ## music theory and musicology
 
-- [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
-
 - [music21](https://github.com/cuthbertlab/music21), a toolkit from MIT for Computational Musicology.
 
 - [Humdrum](https://github.com/kroger/humdrum), a toolkit for music research.
 
 - [python-mingus](https://github.com/bspaans/python-mingus), an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support.
 
-- [tonal](https://github.com/danigb/tonal) - music theory in Javascript.
+- [Euterpea](http://www.euterpea.com/) - A Haskell library for music creation
 
-- [teoria](https://github.com/saebekassebil/teoria) - music theory in Javascript.
+- [tonal](https://github.com/danigb/tonal) - music theory in JavaScript.
 
-- [music_theory](https://github.com/beneggett/music_theory) - music theory in Ruby.
+- [teoria](https://github.com/saebekassebil/teoria) - music theory in JavaScript.
 
-- [rb-music-theory](https://github.com/chrisbratlien/rb-music-theory) - music theory in Ruby.
+- [music_theory](https://github.com/beneggett/music_theory) - in Ruby.
 
-- [music-theory](https://github.com/go-music-theory/music-theory) - music theory in Go.
+- [rb-music-theory](https://github.com/chrisbratlien/rb-music-theory) - in Ruby.
 
-- [music-theory](https://github.com/daveyarwood/music-theory) - music theory in Clojure.
+- [music-theory](https://github.com/go-music-theory/music-theory) - in Go.
+
+- [music-theory](https://github.com/daveyarwood/music-theory) - in Clojure.
+
+- [sharp11](https://github.com/jsrmath/sharp11) - music theorization and improvisation engine in JavaScript.
+
+- [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
 
 - [Varèse](https://github.com/WChargin/varese) - Varèse pitch space calculations as a web app.
 
@@ -30,6 +34,8 @@
 
 - [Essentia](https://github.com/MTG/essentia) and [Gaia](https://github.com/MTG/gaia) - C++ libraries for audio analysis and audio-based music information retrieval.
 
+- [librosa](https://github.com/librosa/librosa) - a Python package for music and audio analysis. 
+
 - [Chromagram Estimation & Chord Detection](https://github.com/adamstark/Chord-Detector-and-Chromagram) - C++ code from a conference paper and PhD thesis.
 
 ## notation and engraving
@@ -38,11 +44,11 @@
 
 - [MuseScore](https://musescore.org) - Great music notation editor.
 
-- [Vexflow](https://github.com/0xfe/vexflow) - Javascript music engraving library - great codebase, good community, budding ecosystem.
+- [Vexflow](https://github.com/0xfe/vexflow) - JavaScript music engraving library - great codebase, good community, budding ecosystem.
 
 - [alphaTab](https://github.com/CoderLine/alphaTab) - a cross platform music notation and guitar tablature rendering library with GuitarPro importer.
 
-- [abcjs](https://github.com/paulrosen/abcjs) - Javascript for rendering ABC music notation.
+- [abcjs](https://github.com/paulrosen/abcjs) - JavaScript for rendering ABC music notation.
 
 - [Belle, Bonne, Sage](https://github.com/burnson/Belle) - an experimental music engraver in C++.
 
@@ -58,7 +64,7 @@
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
 
-- [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised.
+- [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised. [Source code here](https://github.com/Impro-Visor/Impro-Visor).
 
 - [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
 
@@ -68,7 +74,7 @@
 
 ## playback
 
-- [MIDI.js](https://github.com/mudcube/MIDI.js/) - Javascript MIDI player.
+- [MIDI.js](https://github.com/mudcube/MIDI.js/) - JavaScript MIDI player.
 
 - [FluidSynth](http://www.fluidsynth.org/) - a real-time software synthesizer based on the SoundFont 2 specifications.
 
@@ -94,7 +100,7 @@
 
 - [SoundTouch](http://www.surina.net/soundtouch/), an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
 
-## cultural preservation
+## knowledge bases
 
 - [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
 
