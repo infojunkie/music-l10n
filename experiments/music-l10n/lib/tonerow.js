@@ -1,8 +1,5 @@
 // tone row experiments
 
-require('./goodparts.js');
-var Tuning = require('./tuning.js');
-
 /**
 
   MODEL
@@ -14,7 +11,7 @@ var Tuning = require('./tuning.js');
 
 **/
 
-function ToneRow(prime, tuning) {
+export function ToneRow(prime, tuning) {
   this.prime = prime;
   this.tuning = tuning;
 }
@@ -51,27 +48,7 @@ ToneRow.prototype.rotate = function(cycle, delta) {
 }
 
 ToneRow.prototype.matrix = function() {
-  return this.prime.map(function(pitch, index) {
+  return this.prime.map(function(pitch) {
     return this.transpose( this._invert(0)(pitch) );
   }.bind(this));
-}
-
-var edo12 = new Tuning.EDO(12);
-
-// Prime tone row from Webern's Concerto for Nine Instruments, Op. 24
-// https://en.wikipedia.org/wiki/Concerto_for_Nine_Instruments_(Webern)
-
-var t1 = new ToneRow([0, 11, 3, 4, 8, 7, 9, 5, 6, 1, 2, 10], edo12);
-console.log("P0", t1.transpose(0));
-console.log("R0", t1.retrograde(0));
-console.log("I0", t1.invert(0));
-console.log("rotate(3,0)", t1.rotate(3, 0));
-console.log("P1", t1.transpose(1));
-console.log("R1", t1.retrograde(1));
-console.log("I1", t1.invert(1));
-console.log("rotate(3,1)", t1.rotate(3, 1));
-console.log("matrix\n", t1.matrix());
-
-module.export = {
-  ToneRow: ToneRow
 }

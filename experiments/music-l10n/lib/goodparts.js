@@ -20,6 +20,23 @@ Number.method('mod', function (n) {
   return ((this % n) + n) % n;
 });
 
+Array.method('clone', function() {
+  return this.slice(0);
+});
+
+Array.method('fsort', function (f) {
+  var a = this.clone();
+  a.sort(f);
+  return a;
+});
+
+// https://davidwalsh.name/array-insert-index
+// MUTATES!
+Array.method('insert', function(index, item) {
+  this.splice(index, 0, item);
+  return this;
+});
+
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 (function() {
   /**

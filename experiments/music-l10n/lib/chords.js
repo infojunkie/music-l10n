@@ -1,10 +1,10 @@
 // chord generation
 // Given a scale, return all its chords up to the required depth
 
-var R = require('ramda');
+import _ from 'lodash';
 
 /* Interval */
-function Interval(toneFrom, toneTo) {
+export function Interval(toneFrom, toneTo) {
   this.toneFrom = Math.min(toneFrom, toneTo);
   this.toneTo = Math.max(toneTo, toneFrom);
   this.delta = this.toneTo - this.toneFrom;
@@ -14,11 +14,11 @@ Interval.INTERVALS_TO_NAMES = {
   1: 'm2',
   2: 'M2',
   3: 'm3',
-  4: 'M3', // FIXME aka d4
+  4: 'M3/d4',
   5: 'P4',
-  6: 'A4', // FIXME aka d5
+  6: 'A4/d5',
   7: 'P5',
-  8: 'm6', // FIXME aka A5
+  8: 'A5/m6',
   9: 'M6',
   10: 'm7',
   11: 'M7',
@@ -40,9 +40,9 @@ Interval.prototype.name = function() {
 }
 
 /* Scale */
-function Scale(tones, accidental_sign) {
+export function Scale(tones, accidental_sign) {
   this.tones = tones;
-  this.accidental_sign = accidental_sign; // +1 == #, -1 == b
+  this.accidental_sign = accidental_sign; // +1 sharp, -1 flat
 }
 Scale.TUNING_TONES = 12;
 Scale.TUNING_NAMES_TO_TONES = {
@@ -84,67 +84,60 @@ Scale.prototype.noteAt = function(degree) {
 }
 Scale.prototype.spell = function() {
   var scale = this;
-  return this.tones.map(function(tone, degree) {
+  return this.tones.map( (tone, degree) => {
     return scale.noteAt(degree);
   });
 }
 
 /* Chord */
-function Chord(scale, degrees) {
+export function Chord(scale, degrees) {
   this.scale = scale;
   this.degrees = degrees;
 }
 Chord.prototype.tones = function() {
   var chord = this;
-  return this.degrees.map(function(degree) {
+  return this.degrees.map( (degree) => {
     return chord.scale.toneAt(degree);
   });
 }
 Chord.prototype.spell = function() {
   var chord = this;
-  return this.degrees.map(function(degree) {
+  return this.degrees.map( (degree) => {
     return chord.scale.noteAt(degree);
   });
 }
 Chord.prototype.name = function() {
-  var chord = this;
-  var tones = this.tones();
-  // FIXME sort the intervals
-  var intervals = R.map(function(a) { return new Interval(a[0], a[1]); }, R.map(function(a) { return [tones[0], a]; }, R.drop(1, tones)));
-  var names = [];
+  var tones = this.tones().fsort( (a,b) => { return a-b; } );
+  var intervals = tones.slice(1).map( (t) => { return new Interval(tones[0], t); });
+  var parts = [];
 
   // Chord naming: @see https://en.wikipedia.org/wiki/Chord_names_and_symbols_(popular_music)
-  // Root
-  names.push(this.scale.noteAt(this.degrees[0]));
-  names.concat(R.map(function(interval) {
-    var iname = interval.name();
+  parts.push(this.scale.noteAt(this.degrees[0]));
+  var alt_fifth = false; // functional programming cries...
+  parts.concat(intervals.map( (i) => {
+    var iname = i.name();
     switch (iname) {
-      case 'm3': names.push('m'); break;
-      case 'M3': break;
+      case 'P1': break;
+      case 'm2': break;
+      case 'M2': break;
+      case 'm3': parts.push('m'); break;
+      case 'M3/d4': break;
+      case 'P4': break;
       case 'P5': break;
-      case 'A4': names.push('-5'); break;
-      case 'm6': names.push('+5'); break;
-      case 'm7': names.push('7'); break;
-      case 'M7': names.push('Δ7'); break;
-      default: names.push(iname); break;
+      case 'A4/d5': alt_fifth = true; parts.push('b5'); break;
+      case 'A5/m6': alt_fifth = true; parts.push('#5'); break;
+      case 'm7': if (alt_fifth) parts.insert(-1, '7'); else parts.push('7'); break;
+      case 'M7': if (alt_fifth) parts.insert(-1, 'maj7'); else parts.push('maj7'); break;
+      case 'P8': break;
+      default: parts.push(iname); break;
     }
-  }, intervals));
-  // Assemble the name parts.
-  return names.join('');
+  }));
+  return parts.join('');
 }
 Chord.chordsFromScale = function(scale, depth) {
-  return scale.tones.map(function(tone, degree) {
-    return new Chord(scale, R.range(0, depth).map(function(d) {
+  return scale.tones.map( (tone, degree) => {
+    return new Chord(scale, _.range(0, depth).map( (d) => {
       return degree + 2 * d;
     }));
   });
 }
-
-var D = new Scale([2,4,6,7,9,11,13], +1);
-console.log(D.spell());
-var Dchords = Chord.chordsFromScale(D, 5);
-console.log(Dchords.map(function(chord) {
-  return chord.name();
-}));
-var Bb = new Scale([10,12,14,15,17,19,21], -1);
-console.log(Bb.spell());
