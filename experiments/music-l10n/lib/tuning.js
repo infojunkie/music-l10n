@@ -1,36 +1,11 @@
 // tuning
 // generate all pitches in a tuning
 
-/**
+import _ from 'lodash';
 
-EDO generates pitches between [1, 2[ (one octave)
-which are separated by equal (logarithmic) divisions,
-
-**/
-export function EDO(steps) {
-  this.steps = steps;
-  this.pitches = this._pitches();
-}
-
-EDO.prototype._pitches = function() {
-  return new Array(this.steps).fill(0).map(function(__, degree) {
-    return Math.pow(2, degree/this.steps);
-  }.bind(this));
-}
-
-/**
-
-PhysicalTuning takes a generator such as EDO and
-converts pitches to frequencies, given the
-degree (index) of the pitch.
-
-Starts at a given reference frequency.
-
-**/
-export function PhysicalTuning(generator, reference, precision) {
-  this.pitches = generator.pitches;
+export function Tuning(generator, reference) {
+  this.pitches = generator();
   this.reference = reference;
-  this.precision = precision;
 }
 
 /**
@@ -40,8 +15,43 @@ Degree can be any signed integer. It's a
 octaves of the original pitches.
 
 **/
-PhysicalTuning.prototype.get = function(degree) {
-  var octave = Math.floor(degree / this.pitches.length);
+Tuning.prototype.getPitch = function(degree) {
   var pitch = this.pitches[ degree.mod(this.pitches.length) ];
-  return Math.round10(this.reference * pitch * Math.pow(2, octave), 0 - this.precision);
+  var octave = Math.floor(degree / this.pitches.length);
+  return [pitch, octave];
+}
+
+/**
+
+Get the normalized pitch (decimal factor)
+at the given degree, with the required precision.
+
+**/
+Tuning.prototype.getNormalizedPitch = function(degree, precision) {
+  var [pitch, octave] = this.getPitch(degree);
+  return Math.round10(pitch * Math.pow(2, octave), 0 - precision);
+}
+
+/**
+
+Get the frequency of a degree, with the required precision.
+
+**/
+Tuning.prototype.getPitchFrequency = function(degree, precision) {
+  var [pitch, octave] = this.getPitch(degree);
+  return Math.round10(this.reference * pitch * Math.pow(2, octave), 0 - precision);
+}
+
+/**
+
+EDO/tET generates pitches between [1, 2[ (one octave)
+which are separated by equal (logarithmic) divisions,
+
+**/
+export function EDO(steps) {
+  return () => {
+    return _.range(steps).map( (d) => {
+      return Math.pow(2, d / steps);
+    });
+  }
 }

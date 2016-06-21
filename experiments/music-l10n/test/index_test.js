@@ -3,38 +3,42 @@ import _ from 'lodash';
 
 import '../lib';
 import { /*Interval, */Scale, Chord } from '../lib/chords.js';
-import { EDO, PhysicalTuning } from '../lib/tuning.js';
+import { EDO, Tuning } from '../lib/tuning.js';
 import { ToneRow } from '../lib/tonerow.js';
 
 describe('Tuning', () => {
-  it ('manipulates tunings', () => {
-    var edo12 = new EDO(12);
-    console.log("Generating 12-EDO pitch vector\n", edo12.pitches);
+  var concertTuning = new Tuning(EDO(12), 440);
 
-    var concertTuning = new PhysicalTuning(edo12, 440, 3);
-    console.log("Generating frequencies for standard A4 tuning\n", function(tuning) {
-      return _.range(13).map(function(degree) {
-          return this.get(degree);
-      }.bind(tuning));
-    }(concertTuning));
+  it('generates proper normalized pitch vectors for equal temperament tunings', () => {
+    // @see https://en.wikipedia.org/wiki/Equal_temperament#Comparison_to_just_intonation
+    deepEqual(_.range(13).map( (d) => { return concertTuning.getNormalizedPitch(d, 6); }),
+    [
+      1, 1.059463, 1.122462, 1.189207, 1.259921, 1.334840, 1.414214, 1.498307, 1.587401, 1.681793, 1.781797, 1.887749, 2
+    ]);
+  });
+
+  it('generates proper frequencies from pitch vectors', () => {
+    // https://en.wikipedia.org/wiki/Piano_key_frequencies
+    deepEqual(_.range(13).map( (d) => { return concertTuning.getPitchFrequency(d, 3); }),
+    [
+      440, 466.164, 493.883, 523.251, 554.365, 587.330, 622.254, 659.255, 698.456, 739.989, 783.991, 830.609, 880
+    ]);
   });
 });
 
 describe('ToneRow', () => {
-  it('manipulates tonerows', () => {
-    var edo12 = new EDO(12);
-    // Prime tone row from Webern's Concerto for Nine Instruments, Op. 24
-    // https://en.wikipedia.org/wiki/Concerto_for_Nine_Instruments_(Webern)
-    var t1 = new ToneRow([0, 11, 3, 4, 8, 7, 9, 5, 6, 1, 2, 10], edo12);
-    console.log("P0", t1.transpose(0));
-    console.log("R0", t1.retrograde(0));
-    console.log("I0", t1.invert(0));
-    console.log("rotate(3,0)", t1.rotate(3, 0));
-    console.log("P1", t1.transpose(1));
-    console.log("R1", t1.retrograde(1));
-    console.log("I1", t1.invert(1));
-    console.log("rotate(3,1)", t1.rotate(3, 1));
-    console.log("matrix\n", t1.matrix());
+  // @see https://en.wikipedia.org/wiki/Concerto_for_Nine_Instruments_(Webern)
+  // @see http://composertools.com/Tools/matrix/MatrixCalc.html
+  var t1 = new ToneRow([0, 11, 3, 4, 8, 7, 9, 5, 6, 1, 2, 10]);
+
+  it('computes the proper tonerow transforms', () => {
+    t1;
+    throw Error("TODO");
+  });
+
+  it('computes the proper tonerow matrix', () => {
+    t1;
+    throw Error("TODO");
   });
 });
 
