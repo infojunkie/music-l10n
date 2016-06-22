@@ -99,9 +99,9 @@ describe('ToneRow', () => {
 });
 
 describe('Chord', () => {
-  var D = new Scale([2, 4, 6, 7, 9, 11, 13], +1 /* sharp +1 or flat -1 */);
-  var Bb = new Scale([10, 12, 14, 15, 17, 19, 21], -1);
-  var Dchords = Chord.chordsFromScale(D, 4 /* notes per chord */);
+  const D = new Scale([2, 4, 6, 7, 9, 11, 13], +1 /* sharp +1 or flat -1 */);
+  const Bb = new Scale([10, 12, 14, 15, 17, 19, 21], -1);
+  const Dchords = Chord.chordsFromScale(D, 4 /* notes per chord */);
 
   it('generates correct note spellings', () => {
     deepEqual(D.spell(), ['D', 'E', 'F#', 'G', 'A', 'B', 'C#']);
