@@ -10,5 +10,3 @@
 // Using [ES6 modules](http://exploringjs.com/es6/ch_modules.html)
 // Code structure from [Rollup Starter Project](https://github.com/rollup/rollup-starter-project)
 import './goodparts.js';
-
-console.log('Welcome to music-l10n!');
