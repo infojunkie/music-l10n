@@ -40,9 +40,28 @@ Interval.prototype.name = function() {
 }
 
 /* Scale */
-export function Scale(tones, accidental_sign) {
+export function Scale(intervals, tones, accidental_sign) {
+  this.intervals = intervals;
   this.tones = tones;
-  this.accidental_sign = accidental_sign; // +1 sharp, -1 flat
+  this.accidental_sign = accidental_sign;
+}
+Scale.fromTones = function(tones, accidental_sign) {
+  return new Scale(
+    tones.concat(tones[0] + Scale.TUNING_TONES).reduce( (intervals, tone, index, tones) => {
+      return index ? intervals.concat(tone - tones[index - 1]) : intervals;
+    }, []),
+    tones,
+    accidental_sign
+  );
+}
+Scale.fromIntervals = function(intervals, start, accidental_sign) {
+  return new Scale(
+    intervals,
+    intervals.reduce( (tones, interval, index) => {
+      return tones.concat(tones[index] + interval);
+    }, [start]).slice(0,-1),
+    accidental_sign
+  );
 }
 Scale.TUNING_TONES = 12;
 Scale.TUNING_NAMES_TO_TONES = {
