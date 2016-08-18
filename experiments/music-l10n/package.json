@@ -30,7 +30,8 @@
   ],
   "homepage": "https://github.com/infojunkie/music-l10n#readme",
   "dependencies": {
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.4",
