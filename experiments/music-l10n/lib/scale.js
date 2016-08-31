@@ -3,27 +3,27 @@
 import sprintf from 'sprintf';
 
 /* Scale */
-export function Scale(intervals, tones, accidental_sign) {
+export function Scale(intervals, tones, accidentalSign) {
   this.intervals = intervals;
   this.tones = tones;
-  this.accidental_sign = accidental_sign;
+  this.accidentalSign = accidentalSign;
 }
-Scale.fromTones = function(tones, accidental_sign) {
+Scale.fromTones = function(tones, accidentalSign) {
   return new Scale(
     tones.concat(tones[0] + Scale.TUNING_TONES).reduce( (intervals, tone, index, tones) => {
       return index ? intervals.concat(tone - tones[index - 1]) : intervals;
     }, []),
     tones,
-    accidental_sign
+    accidentalSign
   );
 }
-Scale.fromIntervals = function(intervals, start, accidental_sign) {
+Scale.fromIntervals = function(intervals, startTone, accidentalSign) {
   return new Scale(
     intervals,
     intervals.reduce( (tones, interval, index) => {
       return tones.concat(tones[index] + interval);
-    }, [start]).slice(0,-1),
-    accidental_sign
+    }, [startTone]).slice(0,-1),
+    accidentalSign
   );
 }
 Scale.TUNING_TONES = 12;
@@ -58,8 +58,8 @@ Scale.prototype.noteAt = function(degree) {
   var name = Scale.TUNING_TONES_TO_NAMES[base];
   if (!name) {
     // We have an intermediate tone: get the accidental
-    var adjusted_base = (base - this.accidental_sign) % Scale.TUNING_TONES;
-    var accidental = this.accidental_sign > 0 ? '#' : 'b';
+    var adjusted_base = (base - this.accidentalSign) % Scale.TUNING_TONES;
+    var accidental = this.accidentalSign > 0 ? '#' : 'b';
     name = Scale.TUNING_TONES_TO_NAMES[adjusted_base] + accidental;
   }
   return name;
@@ -70,35 +70,73 @@ Scale.prototype.spell = function() {
     return scale.noteAt(degree);
   });
 }
-Scale.prototype.name = function() {
+Scale.prototype.name = function(skipModes) {
   const interval = this.intervals.join(',');
   var found = [];
+  const scale = this;
 
   // Find matching scales.
   if (interval in Scale.KNOWN_SCALES) {
-      found = found.concat(Scale.KNOWN_SCALES[interval].map( (name_template) => {
-        return sprintf(name_template, { root: this.noteAt(0) });
+    found = found.concat(Scale.KNOWN_SCALES[interval].names.map( (name) => {
+      return sprintf(name, { root: this.noteAt(0) });
+    }));
+  }
+
+  // Find matching mode.
+  if (!skipModes) {
+    found = found.concat(scale.modes().reduce( (names, mode, modeNumber) => {
+      return names.concat(mode.name(true).map( (name) => {
+        return sprintf('%s mode %d on %s', name, scale.intervals.length - modeNumber + 1, scale.noteAt(0));
       }));
+    }, []));
   }
 
   return found;
 }
 Scale.prototype.modes = function() {
-  // TODO
+  // cycle on intervals
+  //   generate scale from each rotated interval
+  const scale = this;
+  return this.intervals.map( (interval, delta) => {
+    var intervals = scale.intervals.clone();
+    var head = intervals.splice(0, delta);
+    return Scale.fromIntervals(
+      intervals.concat(head),
+      scale.toneAt(delta),
+      scale.accidentalSign
+    );
+  });
 }
 Scale.KNOWN_SCALES = {
-  '2,2,1,2,2,2,1': [
-    '%(root)s major'
-  ],
-  '2,1,2,2,1,2,2': [
-    '%(root)s natural minor',
-    '%(root)s descending melodic minor'
-  ],
-  '2,1,2,2,1,3,1': [
-    '%(root)s harmonic minor'
-  ],
-  '2,1,2,2,2,2,1': [
-    '%(root)s ascending melodic minor',
-    '%(root)s jazz minor'
-  ]
+  '2,2,1,2,2,2,1': {
+    names: [
+      '%(root)s major'
+    ],
+    modes: [
+      'Ionian',
+      'Dorian',
+      'Phrygian',
+      'Lydian',
+      'Mixolydian',
+      'Aeolian',
+      'Locrian'
+    ]
+  },
+  '2,1,2,2,1,2,2': {
+    names: [
+      '%(root)s natural minor',
+      '%(root)s descending melodic minor'
+    ]
+  },
+  '2,1,2,2,1,3,1': {
+    names: [
+      '%(root)s harmonic minor'
+    ]
+  },
+  '2,1,2,2,2,2,1': {
+    names: [
+      '%(root)s ascending melodic minor',
+      '%(root)s jazz minor'
+    ]
+  }
 };

@@ -29,15 +29,20 @@ describe('Scale', () => {
       Scale.fromTones([4, 6, 7, 9, 11, 13, 14], +1),
       Scale.fromTones([6, 7, 9, 11, 13, 14, 16], +1),
       Scale.fromTones([7, 9, 11, 13, 14, 16, 18], +1),
-      Scale.fromTones([9, 11, 13, 14, 16, 18, 10], +1),
+      Scale.fromTones([9, 11, 13, 14, 16, 18, 19], +1),
       Scale.fromTones([11, 13, 14, 16, 18, 19, 21], +1),
       Scale.fromTones([13, 14, 16, 18, 19, 21, 23], +1)
     ]);
   });
 
   it('identifies scale names correctly', () => {
-    deepEqual(D.name(), ['D major']);
-    deepEqual(Am.name(), ['A natural minor', 'A descending melodic minor']);
+    deepEqual(D.name(true), ['D major']);
+    deepEqual(Am.name(true), ['A natural minor', 'A descending melodic minor']);
+  });
+
+  it('identifies scale modes correctly', () => {
+    const Dmodes = D.modes();
+    deepEqual(Dmodes[1].name(), ['D major mode 2 on E (Dorian)', 'B natural minor mode 4 on E', 'B descending melodic minor mode 4 on E']);
   });
 
 });
