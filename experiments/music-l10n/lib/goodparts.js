@@ -36,7 +36,17 @@ Array.method('insert', function(index, item) {
   this.splice(index, 0, item);
   return this;
 });
-
+/*
+// http://codereview.stackexchange.com/a/85016
+Object.method('invert', function(keyName) {
+  return _.reduce(keyName ? this.keyName : this, function(result, values, key) {
+    return _.reduce(values, function(result, value) {
+      result[value] = key;
+      return result;
+    }, result);
+  }, {});
+});
+*/
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 (function() {
   /**

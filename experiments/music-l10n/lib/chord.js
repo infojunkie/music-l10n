@@ -51,7 +51,7 @@ Chord.prototype.tones = function() {
 Chord.prototype.spell = function() {
   var chord = this;
   return this.degrees.map( (degree) => {
-    return chord.scale.noteAt(degree);
+    return chord.scale.spellAt(degree);
   });
 }
 Chord.prototype.name = function() {
@@ -60,7 +60,7 @@ Chord.prototype.name = function() {
   var parts = [];
 
   // Chord naming: @see https://en.wikipedia.org/wiki/Chord_names_and_symbols_(popular_music)
-  parts.push(this.scale.noteAt(this.degrees[0]));
+  parts.push(this.scale.spellAt(this.degrees[0]));
   var alt_fifth = false; // functional programming cries...
   parts.concat(intervals.map( (i) => {
     var iname = i.name();

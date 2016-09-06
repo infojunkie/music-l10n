@@ -9,11 +9,9 @@ export function Tuning(generator, reference) {
 }
 
 /**
-
-Degree can be any signed integer. It's a
-0-based index into the infinite sequence of
-octaves of the original pitches.
-
+  Degree can be any signed integer. It's a
+  0-based index into the infinite sequence of
+  octaves of the original pitches.
 **/
 Tuning.prototype.getPitch = function(degree) {
   var pitch = this.pitches[ degree.mod(this.pitches.length) ];
@@ -22,10 +20,8 @@ Tuning.prototype.getPitch = function(degree) {
 }
 
 /**
-
-Get the normalized pitch (decimal factor)
-at the given degree, with the required precision.
-
+  Get the normalized pitch (decimal factor)
+  at the given degree, with the required precision.
 **/
 Tuning.prototype.getNormalizedPitch = function(degree, precision) {
   var [pitch, octave] = this.getPitch(degree);
@@ -33,9 +29,7 @@ Tuning.prototype.getNormalizedPitch = function(degree, precision) {
 }
 
 /**
-
-Get the frequency of a degree, with the required precision.
-
+  Get the frequency of a degree, with the required precision.
 **/
 Tuning.prototype.getPitchFrequency = function(degree, precision) {
   var [pitch, octave] = this.getPitch(degree);
@@ -43,10 +37,8 @@ Tuning.prototype.getPitchFrequency = function(degree, precision) {
 }
 
 /**
-
-EDO/tET generates pitches between [1, 2[ (one octave)
-which are separated by equal (logarithmic) divisions,
-
+  EDO/tET generates pitches between [1, 2[ (one octave)
+  which are separated by equal (logarithmic) divisions,
 **/
 export function EDO(steps) {
   return () => {
