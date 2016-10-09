@@ -1,4 +1,4 @@
-# Interesting open source music projects
+# Interesting open source music projects, with an emphasis on Web-based systems
 
 ## music theory and musicology
 
@@ -13,7 +13,7 @@
 - [music-theory](https://github.com/go-music-theory/music-theory) - in Go.
 - [music-theory](https://github.com/daveyarwood/music-theory) - in Clojure.
 - [sharp11](https://github.com/jsrmath/sharp11) - music theorization and improvisation engine in JavaScript.
-- [Musimat](http://www.musimat.com/) is the music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy. The library is written in outdated C++ and distributed as a Visual Studio project, so it needs serious cleanup. It does contain key music abstractions (Pitch, Rhythm, etc.) and some key algorithms, including different tuning systems.
+- [Musimat](http://www.musimat.com/) is the C++ music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy.
 - [Varèse](https://github.com/WChargin/varese) - Varèse pitch space calculations as a web app.
 - [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
 
@@ -69,6 +69,8 @@
 - [Roland TR-909](http://html909.com/)
 - [Roland Juno-106](http://juno-106.js.org/)
 - [EMS Synthi A](https://alexnisnevich.github.io/synthi-js/)
+- [Recreating the sounds of the BBC Radiophonic Workshop using the Web Audio API](http://webaudio.prototyping.bbc.co.uk/)
+- [Recreating The Works of Steve Reich and Brian Eno](http://teropa.info/blog/2016/07/28/javascript-systems-music.html)
 
 ## audio digital signal processing
 
@@ -77,6 +79,7 @@
 ## knowledge bases
 
 - [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
+- [OpenBook](https://github.com/veltzer/openbook) - Open source LilyPond real book for Jazz musicians
 - [Mutopia](https://github.com/MutopiaProject/MutopiaProject) - free sheet music repository
 - [Open Goldberg Variations](http://www.opengoldbergvariations.org/) - The Open Goldberg Variations (Johann Sebastian Bach, BWV 988), played by Kimiko Ishizaka on a Bösendorfer 290 Imperial piano, are free to download and share. They are governed by the Creative Commons Zero license, which means that they are a part of the public domain, and every use of them is allowed.
 - [Lost Voices](http://digitalduchemin.org/) - focusing on a neglected but important repertory of polyphonic songs from mid-sixteenth-century France, this unique project puts old books before a diverse audience of modern scholars and musicians in ways that will prompt renewed understanding of these cultural artifacts and their meanings. It is dedicated to sixteen sets of books expertly crafted by the Parisian printer Nicolas Du Chemin between 1549 and 1568.
