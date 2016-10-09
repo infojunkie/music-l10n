@@ -6,7 +6,8 @@ import { Scale } from '../lib/scale.js';
 describe('Scale', () => {
   const D = Scale.fromTones([2, 4, 6, 7, 9, 11, 13], +1 /* sharp +1 or flat -1 */);
   const Bb = Scale.fromTones([10, 12, 14, 15, 17, 19, 21], -1);
-  const Am = Scale.fromIntervals([2,1,2,2,1,2,2], 9);
+  const Am = Scale.fromIntervals([2,1,2,2,1,2,2], 9, +1);
+  const Dkurd = Scale.fromIntervals([1,2,2,2,1,2,2], 2, -1);
 
   it('saves its input', () => {
     deepEqual(D.tones, [2, 4, 6, 7, 9, 11, 13]);
@@ -41,17 +42,14 @@ describe('Scale', () => {
   });
 
   it('identifies scale names', () => {
-    deepEqual(D.name(true), ['D major']);
-    deepEqual(Am.name(true), ['A natural minor', 'A descending melodic minor']);
+    deepEqual(D.name({ skipModes: true }), ['D major']);
+    deepEqual(Am.name({ skipModes: true }), ['A natural minor', 'A descending melodic minor']);
   });
 
   it('identifies scale modes', () => {
     const Dmodes = D.modes();
-    deepEqual(Dmodes[1].name(), ['D major mode 2 on E (Dorian)', 'B natural minor mode 4 on E', 'B descending melodic minor mode 4 on E']);
-  });
-
-  it('generates scale from name', () => {
-    deepEqual(Scale.fromName('natural minor', 9), Am);
+    deepEqual(Dmodes[1].name(), ['F# Kurd mode 7 on E', 'B natural minor mode 4 on E', 'B descending melodic minor mode 4 on E', 'D major mode 2 on E (Dorian)']);
+    deepEqual(Dkurd.name(), ['D Kurd', 'G natural minor mode 5 on D', 'G descending melodic minor mode 5 on D', 'Bb major mode 3 on D (Phrygian)'])
   });
 
   it('spells scale intervals', () => {
@@ -60,8 +58,13 @@ describe('Scale', () => {
   });
 
   it('generates inverted known scales', () => {
-    deepEqual(Scale.KNOWN_SCALES_INVERTED['%(root)s major'], '2,2,1,2,2,2,1');
-    deepEqual(Scale.KNOWN_SCALES_INVERTED['%(root)s natural minor'], '2,1,2,2,1,2,2');
-    deepEqual(Scale.KNOWN_SCALES_INVERTED['%(root)s descending melodic minor'], '2,1,2,2,1,2,2');
+    deepEqual(Scale.KNOWN_SCALES_EVERTED['%(root)s major'], '2,2,1,2,2,2,1');
+    deepEqual(Scale.KNOWN_SCALES_EVERTED['%(root)s natural minor'], '2,1,2,2,1,2,2');
+    deepEqual(Scale.KNOWN_SCALES_EVERTED['%(root)s descending melodic minor'], '2,1,2,2,1,2,2');
   });
+
+  it('generates scale from name', () => {
+    deepEqual(Scale.fromName('natural minor', 9, +1), Am);
+  });
+
 });

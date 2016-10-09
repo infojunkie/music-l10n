@@ -36,17 +36,36 @@ Array.method('insert', function(index, item) {
   this.splice(index, 0, item);
   return this;
 });
-/*
-// http://codereview.stackexchange.com/a/85016
-Object.method('invert', function(keyName) {
-  return _.reduce(keyName ? this.keyName : this, function(result, values, key) {
-    return _.reduce(values, function(result, value) {
-      result[value] = key;
-      return result;
-    }, result);
-  }, {});
-});
-*/
+
+//Object.method('isScalar', function() {
+//FIXME: Above Object prototype override fails with Babel
+export function isScalar(obj) {
+  return (/boolean|number|string/).test(typeof obj);
+}
+
+// Given an object that is a map of keys => objects with property `prop`,
+// Return a new map of `prop` values => associated key.
+//Object.method('evert', function(prop) {
+//FIXME: Above Object prototype override fails with Babel
+export function evert(obj, prop) {
+
+  return Object.keys(obj).reduce( (eversion, key) => {
+    if (obj[key][prop]) {
+      if (Array.isArray(obj[key][prop])) {
+        obj[key][prop].forEach( (item) => {
+          // FIXME eversion[ obj[key][prop] ] may already exist with another entry
+          eversion[ item ] = key;
+        });
+      }
+      else if (isScalar(obj[key][prop])) {
+        // FIXME eversion[ obj[key][prop] ] may already exist with another entry
+        eversion[ obj[key][prop] ] = key;
+      }
+    }
+    return eversion;
+  }, []);
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 (function() {
   /**

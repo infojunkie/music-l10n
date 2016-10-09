@@ -1,14 +1,16 @@
 // scale functions
 
 import sprintf from 'sprintf';
+import { evert } from './goodparts.js';
 
 /**
   A scale holds simultaneously the TONES that compose it,
   and the INTERVALS between those tones.
 
-  The accidentalSign unfortunately determines whether
+  FIXME: The accidentalSign unfortunately determines whether
   the scale is "sharp" or "flat" - only used for spelling
-  out the scale notes.
+  out the scale notes. Need to move this to a
+  nomenclature or tuning-specific class.
 **/
 export function Scale(intervals, tones, accidentalSign) {
   this.intervals = intervals;
@@ -43,7 +45,16 @@ Scale.fromIntervals = function(intervals, startTone, accidentalSign) {
   Given the scale name, find the scale.
   TODO
  **/
-Scale.fromName = function(/*name, startTone*/) {
+Scale.fromName = function(name, startTone, accidentalSign) {
+  const scaleName = '%(root)s ' + name;
+  try {
+    // Calling `.map(parseInt)` directly does not work, http://stackoverflow.com/a/262511/209184
+    const intervals = Scale.KNOWN_SCALES_EVERTED[scaleName].split(',').map((x) => { return parseInt(x); });
+    return Scale.fromIntervals(intervals, startTone, accidentalSign);
+  }
+  catch (e) {
+    return null;
+  }
 }
 /**
   Tuning constants
@@ -60,12 +71,12 @@ Scale.TUNING_NAMES_TO_TONES = {
   'B': 11
 };
 Scale.TUNING_TONES_TO_NAMES = {
-  0: 'C',
-  2: 'D',
-  4: 'E',
-  5: 'F',
-  7: 'G',
-  9: 'A',
+  0:  'C',
+  2:  'D',
+  4:  'E',
+  5:  'F',
+  7:  'G',
+  9:  'A',
   11: 'B'
 };
 /**
@@ -96,9 +107,8 @@ Scale.prototype.spellAt = function(degree) {
   Spell the whole scale.
 **/
 Scale.prototype.spell = function() {
-  var scale = this;
   return this.tones.map( (tone, degree) => {
-    return scale.spellAt(degree);
+    return this.spellAt(degree);
   });
 }
 /**
@@ -108,6 +118,13 @@ Scale.prototype.spellIntervals = function() {
   return this.intervals.map( (interval) => {
     return Scale.INTERVAL_NAMES[interval];
   });
+}
+/**
+  Get a known scale info for the current scale if any.
+**/
+Scale.prototype.known = function() {
+  const interval = this.intervals.join(',');
+  return Scale.KNOWN_SCALES[interval] || null;
 }
 /**
   Name the scale, given its intervals and tones.
@@ -122,29 +139,42 @@ Scale.prototype.spellIntervals = function() {
   tone vector, yielding familiar examples such as Dorian, Mixolydian, etc.
   Those mode names can be optionally defined alongside the known scale names.
 **/
-Scale.prototype.name = function(skipModes) {
-  const interval = this.intervals.join(',');
+Scale.prototype.name = function(options) {
+  options = Object.assign({ skipModes: false, skipFirstMode: true }, options);
   var found = [];
-  const scale = this;
 
   // Find matching scales.
-  if (interval in Scale.KNOWN_SCALES) {
-    found = found.concat(Scale.KNOWN_SCALES[interval].names.map( (name) => {
+  const known = this.known();
+  if (known) {
+    found = found.concat(known.names.map( (name) => {
       return sprintf(name, { root: this.spellAt(0) });
     }));
   }
 
   // Find matching mode.
-  if (!skipModes) {
-    found = found.concat(scale.modes().reduce( (names, mode, modeNumber) => {
-      return names.concat(mode.name(true).map( (name) => {
-        // TODO find mode name if any
-        return sprintf('%s mode %d on %s', name, scale.intervals.length - modeNumber + 1, scale.spellAt(0));
+  // Generate all modes of the currnt scale, and match any to a known scale.
+  // For each match, generate a name based on the found scale + mode number.
+  if (!options.skipModes) {
+    found = found.concat(this.modes().reduce( (names, mode, modeIndex) => {
+      const knownMode = mode.known();
+      return names.concat(mode.name({ skipModes: true }).map( (name) => {
+        // We are calculating the mode number of the original scale relative to the current mode that is identified.
+        var modeNumber = (this.intervals.length - modeIndex) % this.intervals.length;
+        if (modeNumber === 0 && options.skipFirstMode) return '';
+
+        var modeName = null;
+        try {
+          modeName = knownMode.modes[ modeNumber ];
+        }
+        catch (e) {
+          // failed to find a mode name, nothing more to do
+        }
+        return sprintf('%s mode %d on %s%s', name, modeNumber + 1, this.spellAt(0), (modeName ? ' (' + modeName + ')' : ''));
       }));
     }, []));
   }
 
-  return found;
+  return found.filter((val) => { return val.length; });
 }
 /**
   Generate all modes of a scale.
@@ -153,14 +183,13 @@ Scale.prototype.name = function(skipModes) {
 Scale.prototype.modes = function() {
   // cycle on intervals
   //   generate scale from each rotated interval
-  const scale = this;
   return this.intervals.map( (interval, delta) => {
-    var intervals = scale.intervals.clone();
+    var intervals = this.intervals.clone();
     var head = intervals.splice(0, delta);
     return Scale.fromIntervals(
       intervals.concat(head),
-      scale.toneAt(delta),
-      scale.accidentalSign
+      this.toneAt(delta),
+      this.accidentalSign
     );
   });
 }
@@ -199,14 +228,19 @@ Scale.KNOWN_SCALES = {
       '%(root)s jazz minor'
     ]
   },
-  '1,2,1,2,1,2,2': {
+  '1,3,1,2,1,2,2': {
     names: [
       '%(root)s Phrygian dominant',
-      'Hijaz|حجاز'
+      '%(root)s Hijaz descending'
+    ]
+  },
+  '1,2,2,2,1,2,2': {
+    names: [
+      '%(root)s Kurd'
     ]
   }
 };
-//Scale.KNOWN_SCALES_INVERTED = Scale.KNOWN_SCALES.invert('names');
+Scale.KNOWN_SCALES_EVERTED = evert(Scale.KNOWN_SCALES, 'names');
 Scale.INTERVAL_NAMES = {
   1: 'H',
   2: 'W'
