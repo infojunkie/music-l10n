@@ -3,7 +3,6 @@ import $ from 'jquery';
 
 const G = {
   midi: {
-    input: null,
     output: null
   }
 };
@@ -26,17 +25,22 @@ function playSequence(notes) {
 WebMidi.enable(function (err) {
     console.log(WebMidi.inputs);
     console.log(WebMidi.outputs);
-    G.midi.output = WebMidi.getOutputByName('Synth input port (3310:0)');
-    $('#midi').html(G.midi.output.name);
-
-    playSequence([
-      { name: "C3", duration: 500 },
-      { name: "D3", duration: 500 },
-      { name: "Eb3", duration: 500 },
-      { name: "F3", duration: 500 },
-      { name: "G3", duration: 500 },
-      { name: "Ab3", duration: 500 },
-      { name: "B3", duration: 500 },
-      { name: "C4", duration: 500 },
-    ]);
+    WebMidi.outputs.forEach((output) => {
+      $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
+    });
+    $('#midi #play').on('click', () => {
+      const id = $('#midi #outputs').val();
+      console.log(id);
+      G.midi.output = WebMidi.getOutputById(id);
+      playSequence([
+        { name: "C3 Eb3 G3", duration: 500 },
+        { name: "D3 F3 Ab3", duration: 500 },
+        { name: "Eb3 G3 B3", duration: 500 },
+        { name: "F3 Ab3 C4", duration: 500 },
+        { name: "G3 B3 D4", duration: 500 },
+        { name: "Ab3 C4 Eb4", duration: 500 },
+        { name: "B3 D4 F4", duration: 500 },
+        { name: "C4 Eb4 G4", duration: 500 },
+      ]);
+    });
 });

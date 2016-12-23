@@ -58,7 +58,6 @@
 
 	var G = {
 	  midi: {
-	    input: null,
 	    output: null
 	  }
 	};
@@ -81,10 +80,15 @@
 	_webmidi2.default.enable(function (err) {
 	  console.log(_webmidi2.default.inputs);
 	  console.log(_webmidi2.default.outputs);
-	  G.midi.output = _webmidi2.default.getOutputByName('Synth input port (3310:0)');
-	  (0, _jquery2.default)('#midi').html(G.midi.output.name);
-
-	  playSequence([{ name: "C3", duration: 500 }, { name: "D3", duration: 500 }, { name: "Eb3", duration: 500 }, { name: "F3", duration: 500 }, { name: "G3", duration: 500 }, { name: "Ab3", duration: 500 }, { name: "B3", duration: 500 }, { name: "C4", duration: 500 }]);
+	  _webmidi2.default.outputs.forEach(function (output) {
+	    (0, _jquery2.default)('#midi #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
+	  });
+	  (0, _jquery2.default)('#midi #play').on('click', function () {
+	    var id = (0, _jquery2.default)('#midi #outputs').val();
+	    console.log(id);
+	    G.midi.output = _webmidi2.default.getOutputById(id);
+	    playSequence([{ name: "C3 Eb3 G3", duration: 500 }, { name: "D3 F3 Ab3", duration: 500 }, { name: "Eb3 G3 B3", duration: 500 }, { name: "F3 Ab3 C4", duration: 500 }, { name: "G3 B3 D4", duration: 500 }, { name: "Ab3 C4 Eb4", duration: 500 }, { name: "B3 D4 F4", duration: 500 }, { name: "C4 Eb4 G4", duration: 500 }]);
+	  });
 	});
 
 /***/ },
