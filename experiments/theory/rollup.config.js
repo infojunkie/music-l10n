@@ -12,7 +12,7 @@ export default {
     {
       dest: pkg['main'],
       format: 'umd',
-      moduleName: 'musicL10nProject',
+      moduleName: 'musicL10n',
       sourceMap: true
     },
     {

@@ -1,11 +1,17 @@
 # Interesting open source music projects, with an emphasis on Web-based systems
 
+## web audio & midi
+
+- [MIDI.js](https://github.com/mudcube/MIDI.js/) - JavaScript MIDI player.
+- [Web MIDI Emitter](https://github.com/mohayonao/web-midi-emitter) - Web MIDI message handler.
+- [Web Audio Font](https://github.com/surikov/webaudiofont) - soundfont for Web Audio API.
+
 ## music theory and musicology
 
 - [music21](https://github.com/cuthbertlab/music21), a toolkit from MIT for Computational Musicology.
 - [Humdrum](https://github.com/kroger/humdrum), a toolkit for music research.
 - [python-mingus](https://github.com/bspaans/python-mingus), an advanced, cross-platform music theory and notation package for Python with MIDI file and playback support.
-- [Euterpea](http://www.euterpea.com/) - A Haskell library for music creation
+- [Euterpea](http://www.euterpea.com/) - a Haskell library for music creation
 - [tonal](https://github.com/danigb/tonal) - music theory in JavaScript.
 - [teoria](https://github.com/saebekassebil/teoria) - music theory in JavaScript.
 - [music_theory](https://github.com/beneggett/music_theory) - in Ruby.
@@ -15,7 +21,7 @@
 - [sharp11](https://github.com/jsrmath/sharp11) - music theorization and improvisation engine in JavaScript.
 - [Musimat](http://www.musimat.com/) is the C++ music library that complements the incredible 2-volume book [Musimathics](http://www.musimathics.com/) by Gareth Loy.
 - [Varèse](https://github.com/WChargin/varese) - Varèse pitch space calculations as a web app.
-- [Sator](https://github.com/calebsmith/Sator) - Atonal music analysis in Python.
+- [Sator](https://github.com/calebsmith/Sator) - atonal music analysis in Python.
 
 ## music information retrieval
 
@@ -25,8 +31,8 @@
 
 ## notation and engraving
 
-- [LilyPond](http://lilypond.org/) - The LaTeX of music notation.
-- [MuseScore](https://musescore.org) - Great music notation editor.
+- [LilyPond](http://lilypond.org/) - the LaTeX of music notation.
+- [MuseScore](https://musescore.org) - great music notation editor.
 - [Vexflow](https://github.com/0xfe/vexflow) - JavaScript music engraving library - great codebase, good community, budding ecosystem.
 - [alphaTab](https://github.com/CoderLine/alphaTab) - a cross platform music notation and guitar tablature rendering library with GuitarPro importer.
 - [abcjs](https://github.com/paulrosen/abcjs) - JavaScript for rendering ABC music notation.
@@ -42,14 +48,11 @@
 
 - [MMA](http://www.mellowood.ca/mma/) - Musical MIDI Accompaniment, the daddy of playalong generators. Highly recommended.
 - [Impro-Visor](https://www.cs.hmc.edu/~keller/jazz/improvisor/), (short for “Improvisation Advisor”) is a music notation program designed to help jazz musicians compose and hear solos similar to ones that might be improvised. [Source code here](https://github.com/Impro-Visor/Impro-Visor).
-- [JazzML](https://github.com/evancchow/jazzml) - Computational jazz improvisation powered by machine learning.
-- [deepjazz](https://github.com/jisungk/deepjazz) - Using Keras & Theano for deep learning driven jazz generation.
-- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - web-based playalong generator.
-
-## midi
-
-- [MIDI.js](https://github.com/mudcube/MIDI.js/) - JavaScript MIDI player.
-- [FluidSynth](http://www.fluidsynth.org/) - a real-time software synthesizer based on the SoundFont 2 specifications.
+- [JazzML](https://github.com/evancchow/jazzml) - computational jazz improvisation powered by machine learning.
+- [deepjazz](https://github.com/jisungk/deepjazz) - using Keras & Theano for deep learning driven jazz generation.
+- [Music RNN RBM](https://github.com/dshieble/Music_RNN_RBM) - generating longer musical pieces with an RNN-RBM in TensorFlow.
+- [ChordTrane](https://github.com/larryoatmeal/ChordTrane) - Web-based playalong generator.
+- [DataToMusicAPI](https://github.com/GTCMT/DataToMusicAPI) - client-side JavaScript utility tools for data musification (sonification).
 
 ## synthesis and composition
 
@@ -71,15 +74,19 @@
 - [EMS Synthi A](https://alexnisnevich.github.io/synthi-js/)
 - [Recreating the sounds of the BBC Radiophonic Workshop using the Web Audio API](http://webaudio.prototyping.bbc.co.uk/)
 - [Recreating The Works of Steve Reich and Brian Eno](http://teropa.info/blog/2016/07/28/javascript-systems-music.html)
+- [Viktor NV-1](https://github.com/nicroto/viktor)
 
 ## audio digital signal processing
 
-- [SoundTouch](http://www.surina.net/soundtouch/), an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
+- [SoundTouch](http://www.surina.net/soundtouch/) - an open-source audio processing library for changing the Tempo, Pitch and Playback Rates of audio streams or audio files.
+- [pitchshiftjs](https://github.com/GTCMT/pitchshiftjs) - pure JavaScript client side pitch shifting service meant to be used with Web Audio API.
+- [Audio Waveform Image Generator](https://github.com/bbc/audiowaveform) - C++ program to generate waveform data and render waveform images from audio files.
 
 ## knowledge bases
 
-- [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine
-- [OpenBook](https://github.com/veltzer/openbook) - Open source LilyPond real book for Jazz musicians
-- [Mutopia](https://github.com/MutopiaProject/MutopiaProject) - free sheet music repository
-- [Open Goldberg Variations](http://www.opengoldbergvariations.org/) - The Open Goldberg Variations (Johann Sebastian Bach, BWV 988), played by Kimiko Ishizaka on a Bösendorfer 290 Imperial piano, are free to download and share. They are governed by the Creative Commons Zero license, which means that they are a part of the public domain, and every use of them is allowed.
-- [Lost Voices](http://digitalduchemin.org/) - focusing on a neglected but important repertory of polyphonic songs from mid-sixteenth-century France, this unique project puts old books before a diverse audience of modern scholars and musicians in ways that will prompt renewed understanding of these cultural artifacts and their meanings. It is dedicated to sixteen sets of books expertly crafted by the Parisian printer Nicolas Du Chemin between 1549 and 1568.
+- [Jazzity](https://github.com/rubiety/jazzity) - Jazz Knowledge Engine.
+- [OpenBook](https://github.com/veltzer/openbook) - open source LilyPond real book for Jazz musicians.
+- [Mutopia](https://github.com/MutopiaProject/MutopiaProject) - free sheet music repository.
+- [makamlib](https://github.com/phaedon/makamlib) - An open source library for Ottoman-Turkish makam.
+- [Open Goldberg Variations](http://www.opengoldbergvariations.org/) - The Open Goldberg Variations (Johann Sebastian Bach, BWV 988), played by Kimiko Ishizaka on a Bösendorfer 290 Imperial piano.
+- [Lost Voices](http://digitalduchemin.org/) - focusing on a neglected but important repertory of polyphonic songs from mid-sixteenth-century France expertly crafted by the Parisian printer Nicolas Du Chemin between 1549 and 1568.
