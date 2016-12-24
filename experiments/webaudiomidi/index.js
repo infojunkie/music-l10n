@@ -1,46 +1,79 @@
 import WebMidi from 'webmidi';
 import $ from 'jquery';
+import store from 'store';
+import Vex from 'vexflow';
 
-const G = {
+let G = {
   midi: {
-    output: null
-  }
+    output: null,
+    config: {
+      output: null,
+      channel: 0
+    }
+  },
+  notes: [
+    { name: "C4", duration: 500 },
+    { name: "D4", duration: 500 },
+    { name: "Eb4", duration: 500 },
+    { name: "F4", duration: 500 },
+    { name: "G4", duration: 500 },
+    { name: "Ab4", duration: 500 },
+    { name: "B4", duration: 500 },
+    { name: "C5", duration: 500 },
+  ]
 };
 
 function playNote(notes, index) {
   if (index >= notes.length) return;
 
   const note = notes[index];
-  G.midi.output.playNote(note.name);
+  G.midi.output.playNote(note.name, G.midi.config.channel);
   setTimeout(() => {
     G.midi.output.stopNote(note.name);
     playNote(notes, index+1);
   }, note.duration);
 }
 
-function playSequence(notes) {
+function play(notes) {
   playNote(notes, 0);
 }
 
+function render(notes) {
+  var vf = new Vex.Flow.Factory({
+    renderer: {selector: 'vexflow', width: 500, height: 200}
+  });
+
+  var score = vf.EasyScore();
+  var system = vf.System();
+
+  var vf_notes = notes.map((n) => n.name).join(', ');
+
+  system.addStave({
+    voices: [
+      score.voice(score.notes(vf_notes)),
+    ]
+  }).addClef('treble').addTimeSignature('4/4');
+
+  vf.draw();
+}
+
 WebMidi.enable(function (err) {
-    console.log(WebMidi.inputs);
-    console.log(WebMidi.outputs);
+    G.midi.config = store.get('G.midi.config') || G.midi.config;
     WebMidi.outputs.forEach((output) => {
       $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
     });
-    $('#midi #play').on('click', () => {
-      const id = $('#midi #outputs').val();
-      console.log(id);
-      G.midi.output = WebMidi.getOutputById(id);
-      playSequence([
-        { name: "C3 Eb3 G3", duration: 500 },
-        { name: "D3 F3 Ab3", duration: 500 },
-        { name: "Eb3 G3 B3", duration: 500 },
-        { name: "F3 Ab3 C4", duration: 500 },
-        { name: "G3 B3 D4", duration: 500 },
-        { name: "Ab3 C4 Eb4", duration: 500 },
-        { name: "B3 D4 F4", duration: 500 },
-        { name: "C4 Eb4 G4", duration: 500 },
-      ]);
+    $('#midi #outputs').val(G.midi.config.output);
+    // [1..16] as per http://stackoverflow.com/a/33352604/209184
+    Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
+      $('#midi #channels').append($('<option>', { value: channel, text: channel }));
     });
+    $('#midi #channels').val(G.midi.config.channel);
+    $('#midi #play').on('click', () => {
+      G.midi.config.output = $('#midi #outputs').val();
+      G.midi.config.channel = $('#midi #channels').val();
+      G.midi.output = WebMidi.getOutputById(G.midi.config.output);
+      store.set('G.midi.config', G.midi.config);
+      play(G.notes);
+    });
+    render(G.notes);
 });
