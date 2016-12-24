@@ -62,6 +62,12 @@
 	
 	var _vexflow2 = _interopRequireDefault(_vexflow);
 	
+	var _workerTimers = __webpack_require__(6);
+	
+	var Timer = _interopRequireWildcard(_workerTimers);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var G = {
@@ -75,18 +81,18 @@
 	  notes: [{ name: "C4", duration: 500 }, { name: "D4", duration: 500 }, { name: "Eb4", duration: 500 }, { name: "F4", duration: 500 }, { name: "G4", duration: 500 }, { name: "Ab4", duration: 500 }, { name: "B4", duration: 500 }, { name: "C5", duration: 500 }]
 	};
 	
-	function playNote(notes, index) {
-	  if (index >= notes.length) return;
-	
-	  var note = notes[index];
-	  G.midi.output.playNote(note.name, G.midi.config.channel);
-	  setTimeout(function () {
-	    G.midi.output.stopNote(note.name);
-	    playNote(notes, index + 1);
-	  }, note.duration);
-	}
-	
 	function play(notes) {
+	  function playNote(notes, index) {
+	    if (index >= notes.length) return;
+	
+	    var note = notes[index];
+	    G.midi.output.playNote(note.name, G.midi.config.channel);
+	    Timer.setTimeout(function () {
+	      G.midi.output.stopNote(note.name);
+	      playNote(notes, index + 1);
+	    }, note.duration);
+	  }
+	
 	  playNote(notes, 0);
 	}
 	
@@ -131,6 +137,12 @@
 	  });
 	  render(G.notes);
 	});
+	
+	var time = performance.now();
+	Timer.setInterval(function () {
+	  console.log(performance.now() - time);
+	  time = performance.now();
+	}, 500);
 
 /***/ },
 /* 1 */
@@ -33864,6 +33876,145 @@
 	});
 	;
 	//# sourceMappingURL=vexflow-debug.js.map
+
+/***/ },
+/* 5 */,
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	(function (global, factory) {
+		 true ? factory(exports, __webpack_require__(7)) :
+		typeof define === 'function' && define.amd ? define(['exports', 'worker-timers-broker'], factory) :
+		(factory((global.workerTimers = global.workerTimers || {}),global.workerTimersBroker));
+	}(this, (function (exports,workerTimersBroker) { 'use strict';
+	
+	// tslint:disable-next-line:max-line-length
+	// tslint:disable-next-line:max-line-length
+	var worker = "!function(){\"use strict\";var a=new Map,b=new Map,c=function a(b,c,d,e){var f=\"performance\"in self?performance.now():Date.now();f>d?self.postMessage(e):b.set(c,setTimeout(a,d-f,b,c,d,e))};self.addEventListener(\"message\",function(d){var e=d.data,f=e.action,g=e.delay,h=e.id,i=e.now,j=e.type;if(\"clear\"===f){var k=void 0;\"interval\"===j?(k=a.get(h),void 0!==k&&(clearTimeout(k),a.delete(h))):\"timeout\"===j&&(k=b.get(h),void 0!==k&&(clearTimeout(k),b.delete(h)))}else if(\"set\"===f){var l=void 0;if(\"performance\"in self){var m=performance.now(),n=Math.max(0,m-i);g-=n,l=m}else l=Date.now();var o=l+g;\"interval\"===j?a.set(h,setTimeout(c,g,a,h,o,{id:h,type:j})):\"timeout\"===j&&b.set(h,setTimeout(c,g,b,h,o,{id:h,type:j}))}})}();";
+	
+	var blob = new Blob([worker], { type: 'application/javascript' });
+	var url = URL.createObjectURL(blob);
+	var workerTimers = workerTimersBroker.load(url);
+	var clearInterval = workerTimers.clearInterval;
+	var clearTimeout = workerTimers.clearTimeout;
+	var setInterval = workerTimers.setInterval;
+	var setTimeout = workerTimers.setTimeout;
+	
+	exports.clearInterval = clearInterval;
+	exports.clearTimeout = clearTimeout;
+	exports.setInterval = setInterval;
+	exports.setTimeout = setTimeout;
+	
+	Object.defineProperty(exports, '__esModule', { value: true });
+	
+	})));
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	(function (global, factory) {
+	     true ? factory(exports) :
+	    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	    (factory((global.workerTimersBroker = global.workerTimersBroker || {})));
+	}(this, (function (exports) { 'use strict';
+	
+	var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || Math.pow(2, 53) - 1;
+	var generateUniqueId = function generateUniqueId(map) {
+	    var id = Math.round(Math.random() * MAX_SAFE_INTEGER);
+	    while (map.has(id)) {
+	        id = Math.round(Math.random() * MAX_SAFE_INTEGER);
+	    }
+	    return id;
+	};
+	var load = function load(url) {
+	    var scheduledIntervalFunctions = new Map();
+	    var scheduledTimeoutFunctions = new Map();
+	    var worker = new Worker(url);
+	    worker.addEventListener('message', function (_ref) {
+	        var _ref$data = _ref.data,
+	            id = _ref$data.id,
+	            type = _ref$data.type;
+	
+	        if (type === 'interval') {
+	            var func = scheduledIntervalFunctions.get(id);
+	            if (func) {
+	                func();
+	            }
+	        } else if (type === 'timeout') {
+	            var _func = scheduledTimeoutFunctions.get(id);
+	            if (_func) {
+	                _func();
+	                // A timeout can be savely deleted because it is only called once.
+	                scheduledTimeoutFunctions.delete(id);
+	            }
+	        }
+	        // @todo Maybe throw an error.
+	    });
+	    var clearInterval = function clearInterval(id) {
+	        scheduledIntervalFunctions.delete(id);
+	        worker.postMessage({
+	            action: 'clear',
+	            id: id,
+	            type: 'interval'
+	        });
+	    };
+	    var clearTimeout = function clearTimeout(id) {
+	        scheduledTimeoutFunctions.delete(id);
+	        worker.postMessage({
+	            action: 'clear',
+	            id: id,
+	            type: 'timeout'
+	        });
+	    };
+	    var setInterval = function setInterval(func, delay) {
+	        var id = generateUniqueId(scheduledIntervalFunctions);
+	        scheduledIntervalFunctions.set(id, function () {
+	            func();
+	            worker.postMessage({
+	                action: 'set',
+	                delay: delay,
+	                id: id,
+	                now: performance.now(),
+	                type: 'interval'
+	            });
+	        });
+	        worker.postMessage({
+	            action: 'set',
+	            delay: delay,
+	            id: id,
+	            now: performance.now(),
+	            type: 'interval'
+	        });
+	        return id;
+	    };
+	    var setTimeout = function setTimeout(func, delay) {
+	        var id = generateUniqueId(scheduledTimeoutFunctions);
+	        scheduledTimeoutFunctions.set(id, func);
+	        worker.postMessage({
+	            action: 'set',
+	            delay: delay,
+	            id: id,
+	            now: performance.now(),
+	            type: 'timeout'
+	        });
+	        return id;
+	    };
+	    return {
+	        clearInterval: clearInterval,
+	        clearTimeout: clearTimeout,
+	        setInterval: setInterval,
+	        setTimeout: setTimeout
+	    };
+	};
+	
+	exports.load = load;
+	
+	Object.defineProperty(exports, '__esModule', { value: true });
+	
+	})));
+
 
 /***/ }
 /******/ ]);
