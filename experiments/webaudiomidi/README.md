@@ -40,4 +40,11 @@ Nothing.
 `aplaymidi` a MIDI file to `--port` first VirMIDI port. Nothing.
 `aplaymidi` same MIDI file to `--port` Qsynth. Music!
 
-I don't understand how Virtual MIDI ports work :-(
+I don't understand how Virtual MIDI ports work :-( http://music.stackexchange.com/questions/51463/how-to-use-snd-virmidi-on-linux
+
+However! The above works perfectly when using MIDI Through Ports (provided by `snd-seq-dummy` module) instead of Virtual MIDI ports.
+To increase the number of available MIDI Through Ports, edit `/etc/modprobe.conf/alsa-base.conf` to add the following line:
+```
+options snd-seq-dummy ports=4
+```
+before any mention of `snd-seq`.
