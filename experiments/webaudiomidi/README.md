@@ -13,9 +13,12 @@ Player means we generate a stream of MIDI events corresponding to the sheet's se
 - by applying functions to existing sheets or parts thereof (e.g. `add6thBelowEachNote` or `transposeUpA3rd`)
 
 ## MIDI setup
+- Install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/) for Web MIDI API on Firefox
+- `sudo modprobe snd-virmid` to enable Virtual MIDI ports (needed by Jazz-Plugin)
 - `qsynth` assuming a functional existing setup of Qsynth
 - `timidity -iA` assuming a functional existing setup of TiMiditi++
 - `aconnect -o` should show available output ports, including `FLUID Synth` and `TiMidity`
+- `aconnect 24:0 130:0` where `24:0` should be the port of `VirMIDI 2-0` and `130:0` should be the port of `TiMidity port 0` - this will wire up Jazz-Plugin
 - Open `./index.html`
 - Select the output MIDI port as per above, and the MIDI channel (1-16, or `all`)
 - Play!
@@ -33,12 +36,10 @@ both on the sheet player's output MIDI ports, and on the DX7 emulator's input po
 - Change instruments on the DX7
 - Play again!
 
-Note that if you switch tabs to a one different from the sheet player, the music will slow down.
-Currently [investigating this issue](https://github.com/chrisguttandin/worker-timers/issues/65).
-
 ## Various notes
 - To increase the number of available MIDI Through Ports, edit `/etc/modprobe.conf/alsa-base.conf` to add the following line:
 ```
 options snd-seq-dummy ports=4
 ```
 - Virtual MIDI Ports (provided by kernel module `snd-virmidi`) are NOT used for general routing of MIDI messages! cf. http://music.stackexchange.com/questions/51463/how-to-use-snd-virmidi-on-linux
+- Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Need to investigate why.

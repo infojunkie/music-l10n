@@ -2,7 +2,6 @@ import WebMidi from 'webmidi';
 import $ from 'jquery';
 import store from 'store';
 import Vex from 'vexflow';
-import * as Timer from 'worker-timers';
 
 let G = {
   midi: {
@@ -25,18 +24,14 @@ let G = {
 };
 
 function play(notes) {
-  function playNote(notes, index) {
-    if (index >= notes.length) return;
-
-    const note = notes[index];
-    G.midi.output.playNote(note.name, G.midi.config.channel);
-    Timer.setTimeout(() => {
-      G.midi.output.stopNote(note.name);
-      playNote(notes, index+1);
-    }, note.duration);
-  }
-
-  playNote(notes, 0);
+  let time = 1;
+  notes.forEach((note) => {
+    G.midi.output.playNote(note.name, G.midi.config.channel, {
+      time: `+${time}`,
+      duration: note.duration
+    });
+    time += note.duration;
+  });
 }
 
 function render(notes) {
@@ -78,9 +73,3 @@ WebMidi.enable(function (err) {
     });
     render(G.notes);
 });
-
-var time = performance.now();
-Timer.setInterval(() => {
-  console.log(performance.now() - time);
-  time = performance.now();
-}, 500);
