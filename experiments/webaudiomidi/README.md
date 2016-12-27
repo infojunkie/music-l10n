@@ -42,4 +42,4 @@ both on the sheet player's output MIDI ports, and on the DX7 emulator's input po
 options snd-seq-dummy ports=4
 ```
 - Virtual MIDI Ports (provided by kernel module `snd-virmidi`) are NOT used for general routing of MIDI messages! cf. http://music.stackexchange.com/questions/51463/how-to-use-snd-virmidi-on-linux
-- Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Need to investigate why.
+- Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Investigating: http://jazz-soft.org/bb/viewtopic.php?f=2&t=934

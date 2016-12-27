@@ -2,25 +2,18 @@ import WebMidi from 'webmidi';
 import $ from 'jquery';
 import store from 'store';
 import Vex from 'vexflow';
+import sheets from './sheets.json';
 
 let G = {
   midi: {
     output: null,
     config: {
       output: null,
-      channel: 0
+      channel: 0,
+      sheet: 0
     }
   },
-  notes: [
-    { name: "C4", duration: 500 },
-    { name: "D4", duration: 500 },
-    { name: "Eb4", duration: 500 },
-    { name: "F4", duration: 500 },
-    { name: "G4", duration: 500 },
-    { name: "Ab4", duration: 500 },
-    { name: "B4", duration: 500 },
-    { name: "C5", duration: 500 },
-  ]
+  sheets: sheets.data
 };
 
 function play(notes) {
@@ -54,22 +47,37 @@ function render(notes) {
 }
 
 WebMidi.enable(function (err) {
-    G.midi.config = store.get('G.midi.config') || G.midi.config;
-    WebMidi.outputs.forEach((output) => {
-      $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
-    });
-    $('#midi #outputs').val(G.midi.config.output);
-    // [1..16] as per http://stackoverflow.com/a/33352604/209184
-    Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
-      $('#midi #channels').append($('<option>', { value: channel, text: channel }));
-    });
-    $('#midi #channels').val(G.midi.config.channel);
-    $('#midi #play').on('click', () => {
-      G.midi.config.output = $('#midi #outputs').val();
-      G.midi.config.channel = $('#midi #channels').val();
-      G.midi.output = WebMidi.getOutputById(G.midi.config.output);
-      store.set('G.midi.config', G.midi.config);
-      play(G.notes);
-    });
-    render(G.notes);
+  G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
+
+  // MIDI Output
+  WebMidi.outputs.forEach((output) => {
+    $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
+  });
+  $('#midi #outputs').val(G.midi.config.output);
+
+  // MI]]`DI Channl
+  // [1..16] as per http://stackoverflow.com/a/33352604/209184
+  Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
+    $('#midi #channels').append($('<option>', { value: channel, text: channel }));
+  });
+  $('#midi #channels').val(G.midi.config.channel);
+  $('#midi #play').on('click', () => {
+    G.midi.config.output = $('#midi #outputs').val();
+    G.midi.config.channel = $('#midi #channels').val();
+    G.midi.output = WebMidi.getOutputById(G.midi.config.output);
+    store.set('G.midi.config', G.midi.config);
+    play(G.sheets[G.midi.config.sheet].notes);
+  });
+
+  // Sheet
+  G.sheets.forEach((sheet, index) => {
+    $('#sheets').append($('<option>', { value: index, text: sheet.name }));
+  });
+  $('#sheets').val(G.midi.config.sheet).on('change', () => {
+    G.midi.config.sheet = $('#sheets').val();
+    $('#vexflow').empty();
+    render(G.sheets[G.midi.config.sheet].notes);
+  });
+
+  render(G.sheets[G.midi.config.sheet].notes);
 });

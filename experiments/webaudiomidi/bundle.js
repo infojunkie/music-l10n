@@ -62,6 +62,10 @@
 	
 	var _vexflow2 = _interopRequireDefault(_vexflow);
 	
+	var _sheets = __webpack_require__(5);
+	
+	var _sheets2 = _interopRequireDefault(_sheets);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var G = {
@@ -69,10 +73,11 @@
 	    output: null,
 	    config: {
 	      output: null,
-	      channel: 0
+	      channel: 0,
+	      sheet: 0
 	    }
 	  },
-	  notes: [{ name: "C4", duration: 500 }, { name: "D4", duration: 500 }, { name: "Eb4", duration: 500 }, { name: "F4", duration: 500 }, { name: "G4", duration: 500 }, { name: "Ab4", duration: 500 }, { name: "B4", duration: 500 }, { name: "C5", duration: 500 }]
+	  sheets: _sheets2.default.data
 	};
 	
 	function play(notes) {
@@ -106,11 +111,15 @@
 	}
 	
 	_webmidi2.default.enable(function (err) {
-	  G.midi.config = _store2.default.get('G.midi.config') || G.midi.config;
+	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
+	
+	  // MIDI Output
 	  _webmidi2.default.outputs.forEach(function (output) {
 	    (0, _jquery2.default)('#midi #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
 	  });
 	  (0, _jquery2.default)('#midi #outputs').val(G.midi.config.output);
+	
+	  // MI]]`DI Channl
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;
@@ -123,9 +132,20 @@
 	    G.midi.config.channel = (0, _jquery2.default)('#midi #channels').val();
 	    G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
 	    _store2.default.set('G.midi.config', G.midi.config);
-	    play(G.notes);
+	    play(G.sheets[G.midi.config.sheet].notes);
 	  });
-	  render(G.notes);
+	
+	  // Sheet
+	  G.sheets.forEach(function (sheet, index) {
+	    (0, _jquery2.default)('#sheets').append((0, _jquery2.default)('<option>', { value: index, text: sheet.name }));
+	  });
+	  (0, _jquery2.default)('#sheets').val(G.midi.config.sheet).on('change', function () {
+	    G.midi.config.sheet = (0, _jquery2.default)('#sheets').val();
+	    (0, _jquery2.default)('#vexflow').empty();
+	    render(G.sheets[G.midi.config.sheet].notes);
+	  });
+	
+	  render(G.sheets[G.midi.config.sheet].notes);
 	});
 
 /***/ },
@@ -33860,6 +33880,90 @@
 	});
 	;
 	//# sourceMappingURL=vexflow-debug.js.map
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"type": "sheets",
+		"data": [
+			{
+				"name": "C Harmonic Minor",
+				"notes": [
+					{
+						"name": "C4",
+						"duration": 500
+					},
+					{
+						"name": "D4",
+						"duration": 500
+					},
+					{
+						"name": "Eb4",
+						"duration": 500
+					},
+					{
+						"name": "F4",
+						"duration": 500
+					},
+					{
+						"name": "G4",
+						"duration": 500
+					},
+					{
+						"name": "Ab4",
+						"duration": 500
+					},
+					{
+						"name": "B4",
+						"duration": 500
+					},
+					{
+						"name": "C5",
+						"duration": 500
+					}
+				]
+			},
+			{
+				"name": "C Major",
+				"notes": [
+					{
+						"name": "C4",
+						"duration": 500
+					},
+					{
+						"name": "D4",
+						"duration": 500
+					},
+					{
+						"name": "E4",
+						"duration": 500
+					},
+					{
+						"name": "F4",
+						"duration": 500
+					},
+					{
+						"name": "G4",
+						"duration": 500
+					},
+					{
+						"name": "A4",
+						"duration": 500
+					},
+					{
+						"name": "B4",
+						"duration": 500
+					},
+					{
+						"name": "C5",
+						"duration": 500
+					}
+				]
+			}
+		]
+	};
 
 /***/ }
 /******/ ]);

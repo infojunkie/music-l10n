@@ -7,6 +7,7 @@ module.exports = {
   devtool: 'source-map',
   module: {
     loaders: [
+      { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
