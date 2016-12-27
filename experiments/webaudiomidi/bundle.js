@@ -71,6 +71,7 @@
 	var G = {
 	  midi: {
 	    output: null,
+	    time: 1,
 	    config: {
 	      output: null,
 	      channel: 0,
@@ -80,14 +81,71 @@
 	  sheets: _sheets2.default.data
 	};
 	
+	var PB_QUARTER_TONE = 0.25;
+	var PB_COMMA = 1 / 9;
+	
+	function pitchBend(note) {
+	  // Parse Vexflow note pattern
+	  // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
+	  var score = new _vexflow2.default.Flow.EasyScore();
+	  var noteName = note.name;
+	  if (score.parse(note.name).success) {
+	    var _ornull = void 0;
+	
+	    _ORNULL: {
+	      try {
+	        _ornull = score.builder.piece.chord[0].accid;
+	        break _ORNULL;
+	      } catch (e) {
+	        _ornull = null;
+	        break _ORNULL;
+	      }
+	    }
+	
+	    var acc = _ornull;
+	    var acc_to_pb = {
+	      '+': PB_QUARTER_TONE,
+	      '++': PB_QUARTER_TONE * 3,
+	      'bs': -PB_QUARTER_TONE,
+	      'd': -PB_QUARTER_TONE,
+	      'db': -PB_QUARTER_TONE * 3,
+	      '+-': PB_COMMA * 5,
+	      '++-': PB_COMMA * 8,
+	      'bss': -PB_COMMA * 8
+	    };
+	
+	    var _ornull2 = void 0;
+	
+	    _ORNULL2: {
+	      try {
+	        _ornull2 = acc_to_pb[acc];
+	        break _ORNULL2;
+	      } catch (e) {
+	        _ornull2 = null;
+	        break _ORNULL2;
+	      }
+	    }
+	
+	    var pb = _ornull2;
+	    if (pb) {
+	      G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + G.midi.time });
+	      var endTime = G.midi.time + note.duration;
+	      G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: '+' + endTime });
+	      noteName = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
+	    }
+	  }
+	  return noteName;
+	}
+	
 	function play(notes) {
-	  var time = 1;
+	  G.midi.time = 1;
 	  notes.forEach(function (note) {
-	    G.midi.output.playNote(note.name, G.midi.config.channel, {
-	      time: '+' + time,
+	    var name = pitchBend(note);
+	    G.midi.output.playNote(name, G.midi.config.channel, {
+	      time: '+' + G.midi.time,
 	      duration: note.duration
 	    });
-	    time += note.duration;
+	    G.midi.time += note.duration;
 	  });
 	}
 	
@@ -33889,6 +33947,43 @@
 		"type": "sheets",
 		"data": [
 			{
+				"name": "C Major",
+				"notes": [
+					{
+						"name": "C4",
+						"duration": 500
+					},
+					{
+						"name": "D4",
+						"duration": 500
+					},
+					{
+						"name": "E4",
+						"duration": 500
+					},
+					{
+						"name": "F4",
+						"duration": 500
+					},
+					{
+						"name": "G4",
+						"duration": 500
+					},
+					{
+						"name": "A4",
+						"duration": 500
+					},
+					{
+						"name": "B4",
+						"duration": 500
+					},
+					{
+						"name": "C5",
+						"duration": 500
+					}
+				]
+			},
+			{
 				"name": "C Harmonic Minor",
 				"notes": [
 					{
@@ -33926,7 +34021,7 @@
 				]
 			},
 			{
-				"name": "C Major",
+				"name": "C Rast راست",
 				"notes": [
 					{
 						"name": "C4",
@@ -33937,7 +34032,7 @@
 						"duration": 500
 					},
 					{
-						"name": "E4",
+						"name": "Ebs4",
 						"duration": 500
 					},
 					{
@@ -33953,7 +34048,7 @@
 						"duration": 500
 					},
 					{
-						"name": "B4",
+						"name": "Bbs4",
 						"duration": 500
 					},
 					{

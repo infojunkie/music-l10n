@@ -2,6 +2,19 @@
   "type": "sheets",
   "data": [
     {
+      "name": "C Major",
+      "notes": [
+        { "name": "C4", "duration": 500 },
+        { "name": "D4", "duration": 500 },
+        { "name": "E4", "duration": 500 },
+        { "name": "F4", "duration": 500 },
+        { "name": "G4", "duration": 500 },
+        { "name": "A4", "duration": 500 },
+        { "name": "B4", "duration": 500 },
+        { "name": "C5", "duration": 500 }
+      ]
+    },
+    {
       "name": "C Harmonic Minor",
       "notes": [
         { "name": "C4", "duration": 500 },
@@ -15,15 +28,15 @@
       ]
     },
     {
-      "name": "C Major",
+      "name": "C Rast راست",
       "notes": [
         { "name": "C4", "duration": 500 },
         { "name": "D4", "duration": 500 },
-        { "name": "E4", "duration": 500 },
+        { "name": "Ebs4", "duration": 500 },
         { "name": "F4", "duration": 500 },
         { "name": "G4", "duration": 500 },
         { "name": "A4", "duration": 500 },
-        { "name": "B4", "duration": 500 },
+        { "name": "Bbs4", "duration": 500 },
         { "name": "C5", "duration": 500 }
       ]
     }

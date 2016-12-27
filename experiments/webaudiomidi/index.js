@@ -7,6 +7,7 @@ import sheets from './sheets.json';
 let G = {
   midi: {
     output: null,
+    time: 1,
     config: {
       output: null,
       channel: 0,
@@ -16,14 +17,56 @@ let G = {
   sheets: sheets.data
 };
 
+DEFINE_MACRO(ORNULL, (expr) => {
+  try {
+    return expr;
+  }
+  catch (e) {
+    return null;
+  }
+});
+
+
+const PB_QUARTER_TONE = 0.25;
+const PB_COMMA = 1/9;
+
+function pitchBend(note) {
+  // Parse Vexflow note pattern
+  // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
+  let score = new Vex.Flow.EasyScore();
+  let noteName = note.name;
+  if (score.parse(note.name).success) {
+    const acc = ORNULL(score.builder.piece.chord[0].accid);
+    const acc_to_pb = {
+      '+': PB_QUARTER_TONE,
+      '++': PB_QUARTER_TONE * 3,
+      'bs': -PB_QUARTER_TONE,
+      'd': -PB_QUARTER_TONE,
+      'db': -PB_QUARTER_TONE * 3,
+      '+-': PB_COMMA * 5,
+      '++-': PB_COMMA * 8,
+      'bss': -PB_COMMA * 8
+    };
+    const pb = ORNULL(acc_to_pb[acc]);
+    if (pb) {
+      G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${G.midi.time}` });
+      let endTime = G.midi.time + note.duration;
+      G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
+      noteName = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
+    }
+  }
+  return noteName;
+}
+
 function play(notes) {
-  let time = 1;
+  G.midi.time = 1;
   notes.forEach((note) => {
-    G.midi.output.playNote(note.name, G.midi.config.channel, {
-      time: `+${time}`,
+    let name = pitchBend(note);
+    G.midi.output.playNote(name, G.midi.config.channel, {
+      time: `+${G.midi.time}`,
       duration: note.duration
     });
-    time += note.duration;
+    G.midi.time += note.duration;
   });
 }
 
