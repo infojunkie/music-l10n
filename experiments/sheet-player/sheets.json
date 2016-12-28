@@ -10,8 +10,7 @@
         { "name": "F4", "duration": 500 },
         { "name": "G4", "duration": 500 },
         { "name": "A4", "duration": 500 },
-        { "name": "B4", "duration": 500 },
-        { "name": "C5", "duration": 500 }
+        { "name": "B4", "duration": 500 }
       ]
     },
     {
@@ -23,8 +22,7 @@
         { "name": "F4", "duration": 500 },
         { "name": "G4", "duration": 500 },
         { "name": "Ab4", "duration": 500 },
-        { "name": "B4", "duration": 500 },
-        { "name": "C5", "duration": 500 }
+        { "name": "B4", "duration": 500 }
       ]
     },
     {
@@ -36,8 +34,7 @@
         { "name": "F4", "duration": 500 },
         { "name": "G4", "duration": 500 },
         { "name": "A4", "duration": 500 },
-        { "name": "Bbs4", "duration": 500 },
-        { "name": "C5", "duration": 500 }
+        { "name": "Bbs4", "duration": 500 }
       ]
     }
   ]

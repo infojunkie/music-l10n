@@ -160,13 +160,14 @@
 	
 	  var score = vf.EasyScore();
 	  var system = vf.System();
-	
 	  var vf_notes = notes.map(function (n) {
 	    return n.name;
 	  }).join(', ');
+	  var voice = score.voice(score.notes(vf_notes));
+	  voice.setMode(_vexflow2.default.Flow.Voice.Mode.SOFT);
 	
 	  system.addStave({
-	    voices: [score.voice(score.notes(vf_notes))]
+	    voices: [voice]
 	  }).addClef('treble');
 	
 	  vf.draw();
@@ -181,7 +182,7 @@
 	  });
 	  (0, _jquery2.default)('#midi #outputs').val(G.midi.config.output);
 	
-	  // MI]]`DI Channl
+	  // MIDI Channl
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;
@@ -198,6 +199,12 @@
 	  });
 	
 	  // Sheet
+	  G.sheets.push({
+	    name: 'C Lydian',
+	    notes: _tonal2.default.scale('C lydian').map(function (n) {
+	      return { name: n + '4', duration: 500 };
+	    })
+	  });
 	  G.sheets.forEach(function (sheet, index) {
 	    (0, _jquery2.default)('#sheets').append((0, _jquery2.default)('<option>', { value: index, text: sheet.name }));
 	  });
@@ -33980,10 +33987,6 @@
 					{
 						"name": "B4",
 						"duration": 500
-					},
-					{
-						"name": "C5",
-						"duration": 500
 					}
 				]
 			},
@@ -34017,10 +34020,6 @@
 					{
 						"name": "B4",
 						"duration": 500
-					},
-					{
-						"name": "C5",
-						"duration": 500
 					}
 				]
 			},
@@ -34053,10 +34052,6 @@
 					},
 					{
 						"name": "Bbs4",
-						"duration": 500
-					},
-					{
-						"name": "C5",
 						"duration": 500
 					}
 				]
