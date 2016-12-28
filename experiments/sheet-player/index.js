@@ -3,6 +3,7 @@ import $ from 'jquery';
 import store from 'store';
 import Vex from 'vexflow';
 import sheets from './sheets.json';
+import tonal from 'tonal';
 
 let G = {
   midi: {
@@ -26,7 +27,6 @@ DEFINE_MACRO(ORNULL, (expr) => {
   }
 });
 
-
 const PB_QUARTER_TONE = 0.25;
 const PB_COMMA = 1/9;
 
@@ -34,7 +34,7 @@ function pitchBend(note) {
   // Parse Vexflow note pattern
   // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
   let score = new Vex.Flow.EasyScore();
-  let noteName = note.name;
+  let adjustedNote = note.name;
   if (score.parse(note.name).success) {
     const acc = ORNULL(score.builder.piece.chord[0].accid);
     const acc_to_pb = {
@@ -52,10 +52,10 @@ function pitchBend(note) {
       G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${G.midi.time}` });
       let endTime = G.midi.time + note.duration;
       G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
-      noteName = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
+      adjustedNote = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
     }
   }
-  return noteName;
+  return adjustedNote;
 }
 
 function play(notes) {
@@ -82,9 +82,9 @@ function render(notes) {
 
   system.addStave({
     voices: [
-      score.voice(score.notes(vf_notes)),
+      score.voice(score.notes(vf_notes))
     ]
-  }).addClef('treble').addTimeSignature('4/4');
+  }).addClef('treble');
 
   vf.draw();
 }

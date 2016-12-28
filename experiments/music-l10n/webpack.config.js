@@ -1,19 +1,20 @@
 module.exports = {
-  entry: './index.js',
+  entry: './lib/index.js',
   output: {
-      path: __dirname,
-      filename: 'bundle.js'
+    filename: 'dist/music-l10n.js'
   },
-  devtool: 'source-map',
   module: {
+    preLoaders: [{
+      test: /\.js$/,
+      loaders: ['eslint'],
+    }],
     loaders: [
-      { test: /\.json$/, loader: 'json' },
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
         loader: 'babel-loader',
         query: {
-          presets: ['es2016']
+          presets: ['latest']
         }
       }
     ]
