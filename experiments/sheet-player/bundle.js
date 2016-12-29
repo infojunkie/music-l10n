@@ -268,7 +268,7 @@
 	    })
 	  });
 	  G.sheets.push({
-	    name: 'Bach',
+	    name: 'Bach Minuet in G',
 	    notes: function notes() {
 	      return bach();
 	    }
