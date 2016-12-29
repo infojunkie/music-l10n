@@ -112,6 +112,12 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     play(G.sheets[G.midi.config.sheet].notes);
   });
+  $('#midi #stop').on('click', () => {
+    // https://github.com/WebAudio/web-midi-api/issues/102
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
+    ORNULL(G.midi.output._midiOutput.clear());
+    G.midi.output.sendChannelMode('allsoundoff', 0, G.midi.config.channel);
+  });
 
   // Sheet
   G.sheets.push({

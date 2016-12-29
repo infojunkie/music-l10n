@@ -197,6 +197,26 @@
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    play(G.sheets[G.midi.config.sheet].notes);
 	  });
+	  (0, _jquery2.default)('#midi #stop').on('click', function () {
+	    var _expr = G.midi.output._midiOutput.clear();
+	
+	    var _ornull3 = void 0;
+	
+	    _ORNULL3: {
+	      try {
+	        _ornull3 = _expr;
+	        break _ORNULL3;
+	      } catch (e) {
+	        _ornull3 = null;
+	        break _ORNULL3;
+	      }
+	    }
+	
+	    // https://github.com/WebAudio/web-midi-api/issues/102
+	    // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
+	    _ornull3;
+	    G.midi.output.sendChannelMode('allsoundoff', 0, G.midi.config.channel);
+	  });
 	
 	  // Sheet
 	  G.sheets.push({
