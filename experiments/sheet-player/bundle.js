@@ -145,7 +145,7 @@
 	  return adjustedNote;
 	}
 	
-	function playVexflow(vf) {
+	function playVF(vf) {
 	  console.log(vf);
 	
 	  G.midi.tempo = 120;
@@ -176,7 +176,7 @@
 	
 	function play(notes) {
 	  if (!Array.isArray(notes)) {
-	    playVexflow(notes());
+	    playVF(notes());
 	    return;
 	  }
 	
@@ -224,7 +224,7 @@
 	  });
 	  (0, _jquery2.default)('#midi #outputs').val(G.midi.config.output);
 	
-	  // MIDI Channl
+	  // MIDI Channel
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;

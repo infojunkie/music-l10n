@@ -60,7 +60,7 @@ function pitchBend(note) {
   return adjustedNote;
 }
 
-function playVexflow(vf) {
+function playVF(vf) {
   console.log(vf);
 
   G.midi.tempo = 120;
@@ -89,7 +89,7 @@ function playVexflow(vf) {
 
 function play(notes) {
   if (!Array.isArray(notes)) {
-    playVexflow(notes());
+    playVF(notes());
     return;
   }
 
@@ -138,7 +138,7 @@ WebMidi.enable(function (err) {
   });
   $('#midi #outputs').val(G.midi.config.output);
 
-  // MIDI Channl
+  // MIDI Channel
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
     $('#midi #channels').append($('<option>', { value: channel, text: channel }));
