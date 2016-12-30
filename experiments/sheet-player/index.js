@@ -60,18 +60,21 @@ function pitchBend(note) {
   return adjustedNote;
 }
 
+function ticksToMilliseconds(bpm, resolution) {
+  return 60000.00 / (bpm * resolution);
+}
+
 function playVF(vf) {
   console.log(vf);
-
-  G.midi.tempo = 120;
   G.midi.time = 1;
   let timeNextMeasure = 0;
+  let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
   vf.systems.forEach((system) => {
     system.parts.forEach((part) => {
       part.voices.forEach((voice) => {
         let time = G.midi.time;
         voice.tickables.filter((t) => t.keyProps).forEach((tickable) => {
-          var duration = 500;
+          let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
             G.midi.output.playNote(note.key+note.octave, G.midi.config.channel, {
               time: `+${time}`,

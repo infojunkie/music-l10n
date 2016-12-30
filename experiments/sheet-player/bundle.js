@@ -145,12 +145,15 @@
 	  return adjustedNote;
 	}
 	
+	function ticksToMilliseconds(bpm, resolution) {
+	  return 60000.00 / (bpm * resolution);
+	}
+	
 	function playVF(vf) {
 	  console.log(vf);
-	
-	  G.midi.tempo = 120;
 	  G.midi.time = 1;
 	  var timeNextMeasure = 0;
+	  var ticksToTime = ticksToMilliseconds(66 / 3, _vexflow2.default.Flow.RESOLUTION);
 	  vf.systems.forEach(function (system) {
 	    system.parts.forEach(function (part) {
 	      part.voices.forEach(function (voice) {
@@ -158,7 +161,7 @@
 	        voice.tickables.filter(function (t) {
 	          return t.keyProps;
 	        }).forEach(function (tickable) {
-	          var duration = 500;
+	          var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
 	          tickable.keyProps.forEach(function (note) {
 	            G.midi.output.playNote(note.key + note.octave, G.midi.config.channel, {
 	              time: '+' + time,
