@@ -64,12 +64,50 @@ function ticksToMilliseconds(bpm, resolution) {
   return 60000.00 / (bpm * resolution);
 }
 
+function renderMarker(system, voice, note) {
+  const ctx = system.checkContext();
+  const y1 = system.options.y;
+  const y2 = system.lastY;
+  const metrics = note.getMetrics();
+  const xStart = note.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+  const xPre1 = note.getAbsoluteX() - metrics.extraLeftPx;
+  const xAbs = note.getAbsoluteX();
+  const xPost1 = note.getAbsoluteX() + metrics.noteWidth;
+  const xPost2 = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx;
+  const xEnd = note.getAbsoluteX()
+    + metrics.noteWidth
+    + metrics.extraRightPx
+    + metrics.modRightPx;
+  const x1 = xStart;
+  const x2 = xEnd;
+  ctx.save();
+  ctx.beginPath();
+  ctx.setStrokeStyle('#aaa');
+  ctx.setFillStyle('#aaa');
+  ctx.setLineWidth(1);
+  ctx.attributes.opacity = 0.2;
+  ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  ctx.restore();
+}
+
+Vex.Flow.Factory.prototype.drawWithoutReset = function() {
+  this.systems.forEach(i => i.setContext(this.context).format());
+  this.staves.forEach(i => i.setContext(this.context).draw());
+  this.voices.forEach(i => i.setContext(this.context).draw());
+  this.renderQ.forEach(i => {
+    if (!i.isRendered()) i.setContext(this.context).draw();
+  });
+  this.systems.forEach(i => i.setContext(this.context).draw());
+}
+
 function playVF(vf) {
   console.log(vf);
+
   G.midi.time = 1;
-  let timeNextMeasure = 0;
+  let timeNextMeasure = 1;
   let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
   vf.systems.forEach((system) => {
+    G.midi.time = timeNextMeasure;
     system.parts.forEach((part) => {
       part.voices.forEach((voice) => {
         let time = G.midi.time;
@@ -81,18 +119,20 @@ function playVF(vf) {
               duration: duration
             });
           });
+          setTimeout(() => {
+            renderMarker(system, voice, tickable);
+          }, time);
           time += duration;
           timeNextMeasure = Math.max(time, timeNextMeasure);
         });
       });
     });
-    G.midi.time = timeNextMeasure;
   });
 }
 
 function play(notes) {
   if (!Array.isArray(notes)) {
-    playVF(notes());
+    playVF(G.vf);
     return;
   }
 
@@ -129,7 +169,8 @@ function render(notes) {
     vf = notes();
   }
 
-  vf.draw();
+  vf.drawWithoutReset();
+  G.vf = vf;
 }
 
 WebMidi.enable(function (err) {

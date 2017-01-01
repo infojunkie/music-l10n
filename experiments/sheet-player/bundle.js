@@ -149,12 +149,57 @@
 	  return 60000.00 / (bpm * resolution);
 	}
 	
+	function renderMarker(system, voice, note) {
+	  var ctx = system.checkContext();
+	  var y1 = system.options.y;
+	  var y2 = system.lastY;
+	  var metrics = note.getMetrics();
+	  var xStart = note.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+	  var xPre1 = note.getAbsoluteX() - metrics.extraLeftPx;
+	  var xAbs = note.getAbsoluteX();
+	  var xPost1 = note.getAbsoluteX() + metrics.noteWidth;
+	  var xPost2 = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx;
+	  var xEnd = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
+	  var x1 = xStart;
+	  var x2 = xEnd;
+	  ctx.save();
+	  ctx.beginPath();
+	  ctx.setStrokeStyle('#aaa');
+	  ctx.setFillStyle('#aaa');
+	  ctx.setLineWidth(1);
+	  ctx.attributes.opacity = 0.2;
+	  ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+	  ctx.restore();
+	}
+	
+	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
+	  var _this = this;
+	
+	  this.systems.forEach(function (i) {
+	    return i.setContext(_this.context).format();
+	  });
+	  this.staves.forEach(function (i) {
+	    return i.setContext(_this.context).draw();
+	  });
+	  this.voices.forEach(function (i) {
+	    return i.setContext(_this.context).draw();
+	  });
+	  this.renderQ.forEach(function (i) {
+	    if (!i.isRendered()) i.setContext(_this.context).draw();
+	  });
+	  this.systems.forEach(function (i) {
+	    return i.setContext(_this.context).draw();
+	  });
+	};
+	
 	function playVF(vf) {
 	  console.log(vf);
+	
 	  G.midi.time = 1;
-	  var timeNextMeasure = 0;
+	  var timeNextMeasure = 1;
 	  var ticksToTime = ticksToMilliseconds(66 / 3, _vexflow2.default.Flow.RESOLUTION);
 	  vf.systems.forEach(function (system) {
+	    G.midi.time = timeNextMeasure;
 	    system.parts.forEach(function (part) {
 	      part.voices.forEach(function (voice) {
 	        var time = G.midi.time;
@@ -163,23 +208,26 @@
 	        }).forEach(function (tickable) {
 	          var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
 	          tickable.keyProps.forEach(function (note) {
-	            G.midi.output.playNote(note.key + note.octave, G.midi.config.channel, {
-	              time: '+' + time,
+	            /*
+	            G.midi.output.playNote(note.key+note.octave, G.midi.config.channel, {
+	              time: `+${time}`,
 	              duration: duration
-	            });
+	            });*/
 	          });
+	          setTimeout(function () {
+	            renderMarker(system, voice, tickable);
+	          }, time);
 	          time += duration;
 	          timeNextMeasure = Math.max(time, timeNextMeasure);
 	        });
 	      });
 	    });
-	    G.midi.time = timeNextMeasure;
 	  });
 	}
 	
 	function play(notes) {
 	  if (!Array.isArray(notes)) {
-	    playVF(notes());
+	    playVF(G.vf);
 	    return;
 	  }
 	
@@ -215,7 +263,8 @@
 	    vf = notes();
 	  }
 	
-	  vf.draw();
+	  vf.drawWithoutReset();
+	  G.vf = vf;
 	}
 	
 	_webmidi2.default.enable(function (err) {
