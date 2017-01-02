@@ -64,32 +64,6 @@ function ticksToMilliseconds(bpm, resolution) {
   return 60000.00 / (bpm * resolution);
 }
 
-function renderMarker(system, voice, note) {
-  const ctx = system.checkContext();
-  const y1 = system.options.y;
-  const y2 = system.lastY;
-  const metrics = note.getMetrics();
-  const xStart = note.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-  const xPre1 = note.getAbsoluteX() - metrics.extraLeftPx;
-  const xAbs = note.getAbsoluteX();
-  const xPost1 = note.getAbsoluteX() + metrics.noteWidth;
-  const xPost2 = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx;
-  const xEnd = note.getAbsoluteX()
-    + metrics.noteWidth
-    + metrics.extraRightPx
-    + metrics.modRightPx;
-  const x1 = xStart;
-  const x2 = xEnd;
-  ctx.save();
-  ctx.beginPath();
-  ctx.setStrokeStyle('#aaa');
-  ctx.setFillStyle('#aaa');
-  ctx.setLineWidth(1);
-  ctx.attributes.opacity = 0.2;
-  ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-  ctx.restore();
-}
-
 Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).format());
   this.staves.forEach(i => i.setContext(this.context).draw());
@@ -104,14 +78,26 @@ function playVF(vf) {
   console.log(vf);
 
   G.midi.time = 1;
-  let timeNextMeasure = 1;
   let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
   vf.systems.forEach((system) => {
-    G.midi.time = timeNextMeasure;
-    system.parts.forEach((part) => {
-      part.voices.forEach((voice) => {
-        let time = G.midi.time;
-        voice.tickables.filter((t) => t.keyProps).forEach((tickable) => {
+    const ctx = system.checkContext();
+    const y1 = system.options.y;
+    const y2 = system.lastY;
+    system.formatter.tickContexts.list.forEach((tickStart) => {
+      const tickContext = system.formatter.tickContexts.map[tickStart];
+      const time = G.midi.time + Math.round(tickStart * ticksToTime);
+      let x1 = 1000000000;
+      let x2 = 0;
+      tickContext.tickables.forEach((tickable) => {
+        if (tickable instanceof Vex.Flow.StaveNote) {
+          const metrics = tickable.getMetrics();
+          const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+          const xEnd = tickable.getAbsoluteX()
+            + metrics.noteWidth
+            + metrics.extraRightPx
+            + metrics.modRightPx;
+          x1 = Math.min(x1, xStart);
+          x2 = Math.max(x2, xEnd);
           let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
             G.midi.output.playNote(note.key+note.octave, G.midi.config.channel, {
@@ -119,14 +105,19 @@ function playVF(vf) {
               duration: duration
             });
           });
-          setTimeout(() => {
-            renderMarker(system, voice, tickable);
-          }, time);
-          time += duration;
-          timeNextMeasure = Math.max(time, timeNextMeasure);
-        });
+        }
       });
+      setTimeout(() => {
+        if (G.midi.time > 1) ctx.svg.removeChild(ctx.svg.lastChild);
+        ctx.beginPath();
+        ctx.setStrokeStyle('#aaa');
+        ctx.setFillStyle('#aaa');
+        ctx.setLineWidth(1);
+        ctx.attributes.opacity = 0.2;
+        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      }, time);
     });
+    G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
   });
 }
 

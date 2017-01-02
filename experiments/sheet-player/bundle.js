@@ -149,29 +149,6 @@
 	  return 60000.00 / (bpm * resolution);
 	}
 	
-	function renderMarker(system, voice, note) {
-	  var ctx = system.checkContext();
-	  var y1 = system.options.y;
-	  var y2 = system.lastY;
-	  var metrics = note.getMetrics();
-	  var xStart = note.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-	  var xPre1 = note.getAbsoluteX() - metrics.extraLeftPx;
-	  var xAbs = note.getAbsoluteX();
-	  var xPost1 = note.getAbsoluteX() + metrics.noteWidth;
-	  var xPost2 = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx;
-	  var xEnd = note.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
-	  var x1 = xStart;
-	  var x2 = xEnd;
-	  ctx.save();
-	  ctx.beginPath();
-	  ctx.setStrokeStyle('#aaa');
-	  ctx.setFillStyle('#aaa');
-	  ctx.setLineWidth(1);
-	  ctx.attributes.opacity = 0.2;
-	  ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-	  ctx.restore();
-	}
-	
 	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
 	  var _this = this;
 	
@@ -196,32 +173,45 @@
 	  console.log(vf);
 	
 	  G.midi.time = 1;
-	  var timeNextMeasure = 1;
 	  var ticksToTime = ticksToMilliseconds(66 / 3, _vexflow2.default.Flow.RESOLUTION);
 	  vf.systems.forEach(function (system) {
-	    G.midi.time = timeNextMeasure;
-	    system.parts.forEach(function (part) {
-	      part.voices.forEach(function (voice) {
-	        var time = G.midi.time;
-	        voice.tickables.filter(function (t) {
-	          return t.keyProps;
-	        }).forEach(function (tickable) {
-	          var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
-	          tickable.keyProps.forEach(function (note) {
-	            /*
-	            G.midi.output.playNote(note.key+note.octave, G.midi.config.channel, {
-	              time: `+${time}`,
-	              duration: duration
-	            });*/
-	          });
-	          setTimeout(function () {
-	            renderMarker(system, voice, tickable);
-	          }, time);
-	          time += duration;
-	          timeNextMeasure = Math.max(time, timeNextMeasure);
-	        });
+	    var ctx = system.checkContext();
+	    var y1 = system.options.y;
+	    var y2 = system.lastY;
+	    system.formatter.tickContexts.list.forEach(function (tickStart) {
+	      var tickContext = system.formatter.tickContexts.map[tickStart];
+	      var time = G.midi.time + Math.round(tickStart * ticksToTime);
+	      var x1 = 1000000000;
+	      var x2 = 0;
+	      tickContext.tickables.forEach(function (tickable) {
+	        if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
+	          (function () {
+	            var metrics = tickable.getMetrics();
+	            var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+	            var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
+	            x1 = Math.min(x1, xStart);
+	            x2 = Math.max(x2, xEnd);
+	            var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
+	            tickable.keyProps.forEach(function (note) {
+	              G.midi.output.playNote(note.key + note.octave, G.midi.config.channel, {
+	                time: '+' + time,
+	                duration: duration
+	              });
+	            });
+	          })();
+	        }
 	      });
+	      setTimeout(function () {
+	        if (G.midi.time > 1) ctx.svg.removeChild(ctx.svg.lastChild);
+	        ctx.beginPath();
+	        ctx.setStrokeStyle('#aaa');
+	        ctx.setFillStyle('#aaa');
+	        ctx.setLineWidth(1);
+	        ctx.attributes.opacity = 0.2;
+	        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+	      }, time);
 	    });
+	    G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
 	  });
 	}
 	
