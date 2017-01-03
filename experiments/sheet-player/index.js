@@ -7,10 +7,12 @@ import tonal from 'tonal';
 
 function concat(a, b) { return a.concat(b); }
 
+const MIDI_START_TIME = 1;
+
 let G = {
   midi: {
     output: null,
-    time: 1,
+    time: MIDI_START_TIME,
     config: {
       output: null,
       channel: 0,
@@ -74,11 +76,38 @@ Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).draw());
 }
 
-function playVF(vf) {
-  console.log(vf);
+function getAccidentals(keySignature) {
+  const accidentalsMap = {
+    'G': { 'F': '#' },
+    'D': { 'F': '#', 'C': '#' },
+    'A': { 'F': '#', 'C': '#', 'G': '#' },
+    'E': { 'F': '#', 'C': '#', 'G': '#', 'D': '#' },
+    'B': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#' },
+    'F#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#' },
+    'C#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#', 'B': '#' },
+    'F': { 'B': 'b' },
+    'Bb': { 'B': 'b', 'E': 'b' },
+    'Eb': { 'B': 'b', 'E': 'b', 'A': 'b' },
+    'Ab': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b' },
+    'Db': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b' },
+    'Gb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b' },
+    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
+  };
+  return ORNULL(accidentalsMap[keySignature.keySpec]);
+}
 
-  G.midi.time = 1;
+function playNote(note, accidentals, time, duration) {
+  const accidental = note.accidental || ORNULL(accidentals[note.key]) || '';
+  G.midi.output.playNote(note.key+accidental+note.octave, G.midi.config.channel, {
+    time: `+${time}`,
+    duration: duration
+  });
+}
+
+function playVF(vf) {
+  G.midi.time = MIDI_START_TIME;
   let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
+  let accidentals = null;
   vf.systems.forEach((system) => {
     const ctx = system.checkContext();
     const y1 = system.options.y;
@@ -88,8 +117,20 @@ function playVF(vf) {
       const time = G.midi.time + Math.round(tickStart * ticksToTime);
       let x1 = 1000000000;
       let x2 = 0;
+
+      // Iterate on notes.
       tickContext.tickables.forEach((tickable) => {
         if (tickable instanceof Vex.Flow.StaveNote) {
+          // Parse stave modifiers for key signature, time signature, etc.
+          tickable.stave.modifiers.forEach((modifier) => {
+            if (modifier instanceof Vex.Flow.KeySignature) {
+              accidentals = getAccidentals(modifier);
+            }
+            if (modifier instanceof Vex.Flow.TimeSignature) {
+            }
+          });
+
+          // Get note render metrics for play marker.
           const metrics = tickable.getMetrics();
           const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
           const xEnd = tickable.getAbsoluteX()
@@ -98,17 +139,18 @@ function playVF(vf) {
             + metrics.modRightPx;
           x1 = Math.min(x1, xStart);
           x2 = Math.max(x2, xEnd);
+
+          // Output to MIDI.
           let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
-            G.midi.output.playNote(note.key+note.octave, G.midi.config.channel, {
-              time: `+${time}`,
-              duration: duration
-            });
+            playNote(note, accidentals, time, duration);
           });
         }
       });
+
+      // Draw play marker.
       setTimeout(() => {
-        if (G.midi.time > 1) ctx.svg.removeChild(ctx.svg.lastChild);
+        if (G.midi.time > MIDI_START_TIME) ctx.svg.removeChild(ctx.svg.lastChild);
         ctx.beginPath();
         ctx.setStrokeStyle('#aaa');
         ctx.setFillStyle('#aaa');
@@ -162,6 +204,7 @@ function render(notes) {
 
   vf.drawWithoutReset();
   G.vf = vf;
+  console.log(G.vf);
 }
 
 WebMidi.enable(function (err) {

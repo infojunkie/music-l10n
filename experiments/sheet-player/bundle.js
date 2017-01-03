@@ -76,10 +76,12 @@
 	  return a.concat(b);
 	}
 	
+	var MIDI_START_TIME = 1;
+	
 	var G = {
 	  midi: {
 	    output: null,
-	    time: 1,
+	    time: MIDI_START_TIME,
 	    config: {
 	      output: null,
 	      channel: 0,
@@ -169,11 +171,63 @@
 	  });
 	};
 	
-	function playVF(vf) {
-	  console.log(vf);
+	function getAccidentals(keySignature) {
+	  var accidentalsMap = {
+	    'G': { 'F': '#' },
+	    'D': { 'F': '#', 'C': '#' },
+	    'A': { 'F': '#', 'C': '#', 'G': '#' },
+	    'E': { 'F': '#', 'C': '#', 'G': '#', 'D': '#' },
+	    'B': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#' },
+	    'F#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#' },
+	    'C#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#', 'B': '#' },
+	    'F': { 'B': 'b' },
+	    'Bb': { 'B': 'b', 'E': 'b' },
+	    'Eb': { 'B': 'b', 'E': 'b', 'A': 'b' },
+	    'Ab': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b' },
+	    'Db': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b' },
+	    'Gb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b' },
+	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
+	  };
 	
-	  G.midi.time = 1;
+	  var _ornull3 = void 0;
+	
+	  _ORNULL3: {
+	    try {
+	      _ornull3 = accidentalsMap[keySignature.keySpec];
+	      break _ORNULL3;
+	    } catch (e) {
+	      _ornull3 = null;
+	      break _ORNULL3;
+	    }
+	  }
+	
+	  return _ornull3;
+	}
+	
+	function playNote(note, accidentals, time, duration) {
+	  var _ornull4 = void 0;
+	
+	  _ORNULL4: {
+	    try {
+	      _ornull4 = accidentals[note.key];
+	      break _ORNULL4;
+	    } catch (e) {
+	      _ornull4 = null;
+	      break _ORNULL4;
+	    }
+	  }
+	
+	  var accidental = note.accidental || _ornull4 || '';
+	  G.midi.output.playNote(note.key + accidental + note.octave, G.midi.config.channel, {
+	    time: '+' + time,
+	    duration: duration
+	  });
+	}
+	
+	function playVF(vf) {
+	  G.midi.time = MIDI_START_TIME;
 	  var ticksToTime = ticksToMilliseconds(66 / 3, _vexflow2.default.Flow.RESOLUTION);
+	  var accidentals = null;
 	  vf.systems.forEach(function (system) {
 	    var ctx = system.checkContext();
 	    var y1 = system.options.y;
@@ -183,26 +237,38 @@
 	      var time = G.midi.time + Math.round(tickStart * ticksToTime);
 	      var x1 = 1000000000;
 	      var x2 = 0;
+	
+	      // Iterate on notes.
 	      tickContext.tickables.forEach(function (tickable) {
 	        if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
 	          (function () {
+	            // Parse stave modifiers for key signature, time signature, etc.
+	            tickable.stave.modifiers.forEach(function (modifier) {
+	              if (modifier instanceof _vexflow2.default.Flow.KeySignature) {
+	                accidentals = getAccidentals(modifier);
+	              }
+	              if (modifier instanceof _vexflow2.default.Flow.TimeSignature) {}
+	            });
+	
+	            // Get note render metrics for play marker.
 	            var metrics = tickable.getMetrics();
 	            var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
 	            var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
 	            x1 = Math.min(x1, xStart);
 	            x2 = Math.max(x2, xEnd);
+	
+	            // Output to MIDI.
 	            var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
 	            tickable.keyProps.forEach(function (note) {
-	              G.midi.output.playNote(note.key + note.octave, G.midi.config.channel, {
-	                time: '+' + time,
-	                duration: duration
-	              });
+	              playNote(note, accidentals, time, duration);
 	            });
 	          })();
 	        }
 	      });
+	
+	      // Draw play marker.
 	      setTimeout(function () {
-	        if (G.midi.time > 1) ctx.svg.removeChild(ctx.svg.lastChild);
+	        if (G.midi.time > MIDI_START_TIME) ctx.svg.removeChild(ctx.svg.lastChild);
 	        ctx.beginPath();
 	        ctx.setStrokeStyle('#aaa');
 	        ctx.setFillStyle('#aaa');
@@ -255,6 +321,7 @@
 	
 	  vf.drawWithoutReset();
 	  G.vf = vf;
+	  console.log(G.vf);
 	}
 	
 	_webmidi2.default.enable(function (err) {
@@ -284,21 +351,21 @@
 	  (0, _jquery2.default)('#midi #stop').on('click', function () {
 	    var _expr = G.midi.output._midiOutput.clear();
 	
-	    var _ornull3 = void 0;
+	    var _ornull5 = void 0;
 	
-	    _ORNULL3: {
+	    _ORNULL5: {
 	      try {
-	        _ornull3 = _expr;
-	        break _ORNULL3;
+	        _ornull5 = _expr;
+	        break _ORNULL5;
 	      } catch (e) {
-	        _ornull3 = null;
-	        break _ORNULL3;
+	        _ornull5 = null;
+	        break _ORNULL5;
 	      }
 	    }
 	
 	    // https://github.com/WebAudio/web-midi-api/issues/102
 	    // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
-	    _ornull3;
+	    _ornull5;
 	    G.midi.output.sendChannelMode('allsoundoff', 0, G.midi.config.channel);
 	  });
 	
