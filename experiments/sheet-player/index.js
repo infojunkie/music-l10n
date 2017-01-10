@@ -1,9 +1,10 @@
-import WebMidi from 'webmidi';
+import WebMidi, { Output } from 'webmidi';
 import $ from 'jquery';
 import store from 'store';
 import Vex from 'vexflow';
 import sheets from './sheets.json';
 import tonal from 'tonal';
+import Soundfont from 'soundfont-player';
 
 function concat(a, b) { return a.concat(b); }
 
@@ -30,6 +31,18 @@ DEFINE_MACRO(ORNULL, (expr) => {
     return null;
   }
 });
+
+class LocalMidiOutput {
+  playNote(noteName, channel, options) {
+    const time = G.midi.ac.currentTime + eval(options.time) * 0.001;
+    const duration = options.duration * 0.001;
+    G.midi.local.play(noteName, time, { duration });
+  }
+  sendPitchBend(delta, channel, options) {}
+  stop() {
+    G.midi.local.stop();
+  }
+};
 
 const PB_QUARTER_TONE = 0.25;
 const PB_COMMA = 1/9;
@@ -76,7 +89,7 @@ Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).draw());
 }
 
-function getAccidentals(keySignature) {
+function getKeyAccidentals(keySignature) {
   const accidentalsMap = {
     'G': { 'F': '#' },
     'D': { 'F': '#', 'C': '#' },
@@ -96,8 +109,8 @@ function getAccidentals(keySignature) {
   return ORNULL(accidentalsMap[keySignature.keySpec]);
 }
 
-function playNote(note, accidentals, time, duration) {
-  const accidental = note.accidental || ORNULL(accidentals[note.key]) || '';
+function playNote(note, modifierAccidental, keyAccidentals, time, duration) {
+  const accidental = modifierAccidental || ORNULL(keyAccidentals[note.key]) || '';
   G.midi.output.playNote(note.key+accidental+note.octave, G.midi.config.channel, {
     time: `+${time}`,
     duration: duration
@@ -106,8 +119,9 @@ function playNote(note, accidentals, time, duration) {
 
 function playVF(vf) {
   G.midi.time = MIDI_START_TIME;
+  G.midi.timers = [];
   let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
-  let accidentals = null;
+  let keyAccidentals = null;
   vf.systems.forEach((system) => {
     const ctx = system.checkContext();
     const y1 = system.options.y;
@@ -124,11 +138,13 @@ function playVF(vf) {
           // Parse stave modifiers for key signature, time signature, etc.
           tickable.stave.modifiers.forEach((modifier) => {
             if (modifier instanceof Vex.Flow.KeySignature) {
-              accidentals = getAccidentals(modifier);
+              keyAccidentals = getKeyAccidentals(modifier);
             }
             if (modifier instanceof Vex.Flow.TimeSignature) {
             }
           });
+
+          // Parse StaveNote modifiers for note accidental.
 
           // Get note render metrics for play marker.
           const metrics = tickable.getMetrics();
@@ -143,13 +159,13 @@ function playVF(vf) {
           // Output to MIDI.
           let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
-            playNote(note, accidentals, time, duration);
+            playNote(note, null, keyAccidentals, time, duration);
           });
         }
       });
 
       // Draw play marker.
-      setTimeout(() => {
+      G.midi.timers.push(setTimeout(() => {
         if (G.midi.time > MIDI_START_TIME) ctx.svg.removeChild(ctx.svg.lastChild);
         ctx.beginPath();
         ctx.setStrokeStyle('#aaa');
@@ -157,7 +173,7 @@ function playVF(vf) {
         ctx.setLineWidth(1);
         ctx.attributes.opacity = 0.2;
         ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-      }, time);
+      }, time));
     });
     G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
   });
@@ -169,7 +185,7 @@ function play(notes) {
     return;
   }
 
-  G.midi.time = 1;
+  G.midi.time = MIDI_START_TIME;
   notes.forEach((note) => {
     let name = pitchBend(note);
     G.midi.output.playNote(name, G.midi.config.channel, {
@@ -211,6 +227,7 @@ WebMidi.enable(function (err) {
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
   // MIDI Output
+  $('#midi #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   WebMidi.outputs.forEach((output) => {
     $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
   });
@@ -225,15 +242,27 @@ WebMidi.enable(function (err) {
   $('#midi #play').on('click', () => {
     G.midi.config.output = $('#midi #outputs').val();
     G.midi.config.channel = $('#midi #channels').val();
-    G.midi.output = WebMidi.getOutputById(G.midi.config.output);
+    if (G.midi.config.output !== 'local') {
+      G.midi.output = WebMidi.getOutputById(G.midi.config.output);
+    }
+    else {
+      G.midi.output = new LocalMidiOutput();
+    }
     store.set('G.midi.config', G.midi.config);
     play(G.sheets[G.midi.config.sheet].notes);
   });
   $('#midi #stop').on('click', () => {
-    // https://github.com/WebAudio/web-midi-api/issues/102
-    // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
-    ORNULL(G.midi.output._midiOutput.clear());
-    G.midi.output.sendChannelMode('allsoundoff', 0, G.midi.config.channel);
+    if (G.midi.output.stop) {
+      G.midi.output.stop();
+    }
+    else {
+      // FIXME
+      // https://github.com/WebAudio/web-midi-api/issues/102
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
+    }
+    // Stop player marker.
+    G.midi.timers.forEach((timer) => { window.clearTimeout(timer); });
+    delete G.midi.timers;
   });
 
   // Sheet
@@ -252,6 +281,13 @@ WebMidi.enable(function (err) {
     G.midi.config.sheet = $('#sheets').val();
     $('#vexflow').empty();
     render(G.sheets[G.midi.config.sheet].notes);
+  });
+
+  // Load local soundfont.
+  var AudioContext = window.AudioContext || window.webkitAudioContext;
+  G.midi.ac = new AudioContext();
+  Soundfont.instrument(G.midi.ac, 'acoustic_grand_piano').then(function (piano) {
+    G.midi.local = piano;
   });
 
   render(G.sheets[G.midi.config.sheet].notes);
