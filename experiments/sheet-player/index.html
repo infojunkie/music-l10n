@@ -3,19 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <title>Sheet Player</title>
+<style>
+body { display: flex; }
+#sheet { display: flex; flex-direction: column; }
+#notes { display: flex; flex-direction: column; border-style: dotted; }
+</style>
 </head>
 <body>
-<div id="midi">
-  <label for="outputs">output</label>
-  <select id="outputs"></select>
-  <label for="channels">channel</label>
-  <select id="channels"></select>
-  <input type="button" id="play" value="Play"/>
-  <input type="button" id="stop" value="Stop"/> (Stop does not work with external MIDI ports)
+<div id="sheet">
+  <div>
+    <label for="outputs">output</label>
+    <select id="outputs"></select>
+    <label for="channels">channel</label>
+    <select id="channels"></select>
+    <input type="button" id="play" value="Play"/>
+    <input type="button" id="stop" value="Stop"/> (Stop does not work with external MIDI ports)
+  </div>
+  <div>
+    <label for="sheets">sheet</label>
+    <select id="sheets"></select>
+  </div>
+  <div id="sheet-vexflow"></div>
 </div>
-<label for="sheets">sheet</label>
-<select id="sheets"></select>
-<div id="vexflow"/>
+<div id="notes">
+  NOTES GO HERE!
+</div>
 <script src="http://cwilso.github.io/WebMIDIAPIShim/lib/WebMIDIAPI.js"></script>
 <script src="bundle.js"></script>
 </body>

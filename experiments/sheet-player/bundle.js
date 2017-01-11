@@ -76,6 +76,10 @@
 	
 	var _soundfontPlayer2 = _interopRequireDefault(_soundfontPlayer);
 	
+	var _noteParser = __webpack_require__(9);
+	
+	var _noteParser2 = _interopRequireDefault(_noteParser);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -90,6 +94,7 @@
 	  midi: {
 	    output: null,
 	    time: MIDI_START_TIME,
+	    marker: null,
 	    config: {
 	      output: null,
 	      channel: 0,
@@ -102,6 +107,8 @@
 	var LocalMidiOutput = function () {
 	  function LocalMidiOutput() {
 	    _classCallCheck(this, LocalMidiOutput);
+	
+	    this.pb = 0;
 	  }
 	
 	  _createClass(LocalMidiOutput, [{
@@ -109,11 +116,17 @@
 	    value: function playNote(noteName, channel, options) {
 	      var time = G.midi.ac.currentTime + eval(options.time) * 0.001;
 	      var duration = options.duration * 0.001;
+	      if (this.pb) {
+	        noteName = _noteParser2.default.midi(noteName);
+	        noteName += this.pb;
+	      }
 	      G.midi.local.play(noteName, time, { duration: duration });
 	    }
 	  }, {
 	    key: 'sendPitchBend',
-	    value: function sendPitchBend(delta, channel, options) {}
+	    value: function sendPitchBend(pb, channel, options) {
+	      this.pb = pb;
+	    }
 	  }, {
 	    key: 'stop',
 	    value: function stop() {
@@ -125,62 +138,6 @@
 	}();
 	
 	;
-	
-	var PB_QUARTER_TONE = 0.25;
-	var PB_COMMA = 1 / 9;
-	
-	function pitchBend(note) {
-	  // Parse Vexflow note pattern
-	  // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
-	  var score = new _vexflow2.default.Flow.EasyScore();
-	  var adjustedNote = note.name;
-	  if (score.parse(note.name).success) {
-	    var _ornull = void 0;
-	
-	    _ORNULL: {
-	      try {
-	        _ornull = score.builder.piece.chord[0].accid;
-	        break _ORNULL;
-	      } catch (e) {
-	        _ornull = null;
-	        break _ORNULL;
-	      }
-	    }
-	
-	    var acc = _ornull;
-	    var acc_to_pb = {
-	      '+': PB_QUARTER_TONE,
-	      '++': PB_QUARTER_TONE * 3,
-	      'bs': -PB_QUARTER_TONE,
-	      'd': -PB_QUARTER_TONE,
-	      'db': -PB_QUARTER_TONE * 3,
-	      '+-': PB_COMMA * 5,
-	      '++-': PB_COMMA * 8,
-	      'bss': -PB_COMMA * 8
-	    };
-	
-	    var _ornull2 = void 0;
-	
-	    _ORNULL2: {
-	      try {
-	        _ornull2 = acc_to_pb[acc];
-	        break _ORNULL2;
-	      } catch (e) {
-	        _ornull2 = null;
-	        break _ORNULL2;
-	      }
-	    }
-	
-	    var pb = _ornull2;
-	    if (pb) {
-	      G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + G.midi.time });
-	      var endTime = G.midi.time + note.duration;
-	      G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: '+' + endTime });
-	      adjustedNote = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
-	    }
-	  }
-	  return adjustedNote;
-	}
 	
 	function ticksToMilliseconds(bpm, resolution) {
 	  return 60000.00 / (bpm * resolution);
@@ -224,39 +181,63 @@
 	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
 	  };
 	
-	  var _ornull3 = void 0;
+	  var _ornull = void 0;
 	
-	  _ORNULL3: {
+	  _ORNULL: {
 	    try {
-	      _ornull3 = accidentalsMap[keySignature.keySpec];
-	      break _ORNULL3;
+	      _ornull = accidentalsMap[keySignature.keySpec];
+	      break _ORNULL;
 	    } catch (e) {
-	      _ornull3 = null;
-	      break _ORNULL3;
+	      _ornull = null;
+	      break _ORNULL;
 	    }
 	  }
 	
-	  return _ornull3;
+	  return _ornull;
 	}
 	
-	function playNote(note, modifierAccidental, keyAccidentals, time, duration) {
-	  var _ornull4 = void 0;
+	var PB_QUARTER_TONE = 0.25;
+	var PB_COMMA = 1 / 9;
 	
-	  _ORNULL4: {
+	function playNote(note, accidental, time, duration) {
+	  var acc_to_pb = {
+	    '+': PB_QUARTER_TONE,
+	    '++': PB_QUARTER_TONE * 3,
+	    'bs': -PB_QUARTER_TONE,
+	    'd': -PB_QUARTER_TONE,
+	    'db': -PB_QUARTER_TONE * 3,
+	    '+-': PB_COMMA * 5,
+	    '++-': PB_COMMA * 8,
+	    'bss': -PB_COMMA * 8
+	  };
+	
+	  var _ornull2 = void 0;
+	
+	  _ORNULL2: {
 	    try {
-	      _ornull4 = keyAccidentals[note.key];
-	      break _ORNULL4;
+	      _ornull2 = acc_to_pb[accidental];
+	      break _ORNULL2;
 	    } catch (e) {
-	      _ornull4 = null;
-	      break _ORNULL4;
+	      _ornull2 = null;
+	      break _ORNULL2;
 	    }
 	  }
 	
-	  var accidental = modifierAccidental || _ornull4 || '';
-	  G.midi.output.playNote(note.key + accidental + note.octave, G.midi.config.channel, {
+	  var pb = _ornull2;
+	  if (pb) {
+	    accidental = '';
+	    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + time });
+	  }
+	
+	  G.midi.output.playNote(note.key + (accidental || '') + note.octave, G.midi.config.channel, {
 	    time: '+' + time,
 	    duration: duration
 	  });
+	
+	  if (pb) {
+	    var endTime = time + duration;
+	    G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: '+' + endTime });
+	  }
 	}
 	
 	function playVF(vf) {
@@ -276,6 +257,7 @@
 	
 	      // Iterate on notes.
 	      tickContext.tickables.forEach(function (tickable) {
+	        var accidental = null;
 	        if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
 	          (function () {
 	            // Parse stave modifiers for key signature, time signature, etc.
@@ -286,7 +268,12 @@
 	              if (modifier instanceof _vexflow2.default.Flow.TimeSignature) {}
 	            });
 	
-	            // Parse StaveNote modifiers for note accidental.
+	            // Parse note modifiers.
+	            tickable.modifiers.forEach(function (modifier) {
+	              if (modifier instanceof _vexflow2.default.Flow.Accidental) {
+	                accidental = modifier.type;
+	              }
+	            });
 	
 	            // Get note render metrics for play marker.
 	            var metrics = tickable.getMetrics();
@@ -298,7 +285,19 @@
 	            // Output to MIDI.
 	            var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
 	            tickable.keyProps.forEach(function (note) {
-	              playNote(note, null, keyAccidentals, time, duration);
+	              var _ornull3 = void 0;
+	
+	              _ORNULL3: {
+	                try {
+	                  _ornull3 = keyAccidentals[note.key];
+	                  break _ORNULL3;
+	                } catch (e) {
+	                  _ornull3 = null;
+	                  break _ORNULL3;
+	                }
+	              }
+	
+	              playNote(note, accidental ? accidental : _ornull3, time, duration);
 	            });
 	          })();
 	        }
@@ -306,13 +305,14 @@
 	
 	      // Draw play marker.
 	      G.midi.timers.push(setTimeout(function () {
-	        if (G.midi.time > MIDI_START_TIME) ctx.svg.removeChild(ctx.svg.lastChild);
+	        if (G.midi.marker) ctx.svg.removeChild(G.midi.marker);
 	        ctx.beginPath();
 	        ctx.setStrokeStyle('#aaa');
 	        ctx.setFillStyle('#aaa');
 	        ctx.setLineWidth(1);
 	        ctx.attributes.opacity = 0.2;
 	        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+	        G.midi.marker = ctx.svg.lastChild;
 	      }, time));
 	    });
 	    G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
@@ -320,26 +320,14 @@
 	}
 	
 	function play(notes) {
-	  if (!Array.isArray(notes)) {
-	    playVF(G.vf);
-	    return;
-	  }
-	
-	  G.midi.time = MIDI_START_TIME;
-	  notes.forEach(function (note) {
-	    var name = pitchBend(note);
-	    G.midi.output.playNote(name, G.midi.config.channel, {
-	      time: '+' + G.midi.time,
-	      duration: note.duration
-	    });
-	    G.midi.time += note.duration;
-	  });
+	  playVF(G.vf);
 	}
 	
 	function render(notes) {
+	  var vf;
 	  if (Array.isArray(notes)) {
-	    var vf = new _vexflow2.default.Flow.Factory({
-	      renderer: { selector: 'vexflow', width: 500, height: 200 }
+	    vf = new _vexflow2.default.Flow.Factory({
+	      renderer: { selector: 'sheet-vexflow', width: 500, height: 200 }
 	    });
 	
 	    var score = vf.EasyScore();
@@ -366,23 +354,23 @@
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
 	  // MIDI Output
-	  (0, _jquery2.default)('#midi #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
+	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
 	  _webmidi2.default.outputs.forEach(function (output) {
-	    (0, _jquery2.default)('#midi #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
+	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
 	  });
-	  (0, _jquery2.default)('#midi #outputs').val(G.midi.config.output);
+	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output);
 	
 	  // MIDI Channel
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;
 	  }).concat(['all']).forEach(function (channel) {
-	    (0, _jquery2.default)('#midi #channels').append((0, _jquery2.default)('<option>', { value: channel, text: channel }));
+	    (0, _jquery2.default)('#sheet #channels').append((0, _jquery2.default)('<option>', { value: channel, text: channel }));
 	  });
-	  (0, _jquery2.default)('#midi #channels').val(G.midi.config.channel);
-	  (0, _jquery2.default)('#midi #play').on('click', function () {
-	    G.midi.config.output = (0, _jquery2.default)('#midi #outputs').val();
-	    G.midi.config.channel = (0, _jquery2.default)('#midi #channels').val();
+	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel);
+	  (0, _jquery2.default)('#sheet #play').on('click', function () {
+	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
+	    G.midi.config.channel = (0, _jquery2.default)('#sheet #channels').val();
 	    if (G.midi.config.output !== 'local') {
 	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
 	    } else {
@@ -391,7 +379,7 @@
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    play(G.sheets[G.midi.config.sheet].notes);
 	  });
-	  (0, _jquery2.default)('#midi #stop').on('click', function () {
+	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
 	    if (G.midi.output.stop) {
 	      G.midi.output.stop();
 	    } else {}
@@ -424,7 +412,8 @@
 	  });
 	  (0, _jquery2.default)('#sheets').val(G.midi.config.sheet).on('change', function () {
 	    G.midi.config.sheet = (0, _jquery2.default)('#sheets').val();
-	    (0, _jquery2.default)('#vexflow').empty();
+	    G.midi.marker = null;
+	    (0, _jquery2.default)('#sheet-vexflow').empty();
 	    render(G.sheets[G.midi.config.sheet].notes);
 	  });
 	
@@ -442,7 +431,7 @@
 	  var registry = new _vexflow2.default.Flow.Registry();
 	  _vexflow2.default.Flow.Registry.enableDefaultRegistry(registry);
 	  var vf = new _vexflow2.default.Flow.Factory({
-	    renderer: { selector: 'vexflow', width: 1100, height: 900 }
+	    renderer: { selector: 'sheet-vexflow', width: 1100, height: 900 }
 	  });
 	  var score = vf.EasyScore({ throwOnError: true });
 	

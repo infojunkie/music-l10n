@@ -5,6 +5,7 @@ import Vex from 'vexflow';
 import sheets from './sheets.json';
 import tonal from 'tonal';
 import Soundfont from 'soundfont-player';
+import NoteParser from 'note-parser';
 
 function concat(a, b) { return a.concat(b); }
 
@@ -14,6 +15,7 @@ let G = {
   midi: {
     output: null,
     time: MIDI_START_TIME,
+    marker: null,
     config: {
       output: null,
       channel: 0,
@@ -33,47 +35,25 @@ DEFINE_MACRO(ORNULL, (expr) => {
 });
 
 class LocalMidiOutput {
+  constructor() {
+    this.pb = 0;
+  }
   playNote(noteName, channel, options) {
     const time = G.midi.ac.currentTime + eval(options.time) * 0.001;
     const duration = options.duration * 0.001;
+    if (this.pb) {
+      noteName = NoteParser.midi(noteName);
+      noteName += this.pb;
+    }
     G.midi.local.play(noteName, time, { duration });
   }
-  sendPitchBend(delta, channel, options) {}
+  sendPitchBend(pb, channel, options) {
+    this.pb = pb;
+  }
   stop() {
     G.midi.local.stop();
   }
 };
-
-const PB_QUARTER_TONE = 0.25;
-const PB_COMMA = 1/9;
-
-function pitchBend(note) {
-  // Parse Vexflow note pattern
-  // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
-  let score = new Vex.Flow.EasyScore();
-  let adjustedNote = note.name;
-  if (score.parse(note.name).success) {
-    const acc = ORNULL(score.builder.piece.chord[0].accid);
-    const acc_to_pb = {
-      '+': PB_QUARTER_TONE,
-      '++': PB_QUARTER_TONE * 3,
-      'bs': -PB_QUARTER_TONE,
-      'd': -PB_QUARTER_TONE,
-      'db': -PB_QUARTER_TONE * 3,
-      '+-': PB_COMMA * 5,
-      '++-': PB_COMMA * 8,
-      'bss': -PB_COMMA * 8
-    };
-    const pb = ORNULL(acc_to_pb[acc]);
-    if (pb) {
-      G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${G.midi.time}` });
-      let endTime = G.midi.time + note.duration;
-      G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
-      adjustedNote = score.builder.piece.chord[0].key + score.builder.piece.chord[0].octave;
-    }
-  }
-  return adjustedNote;
-}
 
 function ticksToMilliseconds(bpm, resolution) {
   return 60000.00 / (bpm * resolution);
@@ -109,12 +89,35 @@ function getKeyAccidentals(keySignature) {
   return ORNULL(accidentalsMap[keySignature.keySpec]);
 }
 
-function playNote(note, modifierAccidental, keyAccidentals, time, duration) {
-  const accidental = modifierAccidental || ORNULL(keyAccidentals[note.key]) || '';
-  G.midi.output.playNote(note.key+accidental+note.octave, G.midi.config.channel, {
+const PB_QUARTER_TONE = 0.25;
+const PB_COMMA = 1/9;
+
+function playNote(note, accidental, time, duration) {
+  const acc_to_pb = {
+    '+': PB_QUARTER_TONE,
+    '++': PB_QUARTER_TONE * 3,
+    'bs': -PB_QUARTER_TONE,
+    'd': -PB_QUARTER_TONE,
+    'db': -PB_QUARTER_TONE * 3,
+    '+-': PB_COMMA * 5,
+    '++-': PB_COMMA * 8,
+    'bss': -PB_COMMA * 8
+  };
+  const pb = ORNULL(acc_to_pb[accidental]);
+  if (pb) {
+    accidental = '';
+    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
+  }
+
+  G.midi.output.playNote(note.key+(accidental||'')+note.octave, G.midi.config.channel, {
     time: `+${time}`,
     duration: duration
   });
+
+  if (pb) {
+    let endTime = time + duration;
+    G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
+  }
 }
 
 function playVF(vf) {
@@ -134,6 +137,7 @@ function playVF(vf) {
 
       // Iterate on notes.
       tickContext.tickables.forEach((tickable) => {
+        let accidental = null;
         if (tickable instanceof Vex.Flow.StaveNote) {
           // Parse stave modifiers for key signature, time signature, etc.
           tickable.stave.modifiers.forEach((modifier) => {
@@ -144,7 +148,12 @@ function playVF(vf) {
             }
           });
 
-          // Parse StaveNote modifiers for note accidental.
+          // Parse note modifiers.
+          tickable.modifiers.forEach((modifier) => {
+            if (modifier instanceof Vex.Flow.Accidental) {
+              accidental = modifier.type;
+            }
+          });
 
           // Get note render metrics for play marker.
           const metrics = tickable.getMetrics();
@@ -159,20 +168,21 @@ function playVF(vf) {
           // Output to MIDI.
           let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
-            playNote(note, null, keyAccidentals, time, duration);
+            playNote(note, accidental ? accidental : ORNULL(keyAccidentals[note.key]), time, duration);
           });
         }
       });
 
       // Draw play marker.
       G.midi.timers.push(setTimeout(() => {
-        if (G.midi.time > MIDI_START_TIME) ctx.svg.removeChild(ctx.svg.lastChild);
+        if (G.midi.marker) ctx.svg.removeChild(G.midi.marker);
         ctx.beginPath();
         ctx.setStrokeStyle('#aaa');
         ctx.setFillStyle('#aaa');
         ctx.setLineWidth(1);
         ctx.attributes.opacity = 0.2;
         ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+        G.midi.marker = ctx.svg.lastChild;
       }, time));
     });
     G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
@@ -180,26 +190,14 @@ function playVF(vf) {
 }
 
 function play(notes) {
-  if (!Array.isArray(notes)) {
-    playVF(G.vf);
-    return;
-  }
-
-  G.midi.time = MIDI_START_TIME;
-  notes.forEach((note) => {
-    let name = pitchBend(note);
-    G.midi.output.playNote(name, G.midi.config.channel, {
-      time: `+${G.midi.time}`,
-      duration: note.duration
-    });
-    G.midi.time += note.duration;
-  });
+  playVF(G.vf);
 }
 
 function render(notes) {
+  var vf;
   if (Array.isArray(notes)) {
-    var vf = new Vex.Flow.Factory({
-      renderer: {selector: 'vexflow', width: 500, height: 200}
+    vf = new Vex.Flow.Factory({
+      renderer: {selector: 'sheet-vexflow', width: 500, height: 200}
     });
 
     var score = vf.EasyScore();
@@ -227,21 +225,21 @@ WebMidi.enable(function (err) {
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
   // MIDI Output
-  $('#midi #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
+  $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   WebMidi.outputs.forEach((output) => {
-    $('#midi #outputs').append($('<option>', { value: output.id, text: output.name }));
+    $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
   });
-  $('#midi #outputs').val(G.midi.config.output);
+  $('#sheet #outputs').val(G.midi.config.output);
 
   // MIDI Channel
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
-    $('#midi #channels').append($('<option>', { value: channel, text: channel }));
+    $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
   });
-  $('#midi #channels').val(G.midi.config.channel);
-  $('#midi #play').on('click', () => {
-    G.midi.config.output = $('#midi #outputs').val();
-    G.midi.config.channel = $('#midi #channels').val();
+  $('#sheet #channels').val(G.midi.config.channel);
+  $('#sheet #play').on('click', () => {
+    G.midi.config.output = $('#sheet #outputs').val();
+    G.midi.config.channel = $('#sheet #channels').val();
     if (G.midi.config.output !== 'local') {
       G.midi.output = WebMidi.getOutputById(G.midi.config.output);
     }
@@ -251,7 +249,7 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     play(G.sheets[G.midi.config.sheet].notes);
   });
-  $('#midi #stop').on('click', () => {
+  $('#sheet #stop').on('click', () => {
     if (G.midi.output.stop) {
       G.midi.output.stop();
     }
@@ -279,7 +277,8 @@ WebMidi.enable(function (err) {
   });
   $('#sheets').val(G.midi.config.sheet).on('change', () => {
     G.midi.config.sheet = $('#sheets').val();
-    $('#vexflow').empty();
+    G.midi.marker = null;
+    $('#sheet-vexflow').empty();
     render(G.sheets[G.midi.config.sheet].notes);
   });
 
@@ -297,7 +296,7 @@ function bach() {
   var registry = new Vex.Flow.Registry();
   Vex.Flow.Registry.enableDefaultRegistry(registry);
   var vf = new Vex.Flow.Factory({
-    renderer: {selector: 'vexflow', width: 1100, height: 900}
+    renderer: {selector: 'sheet-vexflow', width: 1100, height: 900}
   });
   var score = vf.EasyScore({throwOnError: true});
 
