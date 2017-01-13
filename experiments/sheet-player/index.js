@@ -284,7 +284,7 @@ WebMidi.enable(function (err) {
   // Sheet
   G.sheets.push({
     name: 'C Lydian',
-    notes: tonal.scale('C lydian').map(function(n) { return { name: `${n}4`, duration: 500} })
+    notes: tonal.scale('C lydian').map((n) => `${n}4`)
   });
   G.sheets.push({
     name: 'Bach Minuet in G',

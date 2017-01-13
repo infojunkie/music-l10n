@@ -415,7 +415,7 @@
 	  G.sheets.push({
 	    name: 'C Lydian',
 	    notes: _tonal2.default.scale('C lydian').map(function (n) {
-	      return { name: n + '4', duration: 500 };
+	      return n + '4';
 	    })
 	  });
 	  G.sheets.push({
