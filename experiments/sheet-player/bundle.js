@@ -349,8 +349,6 @@
 	  var voice = score.voice(score.notes(vf_notes), { time: time });
 	  system.addStave({ voices: [voice] }).addClef('treble');
 	
-	  vf.Formatter().joinVoices([voice]).format([voice], CANVAS_WIDTH);
-	
 	  return vf;
 	}
 	

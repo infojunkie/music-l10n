@@ -218,10 +218,6 @@ function renderVF(notes) {
     .addStave({ voices: [voice] })
     .addClef('treble');
 
-  vf.Formatter()
-    .joinVoices([voice])
-    .format([voice], CANVAS_WIDTH);
-
   return vf;
 }
 
