@@ -15,7 +15,7 @@
     "soundfont-player": "^0.10.5",
     "store": "^1.3.20",
     "tonal": "^0.68.0",
-    "vexflow": "^1.2.83",
+    "vexflow": "git+ssh://git@github.com/infojunkie/vexflow.git",
     "webmidi": "^2.0.0-rc.3"
   },
   "devDependencies": {

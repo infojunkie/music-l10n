@@ -16,6 +16,7 @@ let G = {
     output: null,
     time: MIDI_START_TIME,
     marker: null,
+    bpm: 60,
     config: {
       output: null,
       channel: 0,
@@ -123,7 +124,7 @@ function playNote(note, accidental, time, duration) {
 function playVF(vf) {
   G.midi.time = MIDI_START_TIME;
   G.midi.timers = [];
-  let ticksToTime = ticksToMilliseconds(66/3, Vex.Flow.RESOLUTION);
+  let ticksToTime = ticksToMilliseconds(G.midi.bpm, Vex.Flow.RESOLUTION);
   let keyAccidentals = null;
   vf.systems.forEach((system) => {
     const ctx = system.checkContext();
@@ -144,7 +145,10 @@ function playVF(vf) {
             if (modifier instanceof Vex.Flow.KeySignature) {
               keyAccidentals = getKeyAccidentals(modifier);
             }
-            if (modifier instanceof Vex.Flow.TimeSignature) {
+            if (modifier instanceof Vex.Flow.StaveTempo) {
+              console.log(modifier);
+              G.midi.bpm = modifier.tempo.bpm;
+              ticksToTime = ticksToMilliseconds(G.midi.bpm, Vex.Flow.RESOLUTION);
             }
           });
 
@@ -189,28 +193,42 @@ function playVF(vf) {
   });
 }
 
-function play(notes) {
+function play() {
   playVF(G.vf);
+}
+
+const CANVAS_WIDTH=500;
+const CANVAS_HEIGHT=200;
+
+function renderVF(notes) {
+  var vf_notes = notes.map((n) => n + '/4').join(', ');
+  var time = '' + notes.length + '/4';
+
+  var vf = new Vex.Flow.Factory({
+    renderer: {elementId: 'sheet-vexflow', width: CANVAS_WIDTH, height: CANVAS_HEIGHT}
+  });
+  var system = vf.System({
+    width: CANVAS_WIDTH,
+    formatIterations: 0,
+  });
+
+  var score = vf.EasyScore();
+  var voice = score.voice(score.notes(vf_notes), { time: time });
+  system
+    .addStave({ voices: [voice] })
+    .addClef('treble');
+
+  vf.Formatter()
+    .joinVoices([voice])
+    .format([voice], CANVAS_WIDTH);
+
+  return vf;
 }
 
 function render(notes) {
   var vf;
   if (Array.isArray(notes)) {
-    vf = new Vex.Flow.Factory({
-      renderer: {selector: 'sheet-vexflow', width: 500, height: 200}
-    });
-
-    var score = vf.EasyScore();
-    var system = vf.System();
-    var vf_notes = notes.map((n) => n.name).join(', ');
-    var voice = score.voice(score.notes(vf_notes));
-    voice.setMode(Vex.Flow.Voice.Mode.SOFT);
-
-    system.addStave({
-      voices: [
-        voice
-      ]
-    }).addClef('treble');
+    vf = renderVF(notes);
   }
   else {
     vf = notes();
@@ -247,7 +265,7 @@ WebMidi.enable(function (err) {
       G.midi.output = new LocalMidiOutput();
     }
     store.set('G.midi.config', G.midi.config);
-    play(G.sheets[G.midi.config.sheet].notes);
+    play();
   });
   $('#sheet #stop').on('click', () => {
     if (G.midi.output.stop) {
@@ -296,7 +314,7 @@ function bach() {
   var registry = new Vex.Flow.Registry();
   Vex.Flow.Registry.enableDefaultRegistry(registry);
   var vf = new Vex.Flow.Factory({
-    renderer: {selector: 'sheet-vexflow', width: 1100, height: 900}
+    renderer: {elementId: 'sheet-vexflow', width: 1100, height: 900}
   });
   var score = vf.EasyScore({throwOnError: true});
 
