@@ -25,7 +25,7 @@ My OS setup:
 - Mozilla Firefox from `http://ca.archive.ubuntu.com/ubuntu xenial-updates/main`
 
 My MIDI setup:
-- Install MIDI synths TiMidity - [Ubuntu has it](https://help.ubuntu.com/community/Midi/SoftwareSynthesisHowTo).
+- Install MIDI synth TiMidity - [Ubuntu has it](https://help.ubuntu.com/community/Midi/SoftwareSynthesisHowTo).
 - `timidity -iAD` to start TiMidity in ALSA sequencer daemon mode
 - `aconnect -o` should show available MIDI output ports and their client numbers, including `TiMidity` and `Midi Through`
 - Firefox does not support Web MIDI natively. To add support, you need to install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/)
