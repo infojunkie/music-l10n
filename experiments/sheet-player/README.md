@@ -1,26 +1,45 @@
-# Sheet MIDI
+# Sheet Player
 
-## Wat
-A sheet music navigator, player, and "editor".
+## WAT?
+A MIDI-enabled sheet music navigator, player, and editor packaged as a web app.
 
 Navigator means we can organize and query sheets. Anything from a C harmonic minor scale to a jazz standard or a Bach minuet.
 
 Player means we generate a stream of MIDI events corresponding to the sheet's sequence.
 
-"Editor" means we can create new sheets, e.g.:
+Editor means we can create new sheets, e.g.:
 - by importing from MIDI files, MusicXML files, etc.,
 - by entering notes and scores in a textual format,
 - by applying functions to existing sheets or parts thereof (e.g. `add6thBelowEachNote` or `transposeUpA3rd`)
 
-## MIDI setup
-- Install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/) for Web MIDI API on Firefox
-- `sudo modprobe snd-virmid` to enable Virtual MIDI ports (needed by Jazz-Plugin)
-- `qsynth` assuming a functional existing setup of Qsynth
-- `timidity -iAD` assuming a functional existing setup of TiMidity
-- `aconnect -o` should show available output ports, including `FLUID Synth` and `TiMidity`
-- `aconnect 24:0 130:0` where `24:0` should be the port of `VirMIDI 2-0` and `130:0` should be the port of `TiMidity port 0` - this will wire up Jazz-Plugin
+MIDI-enabled means it can exchange MIDI messages with other MIDI nodes in the music network.
+
+## Getting started
 - Open `./index.html`
-- Select the out  put MIDI port as per above, and the MIDI channel (1-16, or `all`)
+- Select the sheet called "Bach Minuet in G"
+- Play!
+
+## Local synth
+Basic playback is implemented using a [local synth that accepts MIDI messages](https://github.com/danigb/soundfont-player).
+
+This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples that is commonly used by various MIDI synths.
+
+## MIDI setup
+My OS setup:
+- Ubuntu 16.04 x86_64 kernel `4.4.0-59-lowlatency` GNU/Linux
+- Google Chrome from repo `http://dl.google.com/linux/chrome/deb stable/main`.
+- Mozilla Firefox from `http://ca.archive.ubuntu.com/ubuntu xenial-updates/main`
+
+My MIDI setup:
+- Install MIDI synths TiMidity - [Ubuntu has it](https://help.ubuntu.com/community/Midi/SoftwareSynthesisHowTo).
+- `timidity -iAD` to start TiMidity in ALSA sequencer daemon mode
+- `aconnect -o` should show available MIDI output ports and their client numbers, including `TiMidity` and `Midi Through`
+- Firefox does not support Web MIDI natively. To add support, you need to install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/)
+  - `sudo modprobe snd-virmidi` to enable Virtual MIDI ports (needed by Jazz-Plugin)
+  - try `aconnect -o` again and note new `Virtual Raw MIDI` ports
+  - `aconnect 24:0 130:0` where `24:0` should be the client:port of `VirMIDI 2-0` and `130:0` should be the client:port of `TiMidity port 0`
+  - check that [Jazz-Plugin is able to find your MIDI ports](http://jazz-soft.net/demo/Connected.html)
+- In the Sheet Player app, select the output MIDI port to be `TiMidity port 0` (or `VirMIDI 2-0` in the case of Jazz-Plugin)
 - Play!
 
 ## VexFlow to MIDI
@@ -78,3 +97,4 @@ options snd-seq-dummy ports=4
 - Use JZZ.js (https://github.com/jazz-soft/JZZ) instead of WebMidi.js
 - Playback with auto-generated accompaniment
 - Refactor code, use React
+- Add "Sync" dialer to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
