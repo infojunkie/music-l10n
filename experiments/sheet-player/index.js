@@ -45,7 +45,7 @@ class LocalMidiOutput {
     const duration = options.duration * 0.001;
     if (this.pb) {
       noteName = NoteParser.midi(noteName);
-      noteName += this.pb;
+      noteName += (this.pb*2); // Local player counts microtones in fractions of semitones
     }
     G.midi.local.play(noteName, time, { duration });
   }
