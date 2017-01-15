@@ -41,10 +41,9 @@ Basic playback is implemented using a [local synth that accepts MIDI messages](h
 
 This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples commonly used by various MIDI synths.
 
-## Music engraving
+## Music engraving and score definition
 Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).
 
-## VexFlow to MIDI
 Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function `playVF` does. It's a tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
 
 - Key signature
