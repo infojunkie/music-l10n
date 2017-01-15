@@ -13,10 +13,15 @@ Editor means we can create new sheets, e.g.:
 - by applying functions to existing sheets or parts thereof (e.g. `add6thBelowEachNote` or `transposeUpA3rd`)
 - by receiving input from other MIDI sources e.g. keyboard or sequencer
 
+[CHECK OUT THE DEMO!](http://ethereum.karimratib.me:8080/)
+
 ## Getting started
-- Open `./index.html`
+- `git clone git@github.com:infojunkie/music-l10n.git && cd music-l10n/experiments/sheet-player/`
+- Open `./index.html` in your browser
 - Select the sheet called "Bach Minuet in G"
 - Play!
+- `npm install`
+- `webpack --watch`
 
 ## MIDI / Web MIDI setup
 My OS setup:
@@ -100,3 +105,4 @@ options snd-seq-dummy ports=4
 - Add "Tempo" widget
 - Keyboard controls, "Play/Pause" button
 - Add metronome
+- Add "loading..." spinner while loading soundfonts and other assets
