@@ -101,7 +101,7 @@
 	      channel: 0,
 	      sheet: 0,
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
-	      marker_mode: 'note'
+	      marker_mode: 'measure'
 	    }
 	  },
 	  sheets: _sheets2.default.data

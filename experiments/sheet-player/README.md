@@ -90,6 +90,7 @@ options snd-seq-dummy ports=4
 - Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Investigating: http://jazz-soft.org/bb/viewtopic.php?f=2&t=934
 
 ## TODO
+- Unit tests!!
 - Add options to output to Web MIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
 - Pre-create full MIDI stream before playback. Take into account looping, grace notes, etc.
 - Allow mouse selection of tickable. Playback should resume from selection.
@@ -106,3 +107,4 @@ options snd-seq-dummy ports=4
 - Keyboard controls, "Play/Pause" button
 - Add metronome
 - Add "loading..." spinner while loading soundfonts and other assets
+- Support MIDI Tuning system message
