@@ -18,11 +18,6 @@ Editor means we can create new sheets, e.g.:
 - Select the sheet called "Bach Minuet in G"
 - Play!
 
-## Local synth
-Basic playback is implemented using a [local synth that accepts MIDI messages](https://github.com/danigb/soundfont-player).
-
-This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples that is commonly used by various MIDI synths.
-
 ## MIDI setup
 My OS setup:
 - Ubuntu 16.04 x86_64 kernel `4.4.0-59-lowlatency` GNU/Linux
@@ -40,6 +35,14 @@ My MIDI setup:
   - check that [Jazz-Plugin is able to find your MIDI ports](http://jazz-soft.net/demo/Connected.html)
 - In the Sheet Player app, select the output MIDI port to be `TiMidity port 0` (or `VirMIDI 2-0` in the case of Jazz-Plugin)
 - Play!
+
+## Local sound synthesis
+Basic playback is implemented using a [local synth that accepts MIDI messages](https://github.com/danigb/soundfont-player).
+
+This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples commonly used by various MIDI synths.
+
+## Music engraving
+Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).
 
 ## VexFlow to MIDI
 Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function [`playVF`](https://github.com/infojunkie/music-l10n/blob/master/experiments/sheet-player/index.js#L63) does. This is a very tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
