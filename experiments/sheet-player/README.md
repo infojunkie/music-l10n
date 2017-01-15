@@ -65,3 +65,16 @@ options snd-seq-dummy ports=4
 ```
 - Virtual MIDI Ports (provided by kernel module `snd-virmidi`) are NOT used for general routing of MIDI messages! cf. http://music.stackexchange.com/questions/51463/how-to-use-snd-virmidi-on-linux
 - Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Investigating: http://jazz-soft.org/bb/viewtopic.php?f=2&t=934
+
+## TODO
+- Add options to output to WebMIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
+- Pre-create full MIDI stream before playback. Take into account looping, grace notes, etc.
+- Allow mouse selection of tickable. Playback should resume from selection.
+- Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
+- Read and write MusicXML files
+- Read and write MIDI files
+- Add "notes" area to attach musical notes to current sheet. Notes can be hand-input or generated (e.g. C Major Scale, Add 6th to current selection.)
+- The main sheet and notes should support standard actions: play/pause, export, embed, etc.
+- Use JZZ.js (https://github.com/jazz-soft/JZZ) instead of WebMidi.js
+- Playback with auto-generated accompaniment
+- Refactor code, use React
