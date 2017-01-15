@@ -315,7 +315,7 @@ WebMidi.enable(function (err) {
     name: 'C Lydian',
     notes: tonal.scale('C lydian').map((n) => `${n}4`).concat(['c5'])
   });
-  G.sheets.push({
+  G.sheets.unshift({
     name: 'Bach Minuet in G',
     notes: () => bach()
   });

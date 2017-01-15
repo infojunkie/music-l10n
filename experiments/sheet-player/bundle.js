@@ -446,7 +446,7 @@
 	      return n + '4';
 	    }).concat(['c5'])
 	  });
-	  G.sheets.push({
+	  G.sheets.unshift({
 	    name: 'Bach Minuet in G',
 	    notes: function notes() {
 	      return bach();
