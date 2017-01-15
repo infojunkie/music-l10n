@@ -255,9 +255,27 @@ function render(notes) {
     vf = notes();
   }
 
+  // Render and save Vex.Flow.Factory.
   vf.drawWithoutReset();
   G.vf = vf;
   console.log(G.vf);
+
+  // Attach UI event handlers.
+  function colorDescendants(color) {
+    return function() {
+      Vex.forEach($(this).find('*'), function(child) {
+        child.setAttribute('fill', color);
+        child.setAttribute('stroke', color);
+      });
+    };
+  }
+  G.vf.renderQ.forEach((renderable) => {
+    if (renderable instanceof Vex.Flow.StaveNote) {
+      var el = renderable.getAttribute('el');
+      el.addEventListener('mouseover', colorDescendants('green'), false);
+      el.addEventListener('mouseout', colorDescendants('black'), false);
+    }
+  });
 }
 
 WebMidi.enable(function (err) {
