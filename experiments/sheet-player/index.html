@@ -20,6 +20,11 @@ body { display: flex; background-color: wheat; }
     <input type="button" id="stop" value="Stop"/> (Stop does not work with external MIDI ports)
   </div>
   <div>
+    advance play marker
+    <label><input type="radio" name="marker_mode" value="note">per note</label>
+    <label><input type="radio" name="marker_mode" value="measure">per measure</label>
+  </div>
+  <div>
     <label for="sheets">sheet</label>
     <select id="sheets"></select>
   </div>

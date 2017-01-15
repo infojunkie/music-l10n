@@ -100,7 +100,9 @@
 	      output: null,
 	      channel: 0,
 	      sheet: 0,
-	      sync: 100 }
+	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
+	      marker_mode: 'note'
+	    }
 	  },
 	  sheets: _sheets2.default.data
 	};
@@ -295,11 +297,16 @@
 	          });
 	
 	          // Compute play marker position.
-	          var metrics = tickable.getMetrics();
-	          var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-	          var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
-	          x1 = Math.min(x1, xStart);
-	          x2 = Math.max(x2, xEnd);
+	          if (G.midi.config.marker_mode == 'note') {
+	            var metrics = tickable.getMetrics();
+	            var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+	            var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
+	            x1 = Math.min(x1, xStart);
+	            x2 = Math.max(x2, xEnd);
+	          } else {
+	            x1 = system.startX;
+	            x2 = system.startX + system.formatter.justifyWidth;
+	          }
 	
 	          // Output to MIDI.
 	          tickable.keyProps.forEach(function (note) {
@@ -383,14 +390,14 @@
 	_webmidi2.default.enable(function (err) {
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
-	  // MIDI Output
+	  // MIDI Output.
 	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
 	  _webmidi2.default.outputs.forEach(function (output) {
 	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
 	  });
 	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output);
 	
-	  // MIDI Channel
+	  // MIDI Channel.
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;
@@ -398,9 +405,15 @@
 	    (0, _jquery2.default)('#sheet #channels').append((0, _jquery2.default)('<option>', { value: channel, text: channel }));
 	  });
 	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel);
+	
+	  // Marker mode.
+	  (0, _jquery2.default)('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
+	
+	  // Handle "Play" button.
 	  (0, _jquery2.default)('#sheet #play').on('click', function () {
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    G.midi.config.channel = (0, _jquery2.default)('#sheet #channels').val();
+	    G.midi.config.marker_mode = (0, _jquery2.default)('#sheet input[name="marker_mode"]:checked').val();
 	    if (G.midi.config.output !== 'local') {
 	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
 	    } else {
@@ -409,6 +422,8 @@
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    play();
 	  });
+	
+	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
 	    if (G.midi.output.stop) {
 	      G.midi.output.stop();
@@ -424,7 +439,7 @@
 	    G.midi.timers = [];
 	  });
 	
-	  // Sheet
+	  // Build sheets.
 	  G.sheets.push({
 	    name: 'C Lydian',
 	    notes: _tonal2.default.scale('C lydian').map(function (n) {
@@ -454,6 +469,7 @@
 	    G.midi.local = piano;
 	  });
 	
+	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
 	});
 	

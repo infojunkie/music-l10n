@@ -18,7 +18,7 @@ Editor means we can create new sheets, e.g.:
 - Select the sheet called "Bach Minuet in G"
 - Play!
 
-## MIDI setup
+## MIDI / Web MIDI setup
 My OS setup:
 - Ubuntu 16.04 x86_64 kernel `4.4.0-59-lowlatency` GNU/Linux
 - Google Chrome from repo `http://dl.google.com/linux/chrome/deb stable/main`.
@@ -85,7 +85,7 @@ options snd-seq-dummy ports=4
 - Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Investigating: http://jazz-soft.org/bb/viewtopic.php?f=2&t=934
 
 ## TODO
-- Add options to output to WebMIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
+- Add options to output to Web MIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
 - Pre-create full MIDI stream before playback. Take into account looping, grace notes, etc.
 - Allow mouse selection of tickable. Playback should resume from selection.
 - Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
@@ -98,6 +98,5 @@ options snd-seq-dummy ports=4
 - Refactor code, use React
 - Add "Sync" widget to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
 - Add "Tempo" widget
-- Add playback marker mode for whole measure, not single-note
 - Keyboard controls, "Play/Pause" button
 - Add metronome

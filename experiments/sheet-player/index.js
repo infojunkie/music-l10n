@@ -22,6 +22,7 @@ let G = {
       channel: 0,
       sheet: 0,
       sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
+      marker_mode: 'note',
     }
   },
   sheets: sheets.data
@@ -176,14 +177,20 @@ function playVF(vf) {
           });
 
           // Compute play marker position.
-          const metrics = tickable.getMetrics();
-          const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-          const xEnd = tickable.getAbsoluteX()
-            + metrics.noteWidth
-            + metrics.extraRightPx
-            + metrics.modRightPx;
-          x1 = Math.min(x1, xStart);
-          x2 = Math.max(x2, xEnd);
+          if (G.midi.config.marker_mode == 'note') {
+            const metrics = tickable.getMetrics();
+            const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+            const xEnd = tickable.getAbsoluteX()
+              + metrics.noteWidth
+              + metrics.extraRightPx
+              + metrics.modRightPx;
+            x1 = Math.min(x1, xStart);
+            x2 = Math.max(x2, xEnd);
+          }
+          else {
+            x1 = system.startX;
+            x2 = system.startX + system.formatter.justifyWidth;
+          }
 
           // Output to MIDI.
           tickable.keyProps.forEach((note) => {
@@ -256,22 +263,28 @@ function render(notes) {
 WebMidi.enable(function (err) {
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
-  // MIDI Output
+  // MIDI Output.
   $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   WebMidi.outputs.forEach((output) => {
     $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
   });
   $('#sheet #outputs').val(G.midi.config.output);
 
-  // MIDI Channel
+  // MIDI Channel.
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
     $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
   });
   $('#sheet #channels').val(G.midi.config.channel);
+
+  // Marker mode.
+  $('#sheet input[name="marker_mode"][value='+G.midi.config.marker_mode+']').attr('checked', 'checked');
+
+  // Handle "Play" button.
   $('#sheet #play').on('click', () => {
     G.midi.config.output = $('#sheet #outputs').val();
     G.midi.config.channel = $('#sheet #channels').val();
+    G.midi.config.marker_mode = $('#sheet input[name="marker_mode"]:checked').val();
     if (G.midi.config.output !== 'local') {
       G.midi.output = WebMidi.getOutputById(G.midi.config.output);
     }
@@ -281,6 +294,8 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     play();
   });
+
+  // Handle "Stop" button.
   $('#sheet #stop').on('click', () => {
     if (G.midi.output.stop) {
       G.midi.output.stop();
@@ -295,7 +310,7 @@ WebMidi.enable(function (err) {
     G.midi.timers = [];
   });
 
-  // Sheet
+  // Build sheets.
   G.sheets.push({
     name: 'C Lydian',
     notes: tonal.scale('C lydian').map((n) => `${n}4`).concat(['c5'])
@@ -321,6 +336,7 @@ WebMidi.enable(function (err) {
     G.midi.local = piano;
   });
 
+  // Render first sheet.
   render(G.sheets[G.midi.config.sheet].notes);
 });
 
