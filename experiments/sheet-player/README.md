@@ -94,7 +94,8 @@ options snd-seq-dummy ports=4
 - Read and write MIDI files
 - Add "notes" area to attach musical notes to current sheet. Notes can be hand-input or generated (e.g. C Major Scale, Add 6th to current selection.)
 - The main sheet and notes should support standard actions: play/pause, export, embed, etc.
-- Use JZZ.js (https://github.com/jazz-soft/JZZ) instead of WebMidi.js
+- Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
 - Playback with auto-generated accompaniment
 - Refactor code, use React
-- Add "Sync" dialer to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
+- Add "Sync" widget to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
+- Add "Tempo" widget
