@@ -16,7 +16,7 @@ Player means we generate a stream of MIDI events corresponding to the sheet's se
 - Install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/) for Web MIDI API on Firefox
 - `sudo modprobe snd-virmid` to enable Virtual MIDI ports (needed by Jazz-Plugin)
 - `qsynth` assuming a functional existing setup of Qsynth
-- `timidity -iAD` assuming a functional existing setup of TiMiditi++
+- `timidity -iAD` assuming a functional existing setup of TiMidity
 - `aconnect -o` should show available output ports, including `FLUID Synth` and `TiMidity`
 - `aconnect 24:0 130:0` where `24:0` should be the port of `VirMIDI 2-0` and `130:0` should be the port of `TiMidity port 0` - this will wire up Jazz-Plugin
 - Open `./index.html`
