@@ -289,6 +289,7 @@ function render(notes) {
 }
 
 WebMidi.enable(function (err) {
+  // Read the saved configuration.
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
   // MIDI Output.
@@ -298,6 +299,14 @@ WebMidi.enable(function (err) {
   });
   $('#sheet #outputs').val(G.midi.config.output);
 
+  // Listen to Web MIDI state events.
+  WebMidi.addListener('connected', (event) => {
+    $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
+  });
+  WebMidi.addListener('disconnected', (event) => {
+    $('#sheet #outputs option[value="' + event.id + '"]').remove();
+  });
+
   // MIDI Channel.
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
@@ -306,7 +315,7 @@ WebMidi.enable(function (err) {
   $('#sheet #channels').val(G.midi.config.channel);
 
   // Marker mode.
-  $('#sheet input[name="marker_mode"][value='+G.midi.config.marker_mode+']').attr('checked', 'checked');
+  $('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
 
   // Handle "Play" button.
   $('#sheet #play').on('click', () => {

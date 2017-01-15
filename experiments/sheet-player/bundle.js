@@ -416,6 +416,7 @@
 	}
 	
 	_webmidi2.default.enable(function (err) {
+	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
 	  // MIDI Output.
@@ -424,6 +425,14 @@
 	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
 	  });
 	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output);
+	
+	  // Listen to Web MIDI state events.
+	  _webmidi2.default.addListener('connected', function (event) {
+	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
+	  });
+	  _webmidi2.default.addListener('disconnected', function (event) {
+	    (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
+	  });
 	
 	  // MIDI Channel.
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
