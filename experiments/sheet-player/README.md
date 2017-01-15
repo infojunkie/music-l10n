@@ -92,8 +92,8 @@ options snd-seq-dummy ports=4
 - Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
 - Read and write MusicXML files
 - Read and write MIDI files
-- Add "notes" area to attach musical notes to current sheet. Notes can be hand-input or generated (e.g. C Major Scale, Add 6th to current selection.)
-- The main sheet and notes should support standard actions: play/pause, export, embed, etc.
+- Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection".)
+- The main sheet and scribbles should support standard actions: play/pause, export, embed, etc.
 - Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
 - Playback with auto-generated accompaniment
 - Refactor code, use React
