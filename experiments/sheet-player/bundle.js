@@ -332,7 +332,13 @@
 	      // Draw play marker.
 	      G.midi.timers.push(setTimeout(function () {
 	        var ctx = marker.ctx;
-	        if (G.midi.marker) ctx.svg.removeChild(G.midi.marker);
+	        if (G.midi.marker) {
+	          try {
+	            ctx.svg.removeChild(G.midi.marker);
+	          } catch (e) {
+	            // never mind.
+	          }
+	        }
 	        ctx.beginPath();
 	        ctx.setStrokeStyle('#aaa');
 	        ctx.setFillStyle('#aaa');
@@ -460,7 +466,6 @@
 	        window.clearTimeout(timer);
 	      });
 	      delete G.midi.timers;
-	      delete G.midi.marker;
 	    }
 	  });
 	
