@@ -254,17 +254,22 @@
 	  // A system is a full measure.
 	  vf.systems.forEach(function (system) {
 	
-	    // Used to display play marker.
-	    var ctx = system.checkContext();
-	    var y1 = system.options.y;
-	    var y2 = system.lastY;
-	
 	    // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
 	    system.formatter.tickContexts.list.forEach(function (tickStart) {
 	      var tickContext = system.formatter.tickContexts.map[tickStart];
 	
-	      var x1 = Number.MAX_SAFE_INTEGER;
-	      var x2 = 0;
+	      // Used to display play marker.
+	      var marker = {
+	        ctx: system.checkContext(),
+	        y1: system.options.y,
+	        y2: system.lastY,
+	        x1: system.startX,
+	        x2: system.startX + system.formatter.justifyWidth
+	      };
+	      if (G.midi.config.marker_mode == 'note') {
+	        marker.x1 = Number.MAX_SAFE_INTEGER;
+	        marker.x2 = 0;
+	      }
 	
 	      // Iterate on notes.
 	      tickContext.tickables.forEach(function (tickable) {
@@ -301,11 +306,8 @@
 	            var metrics = tickable.getMetrics();
 	            var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
 	            var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
-	            x1 = Math.min(x1, xStart);
-	            x2 = Math.max(x2, xEnd);
-	          } else {
-	            x1 = system.startX;
-	            x2 = system.startX + system.formatter.justifyWidth;
+	            marker.x1 = Math.min(marker.x1, xStart);
+	            marker.x2 = Math.max(marker.x2, xEnd);
 	          }
 	
 	          // Output to MIDI.
@@ -329,13 +331,14 @@
 	
 	      // Draw play marker.
 	      G.midi.timers.push(setTimeout(function () {
+	        var ctx = marker.ctx;
 	        if (G.midi.marker) ctx.svg.removeChild(G.midi.marker);
 	        ctx.beginPath();
 	        ctx.setStrokeStyle('#aaa');
 	        ctx.setFillStyle('#aaa');
 	        ctx.setLineWidth(1);
 	        ctx.attributes.opacity = 0.2;
-	        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+	        ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
 	        G.midi.marker = ctx.svg.lastChild;
 	      }, time.start + G.midi.config.sync));
 	    });
@@ -347,6 +350,7 @@
 	}
 	
 	function play() {
+	  (0, _jquery2.default)('#sheet #stop').trigger('click');
 	  playVF(G.vf);
 	}
 	
@@ -451,10 +455,13 @@
 	    // https://bugs.chromium.org/p/chromium/issues/detail?id=471798
 	
 	    // Stop player marker.
-	    G.midi.timers.forEach(function (timer) {
-	      window.clearTimeout(timer);
-	    });
-	    G.midi.timers = [];
+	    if (G.midi.timers) {
+	      G.midi.timers.forEach(function (timer) {
+	        window.clearTimeout(timer);
+	      });
+	      delete G.midi.timers;
+	      delete G.midi.marker;
+	    }
 	  });
 	
 	  // Build sheets.
@@ -475,7 +482,6 @@
 	  });
 	  (0, _jquery2.default)('#sheets').val(G.midi.config.sheet).on('change', function () {
 	    G.midi.config.sheet = (0, _jquery2.default)('#sheets').val();
-	    G.midi.marker = null;
 	    (0, _jquery2.default)('#sheet-vexflow').empty();
 	    render(G.sheets[G.midi.config.sheet].notes);
 	  });
