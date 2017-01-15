@@ -11,8 +11,7 @@ Editor means we can create new sheets, e.g.:
 - by importing from MIDI files, MusicXML files, etc.,
 - by entering notes and scores in a textual format,
 - by applying functions to existing sheets or parts thereof (e.g. `add6thBelowEachNote` or `transposeUpA3rd`)
-
-MIDI-enabled means it can exchange MIDI messages with other MIDI nodes in the music network.
+- by receiving input from other MIDI sources e.g. keyboard or sequencer
 
 ## Getting started
 - Open `./index.html`
