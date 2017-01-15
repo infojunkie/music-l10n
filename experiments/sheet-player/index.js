@@ -20,7 +20,8 @@ let G = {
     config: {
       output: null,
       channel: 0,
-      sheet: 0
+      sheet: 0,
+      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
     }
   },
   sheets: sheets.data
@@ -55,10 +56,6 @@ class LocalMidiOutput {
     G.midi.local.stop();
   }
 };
-
-function ticksToMilliseconds(bpm, resolution) {
-  return 60000.00 / (bpm * resolution);
-}
 
 Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).format());
@@ -124,42 +121,61 @@ function playNote(note, accidental, time, duration) {
 function playVF(vf) {
   G.midi.time = MIDI_START_TIME;
   G.midi.timers = [];
-  let ticksToTime = ticksToMilliseconds(G.midi.bpm, Vex.Flow.RESOLUTION);
   let keyAccidentals = null;
+
+  // Timing information that will be calculated inside.
+  let time = {
+    start: 0,
+    duration: 0,
+    ticksToTime: 60000 / (60 * Vex.Flow.RESOLUTION / 4),
+  };
+
+  // A system is a full measure.
   vf.systems.forEach((system) => {
+
+    // Used to display play marker.
     const ctx = system.checkContext();
     const y1 = system.options.y;
     const y2 = system.lastY;
+
+    // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
     system.formatter.tickContexts.list.forEach((tickStart) => {
       const tickContext = system.formatter.tickContexts.map[tickStart];
-      const time = G.midi.time + Math.round(tickStart * ticksToTime);
-      let x1 = 1000000000;
+
+      let x1 = Number.MAX_SAFE_INTEGER;
       let x2 = 0;
 
       // Iterate on notes.
       tickContext.tickables.forEach((tickable) => {
         let accidental = null;
         if (tickable instanceof Vex.Flow.StaveNote) {
+
           // Parse stave modifiers for key signature, time signature, etc.
           tickable.stave.modifiers.forEach((modifier) => {
             if (modifier instanceof Vex.Flow.KeySignature) {
               keyAccidentals = getKeyAccidentals(modifier);
             }
             if (modifier instanceof Vex.Flow.StaveTempo) {
-              console.log(modifier);
-              G.midi.bpm = modifier.tempo.bpm;
-              ticksToTime = ticksToMilliseconds(G.midi.bpm, Vex.Flow.RESOLUTION);
+              const ticksPerTempoUnit = Vex.Flow.parseNoteData({
+                duration: modifier.tempo.duration,
+                dots: modifier.tempo.dots,
+              }).ticks;
+              time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
             }
           });
+
+          // Compute time.
+          time.start = G.midi.time + Math.round(tickStart * time.ticksToTime);
+          time.duration = Math.round(tickable.ticks.numerator * time.ticksToTime / tickable.ticks.denominator);
 
           // Parse note modifiers.
           tickable.modifiers.forEach((modifier) => {
             if (modifier instanceof Vex.Flow.Accidental) {
-              accidental = modifier.type;
+              accidental = modifier.type; // TODO: which note does this accidental affect?
             }
           });
 
-          // Get note render metrics for play marker.
+          // Compute play marker position.
           const metrics = tickable.getMetrics();
           const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
           const xEnd = tickable.getAbsoluteX()
@@ -170,9 +186,8 @@ function playVF(vf) {
           x2 = Math.max(x2, xEnd);
 
           // Output to MIDI.
-          let duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
           tickable.keyProps.forEach((note) => {
-            playNote(note, accidental ? accidental : ORNULL(keyAccidentals[note.key]), time, duration);
+            playNote(note, accidental ? accidental : ORNULL(keyAccidentals[note.key]), time.start, time.duration);
           });
         }
       });
@@ -187,9 +202,12 @@ function playVF(vf) {
         ctx.attributes.opacity = 0.2;
         ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
         G.midi.marker = ctx.svg.lastChild;
-      }, time));
+      }, time.start + G.midi.config.sync));
     });
-    G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
+
+    // Advance time by measure's total ticks.
+    // The conversion factor was computed separately by each tickable due to the VexFlow format.
+    G.midi.time += Math.round(system.formatter.totalTicks.numerator * time.ticksToTime / system.formatter.totalTicks.denominator);
   });
 }
 
@@ -274,13 +292,13 @@ WebMidi.enable(function (err) {
     }
     // Stop player marker.
     G.midi.timers.forEach((timer) => { window.clearTimeout(timer); });
-    delete G.midi.timers;
+    G.midi.timers = [];
   });
 
   // Sheet
   G.sheets.push({
     name: 'C Lydian',
-    notes: tonal.scale('C lydian').map((n) => `${n}4`)
+    notes: tonal.scale('C lydian').map((n) => `${n}4`).concat(['c5'])
   });
   G.sheets.push({
     name: 'Bach Minuet in G',

@@ -99,8 +99,8 @@
 	    config: {
 	      output: null,
 	      channel: 0,
-	      sheet: 0
-	    }
+	      sheet: 0,
+	      sync: 100 }
 	  },
 	  sheets: _sheets2.default.data
 	};
@@ -139,10 +139,6 @@
 	}();
 	
 	;
-	
-	function ticksToMilliseconds(bpm, resolution) {
-	  return 60000.00 / (bpm * resolution);
-	}
 	
 	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
 	  var _this = this;
@@ -244,67 +240,83 @@
 	function playVF(vf) {
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
-	  var ticksToTime = ticksToMilliseconds(G.midi.bpm, _vexflow2.default.Flow.RESOLUTION);
 	  var keyAccidentals = null;
+	
+	  // Timing information that will be calculated inside.
+	  var time = {
+	    start: 0,
+	    duration: 0,
+	    ticksToTime: 60000 / (60 * _vexflow2.default.Flow.RESOLUTION / 4)
+	  };
+	
+	  // A system is a full measure.
 	  vf.systems.forEach(function (system) {
+	
+	    // Used to display play marker.
 	    var ctx = system.checkContext();
 	    var y1 = system.options.y;
 	    var y2 = system.lastY;
+	
+	    // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
 	    system.formatter.tickContexts.list.forEach(function (tickStart) {
 	      var tickContext = system.formatter.tickContexts.map[tickStart];
-	      var time = G.midi.time + Math.round(tickStart * ticksToTime);
-	      var x1 = 1000000000;
+	
+	      var x1 = Number.MAX_SAFE_INTEGER;
 	      var x2 = 0;
 	
 	      // Iterate on notes.
 	      tickContext.tickables.forEach(function (tickable) {
 	        var accidental = null;
 	        if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
-	          (function () {
-	            // Parse stave modifiers for key signature, time signature, etc.
-	            tickable.stave.modifiers.forEach(function (modifier) {
-	              if (modifier instanceof _vexflow2.default.Flow.KeySignature) {
-	                keyAccidentals = getKeyAccidentals(modifier);
+	
+	          // Parse stave modifiers for key signature, time signature, etc.
+	          tickable.stave.modifiers.forEach(function (modifier) {
+	            if (modifier instanceof _vexflow2.default.Flow.KeySignature) {
+	              keyAccidentals = getKeyAccidentals(modifier);
+	            }
+	            if (modifier instanceof _vexflow2.default.Flow.StaveTempo) {
+	              var ticksPerTempoUnit = _vexflow2.default.Flow.parseNoteData({
+	                duration: modifier.tempo.duration,
+	                dots: modifier.tempo.dots
+	              }).ticks;
+	              time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
+	            }
+	          });
+	
+	          // Compute time.
+	          time.start = G.midi.time + Math.round(tickStart * time.ticksToTime);
+	          time.duration = Math.round(tickable.ticks.numerator * time.ticksToTime / tickable.ticks.denominator);
+	
+	          // Parse note modifiers.
+	          tickable.modifiers.forEach(function (modifier) {
+	            if (modifier instanceof _vexflow2.default.Flow.Accidental) {
+	              accidental = modifier.type; // TODO: which note does this accidental affect?
+	            }
+	          });
+	
+	          // Compute play marker position.
+	          var metrics = tickable.getMetrics();
+	          var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+	          var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
+	          x1 = Math.min(x1, xStart);
+	          x2 = Math.max(x2, xEnd);
+	
+	          // Output to MIDI.
+	          tickable.keyProps.forEach(function (note) {
+	            var _ornull3 = void 0;
+	
+	            _ORNULL3: {
+	              try {
+	                _ornull3 = keyAccidentals[note.key];
+	                break _ORNULL3;
+	              } catch (e) {
+	                _ornull3 = null;
+	                break _ORNULL3;
 	              }
-	              if (modifier instanceof _vexflow2.default.Flow.StaveTempo) {
-	                console.log(modifier);
-	                G.midi.bpm = modifier.tempo.bpm;
-	                ticksToTime = ticksToMilliseconds(G.midi.bpm, _vexflow2.default.Flow.RESOLUTION);
-	              }
-	            });
+	            }
 	
-	            // Parse note modifiers.
-	            tickable.modifiers.forEach(function (modifier) {
-	              if (modifier instanceof _vexflow2.default.Flow.Accidental) {
-	                accidental = modifier.type;
-	              }
-	            });
-	
-	            // Get note render metrics for play marker.
-	            var metrics = tickable.getMetrics();
-	            var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-	            var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
-	            x1 = Math.min(x1, xStart);
-	            x2 = Math.max(x2, xEnd);
-	
-	            // Output to MIDI.
-	            var duration = Math.round(tickable.ticks.numerator * ticksToTime / tickable.ticks.denominator);
-	            tickable.keyProps.forEach(function (note) {
-	              var _ornull3 = void 0;
-	
-	              _ORNULL3: {
-	                try {
-	                  _ornull3 = keyAccidentals[note.key];
-	                  break _ORNULL3;
-	                } catch (e) {
-	                  _ornull3 = null;
-	                  break _ORNULL3;
-	                }
-	              }
-	
-	              playNote(note, accidental ? accidental : _ornull3, time, duration);
-	            });
-	          })();
+	            playNote(note, accidental ? accidental : _ornull3, time.start, time.duration);
+	          });
 	        }
 	      });
 	
@@ -318,9 +330,12 @@
 	        ctx.attributes.opacity = 0.2;
 	        ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
 	        G.midi.marker = ctx.svg.lastChild;
-	      }, time));
+	      }, time.start + G.midi.config.sync));
 	    });
-	    G.midi.time += Math.round(system.formatter.totalTicks.numerator * ticksToTime / system.formatter.totalTicks.denominator);
+	
+	    // Advance time by measure's total ticks.
+	    // The conversion factor was computed separately by each tickable due to the VexFlow format.
+	    G.midi.time += Math.round(system.formatter.totalTicks.numerator * time.ticksToTime / system.formatter.totalTicks.denominator);
 	  });
 	}
 	
@@ -406,7 +421,7 @@
 	    G.midi.timers.forEach(function (timer) {
 	      window.clearTimeout(timer);
 	    });
-	    delete G.midi.timers;
+	    G.midi.timers = [];
 	  });
 	
 	  // Sheet
@@ -414,7 +429,7 @@
 	    name: 'C Lydian',
 	    notes: _tonal2.default.scale('C lydian').map(function (n) {
 	      return n + '4';
-	    })
+	    }).concat(['c5'])
 	  });
 	  G.sheets.push({
 	    name: 'Bach Minuet in G',
@@ -34983,7 +34998,8 @@
 					"f4",
 					"g4",
 					"a4",
-					"b4"
+					"b4",
+					"c5"
 				]
 			},
 			{
@@ -34995,7 +35011,8 @@
 					"f4",
 					"g4",
 					"ab4",
-					"b4"
+					"b4",
+					"c5"
 				]
 			},
 			{
@@ -35007,7 +35024,8 @@
 					"f4",
 					"g4",
 					"a4",
-					"bbs4"
+					"bbs4",
+					"c5"
 				]
 			}
 		]

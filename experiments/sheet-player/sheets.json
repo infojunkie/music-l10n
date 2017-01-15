@@ -3,15 +3,15 @@
   "data": [
     {
       "name": "C Major",
-      "notes": [ "c4", "d4", "e4", "f4", "g4", "a4", "b4" ]
+      "notes": [ "c4", "d4", "e4", "f4", "g4", "a4", "b4", "c5" ]
     },
     {
       "name": "C Harmonic Minor",
-      "notes": [ "c4", "d4", "eb4", "f4", "g4", "ab4", "b4" ]
+      "notes": [ "c4", "d4", "eb4", "f4", "g4", "ab4", "b4", "c5" ]
     },
     {
       "name": "C Rast راست",
-      "notes": [ "c4", "d4", "ebs4", "f4", "g4", "a4", "bbs4" ]
+      "notes": [ "c4", "d4", "ebs4", "f4", "g4", "a4", "bbs4", "c5" ]
     }
   ]
 }

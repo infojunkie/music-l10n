@@ -98,3 +98,6 @@ options snd-seq-dummy ports=4
 - Refactor code, use React
 - Add "Sync" widget to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
 - Add "Tempo" widget
+- Add playback marker mode for whole measure, not single-note
+- Keyboard controls, "Play/Pause" button
+- Add metronome
