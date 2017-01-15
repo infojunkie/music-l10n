@@ -25,7 +25,7 @@ My OS setup:
 - Mozilla Firefox from `http://ca.archive.ubuntu.com/ubuntu xenial-updates/main`
 
 My MIDI setup:
-- Install MIDI synth TiMidity - [Ubuntu has it](https://help.ubuntu.com/community/Midi/SoftwareSynthesisHowTo).
+- Install MIDI synth TiMidity - [Ubuntu has it](https://help.ubuntu.com/community/Midi/SoftwareSynthesisHowTo)
 - `timidity -iAD` to start TiMidity in ALSA sequencer daemon mode
 - `aconnect -o` should show available MIDI output ports and their client numbers, including `TiMidity` and `Midi Through`
 - Firefox does not support Web MIDI natively. To add support, you need to install [Jazz-Plugin](http://jazz-soft.net/download/Jazz-Plugin/)
@@ -67,14 +67,12 @@ The Web MIDI API allows to schedule MIDI events "in advance", i.e. by allowing f
 HOWEVER! What happens when the user wants to stop playback before the song is over? The Web MIDI API specifies a `Output.clear()` method which should clear this queue of future MIDI events, but [Chrome does not implement it yet](https://bugs.chromium.org/p/chromium/issues/detail?id=471798). I still haven't found a workaround for that.
 
 ## Experiment: using MIDI Through Ports to route output to softsynth
-Routing the MIDI output of the sheet player to a softsynth such as http://mmontag.github.io/dx7-synth-js/.
+Routing the MIDI output of the sheet player to a softsynth such as a [Yamaha DX7 emulator](http://mmontag.github.io/dx7-synth-js/).
 The `MIDI Through Port` ports appear both as input and output, and indeed they show up
 both on the sheet player's output MIDI ports, and on the DX7 emulator's input ports.
 
-- Open `./index.html`
-- Select `MIDI Through Port-0` as output
-- Open http://mmontag.github.io/dx7-synth-js/ in another tab
-- Select `MIDI Through Port-0` as MIDI Device (this is the synth's input)
+- Open the Sheet Player app and select `MIDI Through Port-0` as output
+- Open the Yamaha DX7 emulator in another tab and select `MIDI Through Port-0` as MIDI Device (which is the synth's input)
 - Play!
 - Change instruments on the DX7
 - Play again!
