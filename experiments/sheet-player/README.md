@@ -45,7 +45,7 @@ This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki
 Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).
 
 ## VexFlow to MIDI
-Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function [`playVF`](https://github.com/infojunkie/music-l10n/blob/master/experiments/sheet-player/index.js#L63) does. This is a very tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
+Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function `playVF` does. It's a tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
 
 - Key signature
 - Grace notes
@@ -92,7 +92,7 @@ options snd-seq-dummy ports=4
 - Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
 - Read and write MusicXML files
 - Read and write MIDI files
-- Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection".)
+- Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection")
 - The main sheet and scribbles should support standard actions: play/pause, export, embed, etc.
 - Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
 - Playback with auto-generated accompaniment
