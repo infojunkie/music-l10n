@@ -1,7 +1,11 @@
 {
   "name": "sheet-player",
   "version": "1.0.0",
-  "description": "",
+  "description": "A MIDI-enabled sheet music navigator, player, and editor packaged as a web app.",
+  "repository" :
+    { "type" : "git"
+    , "url" : "https://github.com/infojunkie/music-l10n.git"
+    },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
