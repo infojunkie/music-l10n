@@ -84,18 +84,24 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	// Reach in deep structures without fear of TypeError exceptions.
+	// e.g. x = ORNULL(a.b.c.d['e'].f.g);
 	function concat(a, b) {
 	  return a.concat(b);
 	}
 	
 	var MIDI_START_TIME = 1;
+	var MIDI_PB_QUARTER_TONE = 0.25; // a quarter tone is 1/4 of a tone
+	var MIDI_PB_COMMA = 1 / 9; // a comma is 1/9 of a tone
 	
+	// Global state
 	var G = {
 	  midi: {
 	    output: null,
 	    time: MIDI_START_TIME,
 	    marker: null,
 	    bpm: 60,
+	    performance: [],
 	    config: {
 	      output: null,
 	      channel: 0,
@@ -106,6 +112,8 @@
 	  },
 	  sheets: _sheets2.default.data
 	};
+	
+	// Local MIDI output class that conforms to WedMidi.Output interface.
 	
 	var LocalMidiOutput = function () {
 	  function LocalMidiOutput() {
@@ -142,6 +150,8 @@
 	
 	;
 	
+	// Additional method on Vex.Flow.Factory that draws the score without resetting
+	// the info at the end - because we need to keep that info.
 	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
 	  var _this = this;
 	
@@ -162,6 +172,7 @@
 	  });
 	};
 	
+	// Given a key signature, find the sharps and flats.
 	function getKeyAccidentals(keySignature) {
 	  var accidentalsMap = {
 	    'G': { 'F': '#' },
@@ -195,19 +206,18 @@
 	  return _ornull;
 	}
 	
-	var PB_QUARTER_TONE = 0.25;
-	var PB_COMMA = 1 / 9;
-	
+	// Convert a note to a MIDI message.
+	// Convert microtones into MIDI pitch bends.
 	function playNote(note, accidental, time, duration) {
 	  var acc_to_pb = {
-	    '+': PB_QUARTER_TONE,
-	    '++': PB_QUARTER_TONE * 3,
-	    'bs': -PB_QUARTER_TONE,
-	    'd': -PB_QUARTER_TONE,
-	    'db': -PB_QUARTER_TONE * 3,
-	    '+-': PB_COMMA * 5,
-	    '++-': PB_COMMA * 8,
-	    'bss': -PB_COMMA * 8
+	    '+': MIDI_PB_QUARTER_TONE,
+	    '++': MIDI_PB_QUARTER_TONE * 3,
+	    'bs': -MIDI_PB_QUARTER_TONE,
+	    'd': -MIDI_PB_QUARTER_TONE,
+	    'db': -MIDI_PB_QUARTER_TONE * 3,
+	    '+-': MIDI_PB_COMMA * 5,
+	    '++-': MIDI_PB_COMMA * 8,
+	    'bss': -MIDI_PB_COMMA * 8
 	  };
 	
 	  var _ornull2 = void 0;
@@ -239,6 +249,7 @@
 	  }
 	}
 	
+	// Convert a Vex.Flow.Factory structure into a MIDI stream.
 	function playVF(vf) {
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
@@ -355,6 +366,7 @@
 	  });
 	}
 	
+	// Play the sheet.
 	function play() {
 	  (0, _jquery2.default)('#sheet #stop').trigger('click');
 	  playVF(G.vf);
@@ -363,6 +375,7 @@
 	var CANVAS_WIDTH = 500;
 	var CANVAS_HEIGHT = 200;
 	
+	// Convert an array of notes to a Vex.Flow.Factory structure.
 	function renderVF(notes) {
 	  var vf_notes = notes.map(function (n) {
 	    return n + '/4';
@@ -384,6 +397,10 @@
 	  return vf;
 	}
 	
+	// Render a sheet.
+	// The core sheet structure is Vex.Flow.Factory.
+	// If the passed argument is an array of notes, convert it to a sheet.
+	// If the passed argument is a function, call it to get the sheet.
 	function render(notes) {
 	  var vf;
 	  if (Array.isArray(notes)) {
@@ -415,6 +432,7 @@
 	  });
 	}
 	
+	// Initialize the Web MIDI system and the UI.
 	_webmidi2.default.enable(function (err) {
 	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
@@ -511,6 +529,8 @@
 	  render(G.sheets[G.midi.config.sheet].notes);
 	});
 	
+	// Create a sheet of Bach's Minuet in G.
+	// Copied from one of VexFlow's tests.
 	function bach() {
 	  var registry = new _vexflow2.default.Flow.Registry();
 	  _vexflow2.default.Flow.Registry.enableDefaultRegistry(registry);

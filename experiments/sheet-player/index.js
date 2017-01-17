@@ -7,16 +7,31 @@ import tonal from 'tonal';
 import Soundfont from 'soundfont-player';
 import NoteParser from 'note-parser';
 
+// Reach in deep structures without fear of TypeError exceptions.
+// e.g. x = ORNULL(a.b.c.d['e'].f.g);
+DEFINE_MACRO(ORNULL, (expr) => {
+  try {
+    return expr;
+  }
+  catch (e) {
+    return null;
+  }
+});
+
 function concat(a, b) { return a.concat(b); }
 
 const MIDI_START_TIME = 1;
+const MIDI_PB_QUARTER_TONE = 0.25; // a quarter tone is 1/4 of a tone
+const MIDI_PB_COMMA = 1/9; // a comma is 1/9 of a tone
 
+// Global state
 let G = {
   midi: {
     output: null,
     time: MIDI_START_TIME,
     marker: null,
     bpm: 60,
+    performance: [],
     config: {
       output: null,
       channel: 0,
@@ -28,15 +43,7 @@ let G = {
   sheets: sheets.data
 };
 
-DEFINE_MACRO(ORNULL, (expr) => {
-  try {
-    return expr;
-  }
-  catch (e) {
-    return null;
-  }
-});
-
+// Local MIDI output class that conforms to WedMidi.Output interface.
 class LocalMidiOutput {
   constructor() {
     this.pb = 0;
@@ -58,6 +65,8 @@ class LocalMidiOutput {
   }
 };
 
+// Additional method on Vex.Flow.Factory that draws the score without resetting
+// the info at the end - because we need to keep that info.
 Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).format());
   this.staves.forEach(i => i.setContext(this.context).draw());
@@ -68,6 +77,7 @@ Vex.Flow.Factory.prototype.drawWithoutReset = function() {
   this.systems.forEach(i => i.setContext(this.context).draw());
 }
 
+// Given a key signature, find the sharps and flats.
 function getKeyAccidentals(keySignature) {
   const accidentalsMap = {
     'G': { 'F': '#' },
@@ -88,19 +98,18 @@ function getKeyAccidentals(keySignature) {
   return ORNULL(accidentalsMap[keySignature.keySpec]);
 }
 
-const PB_QUARTER_TONE = 0.25;
-const PB_COMMA = 1/9;
-
+// Convert a note to a MIDI message.
+// Convert microtones into MIDI pitch bends.
 function playNote(note, accidental, time, duration) {
   const acc_to_pb = {
-    '+': PB_QUARTER_TONE,
-    '++': PB_QUARTER_TONE * 3,
-    'bs': -PB_QUARTER_TONE,
-    'd': -PB_QUARTER_TONE,
-    'db': -PB_QUARTER_TONE * 3,
-    '+-': PB_COMMA * 5,
-    '++-': PB_COMMA * 8,
-    'bss': -PB_COMMA * 8
+    '+': MIDI_PB_QUARTER_TONE,
+    '++': MIDI_PB_QUARTER_TONE * 3,
+    'bs': -MIDI_PB_QUARTER_TONE,
+    'd': -MIDI_PB_QUARTER_TONE,
+    'db': -MIDI_PB_QUARTER_TONE * 3,
+    '+-': MIDI_PB_COMMA * 5,
+    '++-': MIDI_PB_COMMA * 8,
+    'bss': -MIDI_PB_COMMA * 8
   };
   const pb = ORNULL(acc_to_pb[accidental]);
   if (pb) {
@@ -119,6 +128,7 @@ function playNote(note, accidental, time, duration) {
   }
 }
 
+// Convert a Vex.Flow.Factory structure into a MIDI stream.
 function playVF(vf) {
   G.midi.time = MIDI_START_TIME;
   G.midi.timers = [];
@@ -227,6 +237,7 @@ function playVF(vf) {
   });
 }
 
+// Play the sheet.
 function play() {
   $('#sheet #stop').trigger('click');
   playVF(G.vf);
@@ -235,6 +246,7 @@ function play() {
 const CANVAS_WIDTH=500;
 const CANVAS_HEIGHT=200;
 
+// Convert an array of notes to a Vex.Flow.Factory structure.
 function renderVF(notes) {
   var vf_notes = notes.map((n) => n + '/4').join(', ');
   var time = '' + notes.length + '/4';
@@ -256,6 +268,10 @@ function renderVF(notes) {
   return vf;
 }
 
+// Render a sheet.
+// The core sheet structure is Vex.Flow.Factory.
+// If the passed argument is an array of notes, convert it to a sheet.
+// If the passed argument is a function, call it to get the sheet.
 function render(notes) {
   var vf;
   if (Array.isArray(notes)) {
@@ -288,6 +304,7 @@ function render(notes) {
   });
 }
 
+// Initialize the Web MIDI system and the UI.
 WebMidi.enable(function (err) {
   // Read the saved configuration.
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
@@ -378,6 +395,8 @@ WebMidi.enable(function (err) {
   render(G.sheets[G.midi.config.sheet].notes);
 });
 
+// Create a sheet of Bach's Minuet in G.
+// Copied from one of VexFlow's tests.
 function bach() {
   var registry = new Vex.Flow.Registry();
   Vex.Flow.Registry.enableDefaultRegistry(registry);

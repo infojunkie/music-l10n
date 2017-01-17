@@ -88,6 +88,7 @@ options snd-seq-dummy ports=4
 ```
 - Virtual MIDI Ports (provided by kernel module `snd-virmidi`) are NOT used for general routing of MIDI messages! cf. http://music.stackexchange.com/questions/51463/how-to-use-snd-virmidi-on-linux
 - Jazz-Plugin on Firefox seems to return ONLY Virtual MIDI Ports, NOT the full list of ALSA MIDI ports. Investigating: http://jazz-soft.org/bb/viewtopic.php?f=2&t=934
+- MacOS X users can [also create virtual MIDI ports](https://www.skratchdot.com/2016/01/creating-virtual-midi-ports-on-osx/)
 
 ## TODO
 - Unit tests!!
@@ -107,4 +108,5 @@ options snd-seq-dummy ports=4
 - Keyboard controls, "Play/Pause" button
 - Add metronome
 - Add "loading..." spinner while loading soundfonts and other assets
-- Support MIDI Tuning system message
+- Support MIDI Tuning system messages
+- Convert soundfonts sf* files to [JS format supported by soundfont-player](https://github.com/danigb/soundfont-player)
