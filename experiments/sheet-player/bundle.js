@@ -156,12 +156,14 @@
 	      var that = this;
 	      var AudioContext = window.AudioContext || window.webkitAudioContext;
 	      G.midi.ac = new AudioContext();
+	      (0, _jquery2.default)('#sheet #play').prop('disabled', true);
 	      _soundfontPlayer2.default.instrument(G.midi.ac, 'acoustic_grand_piano', { soundfont: G.midi.config.soundfont, nameToUrl: function nameToUrl(name, soundfont, format) {
 	          format = format || 'mp3';
 	          var url = _soundfonts2.default.data[soundfont].url;
 	          return url + name + '-' + format + '.js';
 	        } }).then(function (instrument) {
 	        that.instrument = instrument;
+	        (0, _jquery2.default)('#sheet #play').prop('disabled', false);
 	      });
 	    }
 	  }]);

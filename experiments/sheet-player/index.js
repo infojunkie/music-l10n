@@ -71,12 +71,14 @@ class LocalMidiOutput {
     const that = this;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     G.midi.ac = new AudioContext();
+    $('#sheet #play').prop('disabled', true);
     Soundfont.instrument(G.midi.ac, 'acoustic_grand_piano', { soundfont: G.midi.config.soundfont, nameToUrl: (name, soundfont, format) => {
       format = format || 'mp3';
       const url = soundfonts.data[soundfont].url;
       return url + name + '-' + format + '.js';
     }}).then(function (instrument) {
       that.instrument = instrument;
+      $('#sheet #play').prop('disabled', false); 
     });
   }
 };
