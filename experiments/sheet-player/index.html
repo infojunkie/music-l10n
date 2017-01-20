@@ -16,8 +16,8 @@ body { display: flex; background-color: wheat; }
     <select id="outputs"></select>
     <label for="channels">channel</label>
     <select id="channels"></select>
-    <input type="button" id="play" value="Play"/>
-    <input type="button" id="stop" value="Stop"/> (Stop does not work with external MIDI ports)
+    <label for="soundfonts">soundfont</label>
+    <select id="soundfonts"></select>
   </div>
   <div>
     advance play marker
@@ -27,6 +27,10 @@ body { display: flex; background-color: wheat; }
   <div>
     <label for="sheets">sheet</label>
     <select id="sheets"></select>
+  </div>
+  <div>
+    <input type="button" id="play" value="Play"/>
+    <input type="button" id="stop" value="Stop"/> (Stop does not work with external MIDI ports)
   </div>
   <div id="sheet-vexflow"></div>
 </div>

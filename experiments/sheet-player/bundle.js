@@ -80,6 +80,10 @@
 	
 	var _noteParser2 = _interopRequireDefault(_noteParser);
 	
+	var _soundfonts = __webpack_require__(48);
+	
+	var _soundfonts2 = _interopRequireDefault(_soundfonts);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -107,7 +111,8 @@
 	      channel: 0,
 	      sheet: 0,
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
-	      marker_mode: 'measure'
+	      marker_mode: 'measure',
+	      soundfont: 'musyngkite'
 	    }
 	  },
 	  sheets: _sheets2.default.data
@@ -120,6 +125,8 @@
 	    _classCallCheck(this, LocalMidiOutput);
 	
 	    this.pb = 0;
+	    this.instrument = null;
+	    this.load();
 	  }
 	
 	  _createClass(LocalMidiOutput, [{
@@ -131,7 +138,7 @@
 	        noteName = _noteParser2.default.midi(noteName);
 	        noteName += this.pb * 2; // Local player counts microtones in fractions of semitones
 	      }
-	      G.midi.local.play(noteName, time, { duration: duration });
+	      if (this.instrument) this.instrument.play(noteName, time, { duration: duration });
 	    }
 	  }, {
 	    key: 'sendPitchBend',
@@ -141,7 +148,21 @@
 	  }, {
 	    key: 'stop',
 	    value: function stop() {
-	      G.midi.local.stop();
+	      if (this.instrument) this.instrument.stop();
+	    }
+	  }, {
+	    key: 'load',
+	    value: function load() {
+	      var that = this;
+	      var AudioContext = window.AudioContext || window.webkitAudioContext;
+	      G.midi.ac = new AudioContext();
+	      _soundfontPlayer2.default.instrument(G.midi.ac, 'acoustic_grand_piano', { soundfont: G.midi.config.soundfont, nameToUrl: function nameToUrl(name, soundfont, format) {
+	          format = format || 'mp3';
+	          var url = _soundfonts2.default.data[soundfont].url;
+	          return url + name + '-' + format + '.js';
+	        } }).then(function (instrument) {
+	        that.instrument = instrument;
+	      });
 	    }
 	  }]);
 	
@@ -250,7 +271,7 @@
 	}
 	
 	// Convert a Vex.Flow.Factory structure into a MIDI stream.
-	function playVF(vf) {
+	function playVexFlow() {
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
 	  var keyAccidentals = null;
@@ -263,7 +284,7 @@
 	  };
 	
 	  // A system is a full measure.
-	  vf.systems.forEach(function (system) {
+	  G.vf.systems.forEach(function (system) {
 	
 	    // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
 	    system.formatter.tickContexts.list.forEach(function (tickStart) {
@@ -368,15 +389,14 @@
 	
 	// Play the sheet.
 	function play() {
-	  (0, _jquery2.default)('#sheet #stop').trigger('click');
-	  playVF(G.vf);
+	  playVexFlow();
 	}
 	
 	var CANVAS_WIDTH = 500;
 	var CANVAS_HEIGHT = 200;
 	
 	// Convert an array of notes to a Vex.Flow.Factory structure.
-	function renderVF(notes) {
+	function renderVexFlow(notes) {
 	  var vf_notes = notes.map(function (n) {
 	    return n + '/4';
 	  }).join(', ');
@@ -404,15 +424,13 @@
 	function render(notes) {
 	  var vf;
 	  if (Array.isArray(notes)) {
-	    vf = renderVF(notes);
+	    vf = renderVexFlow(notes);
 	  } else {
 	    vf = notes();
 	  }
 	
 	  // Render and save Vex.Flow.Factory.
 	  vf.drawWithoutReset();
-	  G.vf = vf;
-	  console.log(G.vf);
 	
 	  // Attach UI event handlers.
 	  function colorDescendants(color) {
@@ -423,13 +441,17 @@
 	      });
 	    };
 	  }
-	  G.vf.renderQ.forEach(function (renderable) {
+	  vf.renderQ.forEach(function (renderable) {
 	    if (renderable instanceof _vexflow2.default.Flow.StaveNote) {
 	      var el = renderable.getAttribute('el');
 	      el.addEventListener('mouseover', colorDescendants('green'), false);
 	      el.addEventListener('mouseout', colorDescendants('black'), false);
 	    }
 	  });
+	
+	  // Remember VexFlow structure.
+	  G.vf = vf;
+	  console.log(G.vf);
 	}
 	
 	// Initialize the Web MIDI system and the UI.
@@ -442,7 +464,18 @@
 	  _webmidi2.default.outputs.forEach(function (output) {
 	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
 	  });
-	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output);
+	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
+	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	    if (G.midi.config.output !== 'local') {
+	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', true);
+	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
+	    } else {
+	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', false);
+	      G.midi.output = new LocalMidiOutput();
+	    }
+	  });
+	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).trigger('change');
 	
 	  // Listen to Web MIDI state events.
 	  _webmidi2.default.addListener('connected', function (event) {
@@ -461,26 +494,45 @@
 	  });
 	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel);
 	
+	  // Soundfonts.
+	  for (var sf in _soundfonts2.default.data) {
+	    var soundfont = _soundfonts2.default.data[sf];
+	    (0, _jquery2.default)('#sheet #soundfonts').append((0, _jquery2.default)('<option>', { text: soundfont.name, value: sf }));
+	  }
+	  (0, _jquery2.default)('#sheet #soundfonts').on('change', function () {
+	    G.midi.config.soundfont = (0, _jquery2.default)('#sheet #soundfonts').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	    G.midi.output = new LocalMidiOutput();
+	  });
+	  (0, _jquery2.default)('#sheet #soundfonts').val(G.midi.config.soundfont);
+	
 	  // Marker mode.
 	  (0, _jquery2.default)('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
 	
 	  // Handle "Play" button.
 	  (0, _jquery2.default)('#sheet #play').on('click', function () {
-	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
+	    (0, _jquery2.default)('#sheet #stop').trigger('click');
 	    G.midi.config.channel = (0, _jquery2.default)('#sheet #channels').val();
 	    G.midi.config.marker_mode = (0, _jquery2.default)('#sheet input[name="marker_mode"]:checked').val();
-	    if (G.midi.config.output !== 'local') {
-	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
-	    } else {
-	      G.midi.output = new LocalMidiOutput();
-	    }
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    play();
 	  });
 	
 	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
-	    if (G.midi.output.stop) {
+	    var _ornull4 = void 0;
+	
+	    _ORNULL4: {
+	      try {
+	        _ornull4 = G.midi.output.stop;
+	        break _ORNULL4;
+	      } catch (e) {
+	        _ornull4 = null;
+	        break _ORNULL4;
+	      }
+	    }
+	
+	    if (_ornull4) {
 	      G.midi.output.stop();
 	    } else {}
 	    // FIXME
@@ -510,19 +562,13 @@
 	    }
 	  });
 	  G.sheets.forEach(function (sheet, index) {
-	    (0, _jquery2.default)('#sheets').append((0, _jquery2.default)('<option>', { value: index, text: sheet.name }));
+	    (0, _jquery2.default)('#sheet #sheets').append((0, _jquery2.default)('<option>', { value: index, text: sheet.name }));
 	  });
-	  (0, _jquery2.default)('#sheets').val(G.midi.config.sheet).on('change', function () {
-	    G.midi.config.sheet = (0, _jquery2.default)('#sheets').val();
-	    (0, _jquery2.default)('#sheet-vexflow').empty();
+	  (0, _jquery2.default)('#sheet #sheets').val(G.midi.config.sheet).on('change', function () {
+	    G.midi.config.sheet = (0, _jquery2.default)('#sheet #sheets').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	    (0, _jquery2.default)('#sheet #sheet-vexflow').empty();
 	    render(G.sheets[G.midi.config.sheet].notes);
-	  });
-	
-	  // Load local soundfont.
-	  var AudioContext = window.AudioContext || window.webkitAudioContext;
-	  G.midi.ac = new AudioContext();
-	  _soundfontPlayer2.default.instrument(G.midi.ac, 'acoustic_grand_piano').then(function (piano) {
-	    G.midi.local = piano;
 	  });
 	
 	  // Render first sheet.
@@ -40803,6 +40849,28 @@
 	
 	module.exports = Soundfont
 
+
+/***/ },
+/* 48 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"type": "soundfonts",
+		"data": {
+			"musyngkite": {
+				"name": "MusyngKite",
+				"url": "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/"
+			},
+			"fluidr3_gm": {
+				"name": "FluidR3_GM",
+				"url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/"
+			},
+			"qanoon": {
+				"name": "Qanoon",
+				"url": "/soundfont/"
+			}
+		}
+	};
 
 /***/ }
 /******/ ]);
