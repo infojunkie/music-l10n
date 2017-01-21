@@ -28,8 +28,8 @@ require 'midilib'
 require 'zlib'
 include FileUtils
 
-BUILD_DIR = "./soundfont" # Output path
-SOUNDFONT = "../data/qanoon.sf2" # Soundfont file path
+BASE_DIR = "./soundfont" # Base output path
+SOUNDFONT = ARGV[0] # Soundfont file path
 
 # This script will generate MIDI.js-compatible instrument JS files for
 # all instruments in the below array. Add or remove as necessary.
@@ -71,15 +71,17 @@ puts
 puts "Using OGG encoder: " + OGGENC
 puts "Using MP3 encoder: " + LAME
 puts "Using FluidSynth encoder: " + FLUIDSYNTH
-puts
-puts "Sending output to: " + BUILD_DIR
-puts
 
 raise "Can't find soundfont: #{SOUNDFONT}" unless File.exists? SOUNDFONT
 raise "Can't find 'oggenc' command" if OGGENC.empty?
 raise "Can't find 'lame' command" if LAME.empty?
 raise "Can't find 'fluidsynth' command" if FLUIDSYNTH.empty?
-raise "Output directory does not exist: #{BUILD_DIR}" unless File.exists?(BUILD_DIR)
+
+BUILD_DIR = File.join(BASE_DIR, File.basename(SOUNDFONT, File.extname(SOUNDFONT))) # Target output path
+mkdir_p BUILD_DIR
+puts
+puts "Sending output to: " + BUILD_DIR
+puts
 
 puts "Hit return to begin."
 $stdin.readline

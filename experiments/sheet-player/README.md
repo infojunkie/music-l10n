@@ -17,7 +17,8 @@ Editor means we can create new sheets, e.g.:
 
 ## Getting started
 - `git clone git@github.com:infojunkie/music-l10n.git && cd music-l10n/experiments/sheet-player/`
-- Open `./index.html` in your browser
+- Start a local HTTP server, e.g. `npm install -g http-server && http-server`
+- Open http://localhost:8080
 - Select the sheet called "Bach Minuet in G"
 - Play!
 - `npm install`
@@ -46,7 +47,7 @@ Basic playback is implemented using a [local synth that accepts MIDI messages](h
 
 This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples commonly used by various MIDI synths. The sheet player comes preloaded with 3 sondfonts, the last of which, **Qanoon**, is an example of a locally-generated one.
 
-To generate a local soundfont, you need to run `../soundfont-generator/soundfont_builder.rb` which takes a standard `.sf2` file and outputs a compatible sample structure that the library can load. 
+To generate a local soundfont, you need to run `../soundfont-generator/soundfont-generator.rb` which takes a standard `.sf2` file and outputs a compatible sample structure that the library can load.
 
 ## Music engraving and score definition
 Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).

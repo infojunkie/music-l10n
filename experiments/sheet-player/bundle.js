@@ -40869,7 +40869,7 @@
 			},
 			"qanoon": {
 				"name": "Qanoon",
-				"url": "/soundfont/"
+				"url": "/soundfont/qanoon/"
 			}
 		}
 	};
