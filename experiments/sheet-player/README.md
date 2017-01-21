@@ -18,7 +18,7 @@ Editor means we can create new sheets, e.g.:
 ## Getting started
 - `git clone git@github.com:infojunkie/music-l10n.git && cd music-l10n/experiments/sheet-player/`
 - Start a local HTTP server, e.g. `npm install -g http-server && http-server`
-- Open http://localhost:8080
+- Open [http://localhost:8080](http://localhost:8080)
 - Select the sheet called "Bach Minuet in G"
 - Play!
 - `npm install`
