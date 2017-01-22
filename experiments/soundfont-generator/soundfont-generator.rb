@@ -30,6 +30,8 @@ include FileUtils
 
 BASE_DIR = "./soundfonts" # Base output path
 SOUNDFONT = ARGV[0] # Soundfont file path
+abort("Usage: #{File.basename($0)} path/to/soundfont.sf2") if SOUNDFONT.nil?
+abort("Can't find soundfont: #{SOUNDFONT}") unless File.exists? SOUNDFONT
 
 # This script will generate MIDI.js-compatible instrument JS files for
 # all instruments in the below array. Add or remove as necessary.
@@ -71,11 +73,9 @@ puts
 puts "Using OGG encoder: " + OGGENC
 puts "Using MP3 encoder: " + LAME
 puts "Using FluidSynth encoder: " + FLUIDSYNTH
-
-raise "Can't find soundfont: #{SOUNDFONT}" unless File.exists? SOUNDFONT
-raise "Can't find 'oggenc' command" if OGGENC.empty?
-raise "Can't find 'lame' command" if LAME.empty?
-raise "Can't find 'fluidsynth' command" if FLUIDSYNTH.empty?
+abort("Can't find 'oggenc' command") if OGGENC.empty?
+abort("Can't find 'lame' command") if LAME.empty?
+abort("Can't find 'fluidsynth' command") if FLUIDSYNTH.empty?
 
 BUILD_DIR = File.join(BASE_DIR, File.basename(SOUNDFONT, File.extname(SOUNDFONT))) # Target output path
 mkdir_p BUILD_DIR
@@ -132,7 +132,7 @@ end
 # Run a quick table validation
 MIDI_C0.upto(100) do |x|
   note = int_to_note x
-  raise "Broken table" unless note_to_int(note[:key], note[:octave]) == x
+  abort("Broken table at #{x}") unless note_to_int(note[:key], note[:octave]) == x
 end
 
 def generate_midi(program, note_value, file)
