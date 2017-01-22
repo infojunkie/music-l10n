@@ -105,7 +105,7 @@
 	    time: MIDI_START_TIME,
 	    marker: null,
 	    bpm: 100,
-	    performance: [],
+	    stream: [],
 	    config: {
 	      output: null,
 	      channel: 0,
@@ -276,6 +276,9 @@
 	function playVexFlow() {
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
+	  G.midi.stream = [];
+	
+	  // Current key signature.
 	  var keyAccidentals = null;
 	
 	  // Timing information that will be calculated inside.
@@ -40869,7 +40872,7 @@
 			},
 			"qanoon": {
 				"name": "Qanoon",
-				"url": "/soundfonts/qanoon/"
+				"url": "/soundfonts/Qanoon/"
 			}
 		}
 	};

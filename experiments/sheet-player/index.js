@@ -32,7 +32,7 @@ let G = {
     time: MIDI_START_TIME,
     marker: null,
     bpm: 100,
-    performance: [],
+    stream: [],
     config: {
       output: null,
       channel: 0,
@@ -150,6 +150,9 @@ function playNote(note, accidental, time, duration) {
 function playVexFlow() {
   G.midi.time = MIDI_START_TIME;
   G.midi.timers = [];
+  G.midi.stream = [];
+
+  // Current key signature.
   let keyAccidentals = null;
 
   // Timing information that will be calculated inside.
