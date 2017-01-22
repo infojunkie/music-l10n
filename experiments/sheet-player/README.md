@@ -52,7 +52,7 @@ To generate a local soundfont, you need to run `../soundfont-generator/soundfont
 ## Music engraving and score definition
 Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).
 
-Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function `playVF` does. It's a tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
+Since VexFlow contains a full specification of the performance, it can be parsed to generate MIDI events. This is what the function `playVexFlow` does. It's a tricky function to write because each part of the VexFlow model can potentially affect MIDI playback. For example:
 
 - Key signature
 - Grace notes
