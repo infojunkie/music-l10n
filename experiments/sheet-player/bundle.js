@@ -64,21 +64,21 @@
 	
 	var _vexflow2 = _interopRequireDefault(_vexflow);
 	
-	var _sheets = __webpack_require__(5);
-	
-	var _sheets2 = _interopRequireDefault(_sheets);
-	
-	var _tonal = __webpack_require__(6);
+	var _tonal = __webpack_require__(5);
 	
 	var _tonal2 = _interopRequireDefault(_tonal);
 	
-	var _soundfontPlayer = __webpack_require__(34);
+	var _soundfontPlayer = __webpack_require__(33);
 	
 	var _soundfontPlayer2 = _interopRequireDefault(_soundfontPlayer);
 	
-	var _noteParser = __webpack_require__(9);
+	var _noteParser = __webpack_require__(8);
 	
 	var _noteParser2 = _interopRequireDefault(_noteParser);
+	
+	var _sheets = __webpack_require__(47);
+	
+	var _sheets2 = _interopRequireDefault(_sheets);
 	
 	var _soundfonts = __webpack_require__(48);
 	
@@ -104,7 +104,7 @@
 	    output: null,
 	    time: MIDI_START_TIME,
 	    marker: null,
-	    bpm: 60,
+	    bpm: 100,
 	    performance: [],
 	    config: {
 	      output: null,
@@ -282,7 +282,7 @@
 	  var time = {
 	    start: 0,
 	    duration: 0,
-	    ticksToTime: 60000 / (60 * _vexflow2.default.Flow.RESOLUTION / 4)
+	    ticksToTime: 60000 / (G.midi.bpm * _vexflow2.default.Flow.RESOLUTION / 4)
 	  };
 	
 	  // A system is a full measure.
@@ -35106,55 +35106,6 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports) {
-
-	module.exports = {
-		"type": "sheets",
-		"data": [
-			{
-				"name": "C Major",
-				"notes": [
-					"c4",
-					"d4",
-					"e4",
-					"f4",
-					"g4",
-					"a4",
-					"b4",
-					"c5"
-				]
-			},
-			{
-				"name": "C Harmonic Minor",
-				"notes": [
-					"c4",
-					"d4",
-					"eb4",
-					"f4",
-					"g4",
-					"ab4",
-					"b4",
-					"c5"
-				]
-			},
-			{
-				"name": "C Rast راست",
-				"notes": [
-					"c4",
-					"d4",
-					"ebs4",
-					"f4",
-					"g4",
-					"a4",
-					"bbs4",
-					"c5"
-				]
-			}
-		]
-	};
-
-/***/ },
-/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
@@ -35185,43 +35136,43 @@
 	var assign = Object.assign
 	var tonal = {}
 	
-	assign(tonal, __webpack_require__(7))
+	assign(tonal, __webpack_require__(6))
+	assign(tonal, __webpack_require__(11))
 	assign(tonal, __webpack_require__(12))
-	assign(tonal, __webpack_require__(13))
 	
-	tonal.note = __webpack_require__(15)
-	tonal.ivl = __webpack_require__(18)
-	tonal.midi = __webpack_require__(16)
-	tonal.freq = __webpack_require__(17)
-	tonal.range = __webpack_require__(19)
-	tonal.key = __webpack_require__(24)
+	tonal.note = __webpack_require__(14)
+	tonal.ivl = __webpack_require__(17)
+	tonal.midi = __webpack_require__(15)
+	tonal.freq = __webpack_require__(16)
+	tonal.range = __webpack_require__(18)
+	tonal.key = __webpack_require__(23)
 	
 	tonal.scale = function (name) { return tonal.scale.notes(name) }
-	assign(tonal.scale, __webpack_require__(27))
+	assign(tonal.scale, __webpack_require__(26))
 	tonal.chord = function (name) { return tonal.chord.notes(name) }
-	assign(tonal.chord, __webpack_require__(30))
+	assign(tonal.chord, __webpack_require__(29))
 	
-	tonal.pitch = __webpack_require__(8)
-	tonal.notation = __webpack_require__(25)
-	tonal.progression = __webpack_require__(32)
-	tonal.sonority = __webpack_require__(33)
+	tonal.pitch = __webpack_require__(7)
+	tonal.notation = __webpack_require__(24)
+	tonal.progression = __webpack_require__(31)
+	tonal.sonority = __webpack_require__(32)
 	
 	if (typeof module === 'object' && module.exports) module.exports = tonal
 	if (typeof window !== 'undefined') window.Tonal = tonal
 
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(8);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalDistance = __webpack_require__(13);
-	var toArr = __webpack_require__(14);
+	var tonalPitch = __webpack_require__(7);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalDistance = __webpack_require__(12);
+	var toArr = __webpack_require__(13);
 	
 	// utility
 	var isArr = Array.isArray
@@ -35496,16 +35447,16 @@
 	exports.permutations = permutations;
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(9);
-	var intervalNotation = __webpack_require__(10);
-	var tonalEncoding = __webpack_require__(11);
+	var noteParser = __webpack_require__(8);
+	var intervalNotation = __webpack_require__(9);
+	var tonalEncoding = __webpack_require__(10);
 	
 	/**
 	 * Create a pitch
@@ -35773,7 +35724,7 @@
 	exports.pitchFn = pitchFn;
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -35976,7 +35927,7 @@
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -36138,7 +36089,7 @@
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -36202,14 +36153,14 @@
 	exports.decode = decode;
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(8);
+	var tonalPitch = __webpack_require__(7);
 	
 	function trBy (i, p) {
 	  var t = tonalPitch.pType(p)
@@ -36275,14 +36226,14 @@
 	exports.trFifths = trFifths;
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(8);
+	var tonalPitch = __webpack_require__(7);
 	
 	// substract two pitches
 	function substr (a, b) {
@@ -36342,7 +36293,7 @@
 	exports.semitones = semitones;
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -36364,18 +36315,18 @@
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(9);
-	var tonalPitch = __webpack_require__(8);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalMidi = __webpack_require__(16);
-	var tonalFreq = __webpack_require__(17);
+	var noteParser = __webpack_require__(8);
+	var tonalPitch = __webpack_require__(7);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalMidi = __webpack_require__(15);
+	var tonalFreq = __webpack_require__(16);
 	
 	/**
 	 * Get the note midi number
@@ -36624,7 +36575,7 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -36633,7 +36584,7 @@
 	
 	function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 	
-	var parser = _interopDefault(__webpack_require__(9));
+	var parser = _interopDefault(__webpack_require__(8));
 	
 	/**
 	 * Convert the given note to a midi note number. If you pass a midi number it
@@ -36682,14 +36633,14 @@
 	exports.note = note;
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(16);
+	var tonalMidi = __webpack_require__(15);
 	
 	// decorate a function to round the numeric result to a max
 	function round (m, fn) {
@@ -36802,15 +36753,15 @@
 	exports.cents = cents;
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var intervalNotation = __webpack_require__(10);
-	var tonalPitch = __webpack_require__(8);
+	var intervalNotation = __webpack_require__(9);
+	var tonalPitch = __webpack_require__(7);
 	
 	/**
 	 * Get interval name. Can be used to test if it's an interval. It accepts intervals
@@ -37036,17 +36987,17 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalArray = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalMidi = __webpack_require__(16);
-	var tonalPitchset = __webpack_require__(20);
+	var tonalArray = __webpack_require__(6);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalMidi = __webpack_require__(15);
+	var tonalPitchset = __webpack_require__(19);
 	
 	function isNum (n) { return typeof n === 'number' }
 	// convert notes to midi if needed
@@ -37138,17 +37089,17 @@
 	exports.pitchSet = pitchSet;
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(8);
-	var tonalNote = __webpack_require__(21);
-	var tonalArray = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(12);
+	var tonalPitch = __webpack_require__(7);
+	var tonalNote = __webpack_require__(20);
+	var tonalArray = __webpack_require__(6);
+	var tonalTranspose = __webpack_require__(11);
 	
 	function toInt (set) { return parseInt(chroma(set), 2) }
 	function pitchChr (p) { p = tonalPitch.asPitch(p); return p ? tonalPitch.chr(p) : null }
@@ -37328,18 +37279,18 @@
 	exports.filter = filter;
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(9);
-	var tonalPitch = __webpack_require__(8);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalMidi = __webpack_require__(22);
-	var tonalFreq = __webpack_require__(23);
+	var noteParser = __webpack_require__(8);
+	var tonalPitch = __webpack_require__(7);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalMidi = __webpack_require__(21);
+	var tonalFreq = __webpack_require__(22);
 	
 	/**
 	 * Get the note midi number
@@ -37588,7 +37539,7 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -37597,7 +37548,7 @@
 	
 	function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 	
-	var parser = _interopDefault(__webpack_require__(9));
+	var parser = _interopDefault(__webpack_require__(8));
 	
 	/**
 	 * Test if the given number is a valid midi note number
@@ -37659,14 +37610,14 @@
 	exports.toNote = toNote;
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(22);
+	var tonalMidi = __webpack_require__(21);
 	
 	/**
 	 * Return a function that converts midi or notes names to frequency using
@@ -37757,19 +37708,19 @@
 	exports.cents = cents;
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNotation = __webpack_require__(25);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalNote = __webpack_require__(15);
-	var tonalRange = __webpack_require__(19);
-	var tonalArray = __webpack_require__(7);
-	var tonalHarmonizer = __webpack_require__(26);
+	var tonalNotation = __webpack_require__(24);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalNote = __webpack_require__(14);
+	var tonalRange = __webpack_require__(18);
+	var tonalArray = __webpack_require__(6);
+	var tonalHarmonizer = __webpack_require__(25);
 	
 	var isArr = Array.isArray
 	// Order matters: use an array
@@ -37992,7 +37943,7 @@
 	exports.accidentals = accidentals;
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -38100,16 +38051,16 @@
 	exports.toAcc = toAcc;
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalTranspose = __webpack_require__(12);
-	var tonalDistance = __webpack_require__(13);
-	var tonalArray = __webpack_require__(7);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalDistance = __webpack_require__(12);
+	var tonalArray = __webpack_require__(6);
 	
 	/**
 	 * Given a list of notes, return the distance from the first note to the rest.
@@ -38183,20 +38134,20 @@
 	exports.harmonize = harmonize;
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalDictionary = __webpack_require__(28);
-	var tonalArray = __webpack_require__(7);
-	var tonalNote = __webpack_require__(15);
-	var tonalPitch = __webpack_require__(8);
-	var tonalHarmonizer = __webpack_require__(26);
+	var tonalDictionary = __webpack_require__(27);
+	var tonalArray = __webpack_require__(6);
+	var tonalNote = __webpack_require__(14);
+	var tonalPitch = __webpack_require__(7);
+	var tonalHarmonizer = __webpack_require__(25);
 	
-	var DATA = __webpack_require__(29)
+	var DATA = __webpack_require__(28)
 	
 	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
 	
@@ -38278,16 +38229,16 @@
 	exports.detect = detect;
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalArray = __webpack_require__(7);
-	var tonalNote = __webpack_require__(15);
-	var tonalPitchset = __webpack_require__(20);
+	var tonalArray = __webpack_require__(6);
+	var tonalNote = __webpack_require__(14);
+	var tonalPitchset = __webpack_require__(19);
 	
 	/**
 	 * This module contains functions to query tonal dictionaries.
@@ -38412,7 +38363,7 @@
 	exports.detector = detector;
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -38737,21 +38688,21 @@
 	};
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalDictionary = __webpack_require__(28);
-	var tonalArray = __webpack_require__(7);
-	var tonalPitch = __webpack_require__(8);
-	var tonalNote = __webpack_require__(15);
-	var noteParser = __webpack_require__(9);
-	var tonalHarmonizer = __webpack_require__(26);
+	var tonalDictionary = __webpack_require__(27);
+	var tonalArray = __webpack_require__(6);
+	var tonalPitch = __webpack_require__(7);
+	var tonalNote = __webpack_require__(14);
+	var noteParser = __webpack_require__(8);
+	var tonalHarmonizer = __webpack_require__(25);
 	
-	var DATA = __webpack_require__(31)
+	var DATA = __webpack_require__(30)
 	
 	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
 	
@@ -38888,7 +38839,7 @@
 	exports.parse = parse;
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -39455,20 +39406,20 @@
 	};
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNote = __webpack_require__(15);
-	var tonalInterval = __webpack_require__(18);
-	var tonalArray = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(12);
-	var tonalDistance = __webpack_require__(13);
-	var tonalChord = __webpack_require__(30);
-	var tonalNotation = __webpack_require__(25);
+	var tonalNote = __webpack_require__(14);
+	var tonalInterval = __webpack_require__(17);
+	var tonalArray = __webpack_require__(6);
+	var tonalTranspose = __webpack_require__(11);
+	var tonalDistance = __webpack_require__(12);
+	var tonalChord = __webpack_require__(29);
+	var tonalNotation = __webpack_require__(24);
 	
 	/**
 	 * Given a chord progression and a tonic, return the chord progression
@@ -39573,16 +39524,16 @@
 	exports.parseRomanChord = parseRomanChord;
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalInterval = __webpack_require__(18);
-	var tonalPitch = __webpack_require__(8);
-	var tonalArray = __webpack_require__(7);
+	var tonalInterval = __webpack_require__(17);
+	var tonalPitch = __webpack_require__(7);
+	var tonalArray = __webpack_require__(6);
 	
 	/**
 	 * Get the intervals analysis of a collection of notes
@@ -39628,13 +39579,13 @@
 	exports.density = density;
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var load = __webpack_require__(35)
-	var player = __webpack_require__(38)
+	var load = __webpack_require__(34)
+	var player = __webpack_require__(37)
 	
 	/**
 	 * Load a soundfont instrument. It returns a promise that resolves to a
@@ -39710,7 +39661,7 @@
 	
 	// In the 1.0.0 release it will be:
 	// var Soundfont = {}
-	var Soundfont = __webpack_require__(47)
+	var Soundfont = __webpack_require__(46)
 	Soundfont.instrument = instrument
 	Soundfont.nameToUrl = nameToUrl
 	
@@ -39719,13 +39670,13 @@
 
 
 /***/ },
-/* 35 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var base64 = __webpack_require__(36)
-	var fetch = __webpack_require__(37)
+	var base64 = __webpack_require__(35)
+	var fetch = __webpack_require__(36)
 	
 	// Given a regex, return a function that test if against a string
 	function fromRegex (r) {
@@ -39872,7 +39823,7 @@
 
 
 /***/ },
-/* 36 */
+/* 35 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -39914,7 +39865,7 @@
 
 
 /***/ },
-/* 37 */
+/* 36 */
 /***/ function(module, exports) {
 
 	/* global XMLHttpRequest */
@@ -39944,16 +39895,16 @@
 
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var player = __webpack_require__(39)
-	var events = __webpack_require__(41)
-	var notes = __webpack_require__(42)
-	var scheduler = __webpack_require__(44)
-	var midi = __webpack_require__(45)
+	var player = __webpack_require__(38)
+	var events = __webpack_require__(40)
+	var notes = __webpack_require__(41)
+	var scheduler = __webpack_require__(43)
+	var midi = __webpack_require__(44)
 	
 	function SamplePlayer (ac, source, options) {
 	  return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -39964,13 +39915,13 @@
 
 
 /***/ },
-/* 39 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* global AudioBuffer */
 	'use strict'
 	
-	var ADSR = __webpack_require__(40)
+	var ADSR = __webpack_require__(39)
 	
 	var EMPTY = {}
 	var DEFAULTS = {
@@ -40182,7 +40133,7 @@
 
 
 /***/ },
-/* 40 */
+/* 39 */
 /***/ function(module, exports) {
 
 	module.exports = ADSR
@@ -40348,7 +40299,7 @@
 
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports) {
 
 	
@@ -40380,12 +40331,12 @@
 
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var note = __webpack_require__(43)
+	var note = __webpack_require__(42)
 	var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 	var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 	
@@ -40422,7 +40373,7 @@
 
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -40577,7 +40528,7 @@
 
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -40645,10 +40596,10 @@
 
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var midimessage = __webpack_require__(46)
+	var midimessage = __webpack_require__(45)
 	
 	module.exports = function (player) {
 	  /**
@@ -40700,19 +40651,19 @@
 
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var require;var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return require(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 	//# sourceMappingURL=dist/index.js.map
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var parser = __webpack_require__(9)
+	var parser = __webpack_require__(8)
 	
 	/**
 	 * Create a Soundfont object
@@ -40851,6 +40802,55 @@
 	
 	module.exports = Soundfont
 
+
+/***/ },
+/* 47 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"type": "sheets",
+		"data": [
+			{
+				"name": "C Major",
+				"notes": [
+					"c4",
+					"d4",
+					"e4",
+					"f4",
+					"g4",
+					"a4",
+					"b4",
+					"c5"
+				]
+			},
+			{
+				"name": "C Harmonic Minor",
+				"notes": [
+					"c4",
+					"d4",
+					"eb4",
+					"f4",
+					"g4",
+					"ab4",
+					"b4",
+					"c5"
+				]
+			},
+			{
+				"name": "C Rast راست",
+				"notes": [
+					"c4",
+					"d4",
+					"ebs4",
+					"f4",
+					"g4",
+					"a4",
+					"bbs4",
+					"c5"
+				]
+			}
+		]
+	};
 
 /***/ },
 /* 48 */

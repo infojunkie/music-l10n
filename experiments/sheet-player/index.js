@@ -2,10 +2,10 @@ import WebMidi, { Output } from 'webmidi';
 import $ from 'jquery';
 import store from 'store';
 import Vex from 'vexflow';
-import sheets from './sheets.json';
 import tonal from 'tonal';
 import Soundfont from 'soundfont-player';
 import NoteParser from 'note-parser';
+import sheets from './sheets.json';
 import soundfonts from './soundfonts.json';
 
 // Reach in deep structures without fear of TypeError exceptions.
@@ -31,7 +31,7 @@ let G = {
     output: null,
     time: MIDI_START_TIME,
     marker: null,
-    bpm: 60,
+    bpm: 100,
     performance: [],
     config: {
       output: null,
@@ -78,7 +78,7 @@ class LocalMidiOutput {
       return url + name + '-' + format + '.js';
     }}).then(function (instrument) {
       that.instrument = instrument;
-      $('#sheet #play').prop('disabled', false); 
+      $('#sheet #play').prop('disabled', false);
     });
   }
 };
@@ -156,7 +156,7 @@ function playVexFlow() {
   let time = {
     start: 0,
     duration: 0,
-    ticksToTime: 60000 / (60 * Vex.Flow.RESOLUTION / 4),
+    ticksToTime: 60000 / (G.midi.bpm * Vex.Flow.RESOLUTION / 4),
   };
 
   // A system is a full measure.
