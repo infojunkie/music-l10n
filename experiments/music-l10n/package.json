@@ -1,7 +1,7 @@
 {
   "name": "music-l10n",
   "version": "1.0.0",
-  "description": "Music localization.",
+  "description": "World music library.",
   "main": "dist/music-l10n.js",
   "scripts": {
     "prebuild": "eslint lib test",
