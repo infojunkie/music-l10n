@@ -28,7 +28,7 @@ require 'midilib'
 require 'zlib'
 include FileUtils
 
-BASE_DIR = "./soundfont" # Base output path
+BASE_DIR = "./soundfonts" # Base output path
 SOUNDFONT = ARGV[0] # Soundfont file path
 
 # This script will generate MIDI.js-compatible instrument JS files for
