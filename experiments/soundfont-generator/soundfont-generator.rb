@@ -30,31 +30,8 @@ include FileUtils
 
 BASE_DIR = "./soundfonts" # Base output path
 SOUNDFONT = ARGV[0] # Soundfont file path
-abort("Usage: #{File.basename($0)} path/to/soundfont.sf2") if SOUNDFONT.nil?
+abort("Usage: #{File.basename($0)} path/to/soundfont.sf2 optional,list,of,comma,separated,instrument,patch,numbers") if SOUNDFONT.nil?
 abort("Can't find soundfont: #{SOUNDFONT}") unless File.exists? SOUNDFONT
-
-# This script will generate MIDI.js-compatible instrument JS files for
-# all instruments in the below array. Add or remove as necessary.
-INSTRUMENTS = [
-  0     # Acoustic Grand Piano
-];
-# INSTRUMENTS = [
-#   0,     # Acoustic Grand Piano
-#   24,    # Acoustic Guitar (nylon)
-#   25,    # Acoustic Guitar (steel)
-#   26,    # Electric Guitar (jazz)
-#   30,    # Distortion Guitar
-#   33,    # Electric Bass (finger)
-#   34,    # Electric Bass (pick)
-#   56,    # Trumpet
-#   61,    # Brass Section
-#   64,    # Soprano Sax
-#   65,    # Alto Sax
-#   66,    # Tenor Sax
-#   67,    # Baritone Sax
-#   73,    # Flute
-#   118    # Synth Drum
-# ];
 
 # The encoders and tools are expected in your PATH. You can supply alternate
 # paths by changing the constants below.
@@ -65,6 +42,7 @@ FLUIDSYNTH = `which fluidsynth`.chomp
 puts "Building the following instruments using font: " + SOUNDFONT
 
 # Display instrument names.
+INSTRUMENTS = ARGV[1].nil? ? [0] : ARGV[1].split(",").map { |s| s.to_i }
 INSTRUMENTS.each do |i|
   puts "    #{i}: " + MIDI::GM_PATCH_NAMES[i]
 end
