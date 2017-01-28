@@ -40873,6 +40873,10 @@
 			"qanoon": {
 				"name": "Qanoon",
 				"url": "/soundfonts/Qanoon/"
+			},
+			"doumbek": {
+				"name": "Doumbek-Faisal",
+				"url": "/soundfonts/Doumbek-Faisal/"
 			}
 		}
 	};
