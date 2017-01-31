@@ -484,6 +484,7 @@
 	
 	  // Listen to Web MIDI state events.
 	  _webmidi2.default.addListener('connected', function (event) {
+	    if ((0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').length) return;
 	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
 	  });
 	  _webmidi2.default.addListener('disconnected', function (event) {

@@ -352,6 +352,7 @@ WebMidi.enable(function (err) {
 
   // Listen to Web MIDI state events.
   WebMidi.addListener('connected', (event) => {
+    if ($('#sheet #outputs option[value="' + event.id + '"]').length) return;
     $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
   });
   WebMidi.addListener('disconnected', (event) => {
