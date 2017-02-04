@@ -46,6 +46,8 @@
 
 	'use strict';
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _webmidi = __webpack_require__(1);
@@ -88,15 +90,85 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	var MIDI_PB_QUARTER_TONE = 0.25;
+	var MIDI_PB_THIRD_TONE = 1 / 3;
+	
+	// For now, a tuning is a mapping from accidentals to MIDI pitch bends
+	// https://github.com/0xfe/vexflow/wiki/Microtonal-Support
+	
+	var Tuning = function () {
+	  function Tuning(accidentalsMap) {
+	    _classCallCheck(this, Tuning);
+	
+	    this.accidentalsMap = accidentalsMap;
+	  }
+	
+	  _createClass(Tuning, [{
+	    key: 'noteToMidi',
+	    value: function noteToMidi(key, accidental, octave) {
+	      var _ornull = void 0;
+	
+	      _ORNULL: {
+	        try {
+	          _ornull = this.accidentalsMap[accidental];
+	          break _ORNULL;
+	        } catch (e) {
+	          _ornull = null;
+	          break _ORNULL;
+	        }
+	      }
+	
+	      var pb = _ornull;
+	      if (pb) {
+	        accidental = null;
+	      };
+	      var midi = _noteParser2.default.midi(key + (accidental || '') + octave);
+	      if (!midi) {
+	        console.log('Could not parse note ' + key + (accidental || '') + octave);
+	      }
+	      return [midi, pb];
+	    }
+	  }]);
+	
+	  return Tuning;
+	}();
+	
+	// Initialize known tunings.
+	
+	
+	var tunings = [{
+	  key: '12tet',
+	  name: 'Western standard tuning (12-tet)',
+	  tuning: new Tuning()
+	}, {
+	  key: '24tet',
+	  name: 'Arabic quarter-tone tuning (24-tet)',
+	  tuning: new Tuning({
+	    '+': MIDI_PB_QUARTER_TONE,
+	    '++': MIDI_PB_QUARTER_TONE * 3,
+	    'bs': -MIDI_PB_QUARTER_TONE,
+	    'bss': -MIDI_PB_QUARTER_TONE * 3
+	  })
+	}, {
+	  key: 'villoteau',
+	  name: 'Arabic Villoteau third-tone tuning',
+	  tuning: new Tuning({
+	    '+': MIDI_PB_THIRD_TONE,
+	    '++': MIDI_PB_THIRD_TONE * 2,
+	    'bs': -MIDI_PB_THIRD_TONE,
+	    'bss': -MIDI_PB_THIRD_TONE * 2
+	  })
+	}];
+	
 	// Reach in deep structures without fear of TypeError exceptions.
 	// e.g. x = ORNULL(a.b.c.d['e'].f.g);
+	
+	
 	function concat(a, b) {
 	  return a.concat(b);
 	}
 	
 	var MIDI_START_TIME = 1;
-	var MIDI_PB_QUARTER_TONE = 0.25; // a quarter tone is 1/4 of a tone
-	var MIDI_PB_COMMA = 1 / 9; // a comma is 1/9 of a tone
 	
 	// Global state
 	var G = {
@@ -106,13 +178,15 @@
 	    marker: null,
 	    bpm: 100,
 	    stream: [],
+	    tuning: null,
 	    config: {
 	      output: null,
 	      channel: 0,
 	      sheet: 0,
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
 	      marker_mode: 'measure',
-	      soundfont: 'musyngkite'
+	      soundfont: 'musyngkite',
+	      tuning: '12tet'
 	    }
 	  },
 	  sheets: _sheets2.default.data
@@ -131,14 +205,13 @@
 	
 	  _createClass(LocalMidiOutput, [{
 	    key: 'playNote',
-	    value: function playNote(noteName, channel, options) {
+	    value: function playNote(note, channel, options) {
 	      var time = G.midi.ac.currentTime + eval(options.time) * 0.001;
 	      var duration = options.duration * 0.001;
 	      if (this.pb) {
-	        noteName = _noteParser2.default.midi(noteName);
-	        noteName += this.pb * 2; // Local player counts microtones in fractions of semitones
+	        note += this.pb * 2; // Local player counts microtones in fractions of semitones
 	      }
-	      if (this.instrument) this.instrument.play(noteName, time, { duration: duration });
+	      if (this.instrument) this.instrument.play(note, time, { duration: duration });
 	    }
 	  }, {
 	    key: 'sendPitchBend',
@@ -214,40 +287,11 @@
 	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
 	  };
 	
-	  var _ornull = void 0;
-	
-	  _ORNULL: {
-	    try {
-	      _ornull = accidentalsMap[keySignature.keySpec];
-	      break _ORNULL;
-	    } catch (e) {
-	      _ornull = null;
-	      break _ORNULL;
-	    }
-	  }
-	
-	  return _ornull;
-	}
-	
-	// Convert a note to a MIDI message.
-	// Convert microtones into MIDI pitch bends.
-	function playNote(note, accidental, time, duration) {
-	  var acc_to_pb = {
-	    '+': MIDI_PB_QUARTER_TONE,
-	    '++': MIDI_PB_QUARTER_TONE * 3,
-	    'bs': -MIDI_PB_QUARTER_TONE,
-	    'd': -MIDI_PB_QUARTER_TONE,
-	    'db': -MIDI_PB_QUARTER_TONE * 3,
-	    '+-': MIDI_PB_COMMA * 5,
-	    '++-': MIDI_PB_COMMA * 8,
-	    'bss': -MIDI_PB_COMMA * 8
-	  };
-	
 	  var _ornull2 = void 0;
 	
 	  _ORNULL2: {
 	    try {
-	      _ornull2 = acc_to_pb[accidental];
+	      _ornull2 = accidentalsMap[keySignature.keySpec];
 	      break _ORNULL2;
 	    } catch (e) {
 	      _ornull2 = null;
@@ -255,17 +299,24 @@
 	    }
 	  }
 	
-	  var pb = _ornull2;
+	  return _ornull2;
+	}
+	
+	// Convert a note to a MIDI message.
+	// Convert microtones into MIDI pitch bends.
+	function playNote(note, accidental, time, duration) {
+	  var _G$midi$tuning$tuning = G.midi.tuning.tuning.noteToMidi(note.key, accidental, note.octave),
+	      _G$midi$tuning$tuning2 = _slicedToArray(_G$midi$tuning$tuning, 2),
+	      midi = _G$midi$tuning$tuning2[0],
+	      pb = _G$midi$tuning$tuning2[1];
+	
 	  if (pb) {
-	    accidental = '';
 	    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + time });
 	  }
-	
-	  G.midi.output.playNote(note.key + (accidental || '') + note.octave, G.midi.config.channel, {
+	  G.midi.output.playNote(midi, G.midi.config.channel, {
 	    time: '+' + time,
 	    duration: duration
 	  });
-	
 	  if (pb) {
 	    var endTime = time + duration;
 	    G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: '+' + endTime });
@@ -514,6 +565,19 @@
 	
 	  // Marker mode.
 	  (0, _jquery2.default)('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
+	
+	  // Tuning
+	  tunings.forEach(function (tuning) {
+	    (0, _jquery2.default)('#sheet #tunings').append((0, _jquery2.default)('<option>', { value: tuning.key, text: tuning.name }));
+	  });
+	  (0, _jquery2.default)('#sheet #tunings').on('change', function () {
+	    G.midi.config.tuning = (0, _jquery2.default)('#sheet #tunings').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	    G.midi.tuning = tunings.find(function (t) {
+	      return t.key === G.midi.config.tuning;
+	    });
+	  });
+	  (0, _jquery2.default)('#sheet #tunings').val(G.midi.config.tuning).trigger('change');
 	
 	  // Handle "Play" button.
 	  (0, _jquery2.default)('#sheet #play').on('click', function () {
@@ -40841,7 +40905,7 @@
 				]
 			},
 			{
-				"name": "C Rast راست",
+				"name": "C Rast رست",
 				"notes": [
 					"c4",
 					"d4",

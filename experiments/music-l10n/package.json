@@ -28,6 +28,7 @@
   ],
   "homepage": "https://github.com/infojunkie/music-l10n#readme",
   "dependencies": {
+    "js-combinatorics": "^0.5.2",
     "lodash": "^4.13.1",
     "sprintf": "^0.1.5",
     "xml2js": "^0.4.17"

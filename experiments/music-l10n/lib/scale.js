@@ -1,6 +1,7 @@
 // scale functions
 
 import sprintf from 'sprintf';
+import Combinatorics from 'js-combinatorics';
 import { evert } from './goodparts.js';
 
 /**
@@ -244,4 +245,21 @@ Scale.KNOWN_SCALES_EVERTED = evert(Scale.KNOWN_SCALES, 'names');
 Scale.INTERVAL_NAMES = {
   1: 'H',
   2: 'W'
+}
+
+// scales of degree n is the set of all combinations of T of length n
+// C(n,t) = P(n,t) / t! = n! / (n-t)! t!
+// that start with tone 0 === f
+//
+// only keep scales that satisfy some criteria, e.g.:
+// - contains a tone that is 3:2 frequency of root
+// - contains a tone that is 4:3 frequency of root
+// according to formula
+// t = n log2(f)
+
+Scale.generate = function(criteria, n, t) {
+  const tones = [...Array(t).keys()].slice(1); // [1..t]
+  return Combinatorics.bigCombination(tones, n-1)
+  .filter(criteria)
+  .map((scale) => [0].concat(scale));
 }
