@@ -310,6 +310,7 @@
 	      midi = _G$midi$tuning$tuning2[0],
 	      pb = _G$midi$tuning$tuning2[1];
 	
+	  if (!midi) return;
 	  if (pb) {
 	    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + time });
 	  }
