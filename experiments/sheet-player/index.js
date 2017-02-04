@@ -168,6 +168,7 @@ function getKeyAccidentals(keySignature) {
 // Convert microtones into MIDI pitch bends.
 function playNote(note, accidental, time, duration) {
   let [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, accidental, note.octave);
+  if (!midi) return;
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
   }
