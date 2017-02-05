@@ -20,9 +20,10 @@ class Tuning {
   noteToMidi(key, accidental, octave) {
     const pb = ORNULL(this.accidentalsMap[accidental]);
     if (pb) { accidental = null };
-    const midi = NoteParser.midi(key+(accidental||'')+octave);
+    let midi = NoteParser.midi(key+(accidental||'')+octave);
     if (!midi) {
-      console.log(`Could not parse note ${key}${accidental||''}${octave}`);
+      console.log(`Could not parse note ${key}${accidental||''}${octave}. Reverting to standard MIDI tuning.`);
+      midi = NoteParser.midi(key+octave);
     }
     return [ midi, pb ];
   }
@@ -498,7 +499,7 @@ function villoteau() {
   var notes = score.notes.bind(score);
   var beam = score.beam.bind(score);
 
-  var x = 120, y = 80;
+  var x = 20, y = 80;
   function makeSystem(width) {
     var system = vf.System({x: x, y: y, width: width, spaceBetweenStaves: 10});
     x += width;
@@ -512,56 +513,59 @@ function villoteau() {
   /*  Measure 1 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, (a3 c4 f+4)', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
   })
   .addClef('treble')
   .addTimeSignature('2/4')
   .setTempo({ name: "Moderato", duration: "q", bpm: 108}, -30);
+  system.addConnector('singleLeft');
 
   /*  Measure 2 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(notes('f+4/q', {stem: "up"}).concat(beam(notes('e4, f4', {stem: "up"}))))]
   });
 
   /*  Measure 3 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(beam(notes('g4, a4', {stem: "up"})).concat(beam(notes('g4, f+4', {stem: "up"}))))]
   });
 
   /*  Measure 4 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(beam(notes('g4, f+4', {stem: "up"})).concat(notes('e4/q', {stem: "up"})))]
   });
 
   /*  Measure 5 */
   x = 20;
-  y += 230;
+  y += 100;
 
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(notes('b4/r, e4', {stem: "up"}).concat(beam(notes('e4, e4', {stem: "up"}))))]
   });
+  system.addConnector('singleLeft');
 
   /*  Measure 6 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(notes('e4/q', {stem: "up"}).concat(beam(notes('d4, e4', {stem: "up"}))))]
   });
 
   /*  Measure 7 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(beam(notes('f+4, g4', {stem: "up"})).concat(beam(notes('e4, f4', {stem: "up"}))))]
   });
 
   /*  Measure 8 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
-  });
+    voices: [voice(notes('d4/q, b4/q/r', {stem: "up"}))]
+  })
+  .setEndBarType(Vex.Flow.Barline.type.REPEAT_END);
 
   return vf;
 }
