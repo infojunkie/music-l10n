@@ -343,6 +343,9 @@
 	  // A system is a full measure.
 	  G.vf.systems.forEach(function (system) {
 	
+	    // Remember which accidentals apply to which note keys.
+	    var measureAccidentals = [];
+	
 	    // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
 	    system.formatter.tickContexts.list.forEach(function (tickStart) {
 	      var tickContext = system.formatter.tickContexts.map[tickStart];
@@ -362,9 +365,7 @@
 	
 	      // Iterate on notes.
 	      tickContext.tickables.forEach(function (tickable) {
-	        var accidental = null;
 	        if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
-	
 	          // Parse stave modifiers for key signature, time signature, etc.
 	          tickable.stave.modifiers.forEach(function (modifier) {
 	            if (modifier instanceof _vexflow2.default.Flow.KeySignature) {
@@ -386,7 +387,7 @@
 	          // Parse note modifiers.
 	          tickable.modifiers.forEach(function (modifier) {
 	            if (modifier instanceof _vexflow2.default.Flow.Accidental) {
-	              accidental = modifier.type; // TODO: which note does this accidental affect?
+	              measureAccidentals[tickable.keyProps[modifier.index].key] = modifier.type;
 	            }
 	          });
 	
@@ -400,21 +401,36 @@
 	          }
 	
 	          // Output to MIDI.
-	          tickable.keyProps.forEach(function (note) {
-	            var _ornull3 = void 0;
+	          if (tickable.noteType === 'n') {
+	            tickable.keyProps.forEach(function (note) {
+	              var _ornull3 = void 0;
 	
-	            _ORNULL3: {
-	              try {
-	                _ornull3 = keyAccidentals[note.key];
-	                break _ORNULL3;
-	              } catch (e) {
-	                _ornull3 = null;
-	                break _ORNULL3;
+	              _ORNULL3: {
+	                try {
+	                  _ornull3 = measureAccidentals[note.key];
+	                  break _ORNULL3;
+	                } catch (e) {
+	                  _ornull3 = null;
+	                  break _ORNULL3;
+	                }
 	              }
-	            }
 	
-	            playNote(note, accidental ? accidental : _ornull3, time.start, time.duration);
-	          });
+	              var _ornull4 = void 0;
+	
+	              _ORNULL4: {
+	                try {
+	                  _ornull4 = keyAccidentals[note.key];
+	                  break _ORNULL4;
+	                } catch (e) {
+	                  _ornull4 = null;
+	                  break _ORNULL4;
+	                }
+	              }
+	
+	              var accidental = _ornull3 || _ornull4;
+	              playNote(note, accidental, time.start, time.duration);
+	            });
+	          }
 	        }
 	      });
 	
@@ -591,19 +607,19 @@
 	
 	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
-	    var _ornull4 = void 0;
+	    var _ornull5 = void 0;
 	
-	    _ORNULL4: {
+	    _ORNULL5: {
 	      try {
-	        _ornull4 = G.midi.output.stop;
-	        break _ORNULL4;
+	        _ornull5 = G.midi.output.stop;
+	        break _ORNULL5;
 	      } catch (e) {
-	        _ornull4 = null;
-	        break _ORNULL4;
+	        _ornull5 = null;
+	        break _ORNULL5;
 	      }
 	    }
 	
-	    if (_ornull4) {
+	    if (_ornull5) {
 	      G.midi.output.stop();
 	    } else {}
 	    // FIXME
@@ -627,6 +643,12 @@
 	    }).concat(['c5'])
 	  });
 	  G.sheets.unshift({
+	    name: 'Yâ lâbesyn يا لابسين',
+	    notes: function notes() {
+	      return villoteau();
+	    }
+	  });
+	  G.sheets.unshift({
 	    name: 'Bach Minuet in G',
 	    notes: function notes() {
 	      return bach();
@@ -645,6 +667,85 @@
 	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
 	});
+	
+	// Create a sheet of https://musescore.com/infojunkie/ya-labesyn
+	function villoteau() {
+	  var vf = new _vexflow2.default.Flow.Factory({
+	    renderer: { elementId: 'sheet-vexflow', width: 1100, height: 900 }
+	  });
+	  var score = vf.EasyScore({ throwOnError: true });
+	
+	  var voice = score.voice.bind(score);
+	  var notes = score.notes.bind(score);
+	  var beam = score.beam.bind(score);
+	
+	  var x = 120,
+	      y = 80;
+	  function makeSystem(width) {
+	    var system = vf.System({ x: x, y: y, width: width, spaceBetweenStaves: 10 });
+	    x += width;
+	    return system;
+	  }
+	
+	  function id(id) {
+	    return registry.getElementById(id);
+	  }
+	
+	  score.set({ time: '2/4' });
+	
+	  /*  Measure 1 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, (a3 c4 f+4)', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  }).addClef('treble').addTimeSignature('2/4').setTempo({ name: "Moderato", duration: "q", bpm: 108 }, -30);
+	
+	  /*  Measure 2 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 3 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 4 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 5 */
+	  x = 20;
+	  y += 230;
+	
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 6 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 7 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  /*  Measure 8 */
+	  var system = makeSystem(220);
+	  system.addStave({
+	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  });
+	
+	  return vf;
+	}
 	
 	// Create a sheet of Bach's Minuet in G.
 	// Copied from one of VexFlow's tests.
