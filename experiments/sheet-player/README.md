@@ -47,7 +47,7 @@ Basic playback is implemented using a [local synth that accepts MIDI messages](h
 
 This library is cool because it plays [soundfonts](https://en.wikipedia.org/wiki/SoundFont), which are a format to exchange instrument samples commonly used by various MIDI synths. The sheet player comes preloaded with 3 sondfonts, the last of which, **Qanoon**, is an example of a locally-generated one.
 
-To generate a local soundfont, you need to run `../soundfont-generator/soundfont-generator.rb` which takes a standard `.sf2` file and outputs a compatible sample structure that the library can load. Then edit `soundfonts.json` to include your soundfont in the dropdown.
+To generate a local soundfont, you need to run `../soundfont-generator/soundfont-generator.rb` which takes a standard `.sf2` file and outputs a compatible sample structure that the local synth player can load. Then edit `soundfonts.json` to include your soundfont in the dropdown.
 
 ## Music engraving and score definition
 Sheet music display is implemented using [VexFlow](https://github.com/0xfe/vexflow).
@@ -61,7 +61,9 @@ Since VexFlow contains a full specification of the performance, it can be parsed
 - Ties
 etc.
 
-## Microtonal support
+## Tuning and microtonal support
+The app supports multiple tunings, allowing to play music from different cultures. For example, contemporary Arabic music uses a quarter-tone system based on equal temperament of 24 microtones (12 of which align precisely with the standard Western equal temperament). A "tuning" is simply a mapping of notes names and accidentals to their equivalent MIDI note number and microtone value.
+
 To support microtonal music during MIDI playback, two approaches can be used:
 
 - Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can hear sound fluctuations at note boundaries. This approach is currently implemented.
@@ -112,4 +114,3 @@ options snd-seq-dummy ports=4
 - Add metronome
 - Add "loading..." spinner while loading soundfonts and other assets
 - Support MIDI Tuning system messages
-- Convert soundfonts sf* files to [JS format supported by soundfont-player](https://github.com/danigb/soundfont-player)
