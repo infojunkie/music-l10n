@@ -20,9 +20,10 @@ class Tuning {
   noteToMidi(key, accidental, octave) {
     const pb = ORNULL(this.accidentalsMap[accidental]);
     if (pb) { accidental = null };
-    let midi = NoteParser.midi(key+(accidental||'')+octave);
+    const keyAccidentalOctave = key + (accidental || '') + octave;
+    let midi = NoteParser.midi(keyAccidentalOctave);
     if (!midi) {
-      console.log(`Could not parse note ${key}${accidental||''}${octave}. Reverting to standard MIDI tuning.`);
+      console.log(`Could not parse note ${keyAccidentalOctave}. Trying without accidental.`);
       midi = NoteParser.midi(key+octave);
     }
     return [ midi, pb ];
@@ -76,12 +77,16 @@ const MIDI_START_TIME = 1;
 // Global state
 let G = {
   midi: {
+    ac: null,
     output: null,
     time: MIDI_START_TIME,
     marker: null,
     bpm: 100,
-    stream: [],
+    performance: {
+      sections: []
+    },
     tuning: null,
+    timers: [],
     config: {
       output: null,
       channel: 0,
@@ -167,8 +172,8 @@ function getKeyAccidentals(keySignature) {
 
 // Convert a note to a MIDI message.
 // Convert microtones into MIDI pitch bends.
-function playNote(note, accidental, time, duration) {
-  let [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, accidental, note.octave);
+function playNote(note, time, duration) {
+  let [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, note.accidental, note.octave);
   if (!midi) return;
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
@@ -183,64 +188,92 @@ function playNote(note, accidental, time, duration) {
   }
 }
 
+class Section {
+  constructor() {
+    this.key = null; // section label
+    this.repeat = 1; // number of times this section should be played
+    this.systems = [];
+  }
+};
+
 // Convert a Vex.Flow.Factory structure into a MIDI stream.
-function playVexFlow() {
-  G.midi.time = MIDI_START_TIME;
-  G.midi.timers = [];
-  G.midi.stream = [];
+function parseVexFlow() {
+  G.midi.performance = {
+    sections: []
+  };
 
   // Current key signature.
   let keyAccidentals = null;
 
   // Timing information that will be calculated inside.
-  let time = {
+  const time = {
     start: 0,
     duration: 0,
     ticksToTime: 60000 / (G.midi.bpm * Vex.Flow.RESOLUTION / 4),
   };
 
+  // A section is bounded by double barlines
+  // or other bounding symbols.
+  let currentSection = new Section();
+
   // A system is a full measure.
   G.vf.systems.forEach((system) => {
+    currentSection.systems.push(system);
 
     // Remember which accidentals apply to which note keys.
     let measureAccidentals = [];
+
+    // Remember the stave we've working with.
+    let currentStave = null;
 
     // A system's formatter has an ordered list of all tick events, grouped in "tick contexts".
     system.formatter.tickContexts.list.forEach((tickStart) => {
       const tickContext = system.formatter.tickContexts.map[tickStart];
 
-      // Used to display play marker.
-      let marker = {
-        ctx: system.checkContext(),
-        y1: system.options.y,
-        y2: system.lastY,
-        x1: system.startX,
-        x2: system.startX + system.formatter.justifyWidth
-      };
-      if (G.midi.config.marker_mode == 'note') {
-        marker.x1 = Number.MAX_SAFE_INTEGER;
-        marker.x2 = 0;
-      }
-
-      // Iterate on notes.
       tickContext.tickables.forEach((tickable) => {
         if (tickable instanceof Vex.Flow.StaveNote) {
-          // Parse stave modifiers for key signature, time signature, etc.
-          tickable.stave.modifiers.forEach((modifier) => {
-            if (modifier instanceof Vex.Flow.KeySignature) {
-              keyAccidentals = getKeyAccidentals(modifier);
-            }
-            if (modifier instanceof Vex.Flow.StaveTempo) {
-              const ticksPerTempoUnit = Vex.Flow.parseNoteData({
-                duration: modifier.tempo.duration,
-                dots: modifier.tempo.dots,
-              }).ticks;
-              time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
-            }
-          });
+          // Ignore staves we've already seen.
+          if (tickable.stave != currentStave) {
+            currentStave = tickable.stave;
+
+            // Parse stave modifiers for key signature, time signature, etc.
+            currentStave.modifiers.forEach((modifier) => {
+              if (modifier instanceof Vex.Flow.KeySignature) {
+                keyAccidentals = getKeyAccidentals(modifier);
+              }
+              if (modifier instanceof Vex.Flow.StaveTempo) {
+                const ticksPerTempoUnit = Vex.Flow.parseNoteData({
+                  duration: modifier.tempo.duration,
+                  dots: modifier.tempo.dots,
+                }).ticks;
+                time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
+              }
+              if (modifier instanceof Vex.Flow.Barline) {
+                switch (modifier.type) {
+                  case Vex.Flow.Barline.type.SINGLE: // 1
+                    break;
+                  case Vex.Flow.Barline.type.DOUBLE: // 2
+                    break;
+                  case Vex.Flow.Barline.type.END: // 3
+                    break;
+                  case Vex.Flow.Barline.type.REPEAT_BEGIN: // 4
+                    break;
+                  case Vex.Flow.Barline.type.REPEAT_END: // 5
+                    currentSection.repeat = 2;
+                    G.midi.performance.sections.push(currentSection);
+                    currentSection = new Section();
+                    break;
+                  case Vex.Flow.Barline.type.REPEAT_BOTH: // 6
+                    break;
+                  case Vex.Flow.Barline.type.NONE: // 7
+                    break;
+                }
+              }
+            });
+          }
 
           // Compute time.
-          time.start = G.midi.time + Math.round(tickStart * time.ticksToTime);
+          time.start = Math.round(tickStart * time.ticksToTime);
           time.duration = Math.round(tickable.ticks.numerator * time.ticksToTime / tickable.ticks.denominator);
 
           // Parse note modifiers.
@@ -250,60 +283,105 @@ function playVexFlow() {
             }
           });
 
-          // Compute play marker position.
-          if (G.midi.config.marker_mode == 'note') {
-            const metrics = tickable.getMetrics();
-            const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-            const xEnd = tickable.getAbsoluteX()
-              + metrics.noteWidth
-              + metrics.extraRightPx
-              + metrics.modRightPx;
-            marker.x1 = Math.min(marker.x1, xStart);
-            marker.x2 = Math.max(marker.x2, xEnd);
-          }
-
-          // Output to MIDI.
+          // Compute MIDI information.
+          tickable.midi = {
+            start: time.start,
+            duration: time.duration,
+          };
           if (tickable.noteType === 'n') {
             tickable.keyProps.forEach((note) => {
-              const accidental =
+              note.accidental =
+                note.accidental ||
                 ORNULL(measureAccidentals[note.key]) ||
                 ORNULL(keyAccidentals[note.key]);
-              playNote(note, accidental, time.start, time.duration);
             });
           }
         }
       });
-
-      // Draw play marker.
-      G.midi.timers.push(setTimeout(() => {
-        const ctx = marker.ctx;
-        if (G.midi.marker) {
-          try {
-            ctx.svg.removeChild(G.midi.marker);
-          }
-          catch (e) {
-            // never mind.
-          }
-        }
-        ctx.beginPath();
-        ctx.setStrokeStyle('#aaa');
-        ctx.setFillStyle('#aaa');
-        ctx.setLineWidth(1);
-        ctx.attributes.opacity = 0.2;
-        ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
-        G.midi.marker = ctx.svg.lastChild;
-      }, time.start + G.midi.config.sync));
     });
 
     // Advance time by measure's total ticks.
     // The conversion factor was computed separately by each tickable due to the VexFlow format.
-    G.midi.time += Math.round(system.formatter.totalTicks.numerator * time.ticksToTime / system.formatter.totalTicks.denominator);
+    system.midi = {
+      duration: Math.round(system.formatter.totalTicks.numerator * time.ticksToTime / system.formatter.totalTicks.denominator),
+    };
   });
+
+  // Last remaining section.
+  G.midi.performance.sections.push(currentSection);
 }
 
 // Play the sheet.
 function play() {
-  playVexFlow();
+  // This creates a G.midi.performance.
+  parseVexFlow();
+
+  // Play the performance.
+  G.midi.time = MIDI_START_TIME;
+  G.midi.timers = [];
+  G.midi.performance.sections.forEach((section) => {
+    for (var i=1; i<=section.repeat; i++) {
+      section.systems.forEach((system) => {
+        system.formatter.tickContexts.list.forEach((tickStart) => {
+          const tickContext = system.formatter.tickContexts.map[tickStart];
+
+          // Used to display play marker.
+          let marker = {
+            ctx: system.checkContext(),
+            y1: system.options.y,
+            y2: system.lastY,
+            x1: G.midi.config.marker_mode == 'note' ? Number.MAX_SAFE_INTEGER : system.startX,
+            x2: G.midi.config.marker_mode == 'note' ? 0 : system.startX + system.formatter.justifyWidth
+          };
+
+          tickContext.tickables.forEach((tickable) => {
+            if (tickable instanceof Vex.Flow.StaveNote) {
+              // Compute play marker position.
+              if (G.midi.config.marker_mode == 'note') {
+                const metrics = tickable.getMetrics();
+                const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+                const xEnd = tickable.getAbsoluteX()
+                  + metrics.noteWidth
+                  + metrics.extraRightPx
+                  + metrics.modRightPx;
+                marker.x1 = Math.min(marker.x1, xStart);
+                marker.x2 = Math.max(marker.x2, xEnd);
+              }
+
+              // Output to MIDI.
+              if (tickable.noteType === 'n') {
+                tickable.keyProps.forEach((note) => {
+                  playNote(note, G.midi.time + tickable.midi.start, tickable.midi.duration);
+                });
+              }
+
+              // Draw play marker.
+              G.midi.timers.push(setTimeout(() => {
+                const ctx = marker.ctx;
+                if (G.midi.marker) {
+                  try {
+                    ctx.svg.removeChild(G.midi.marker);
+                  }
+                  catch (e) {
+                    // never mind.
+                  }
+                }
+                ctx.beginPath();
+                ctx.setStrokeStyle('#aaa');
+                ctx.setFillStyle('#aaa');
+                ctx.setLineWidth(1);
+                ctx.attributes.opacity = 0.2;
+                ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
+                G.midi.marker = ctx.svg.lastChild;
+              }, G.midi.time + tickable.midi.start + G.midi.config.sync));
+            }
+          });
+        });
+
+        G.midi.time += system.midi.duration;
+      });
+    }
+  });
 }
 
 const CANVAS_WIDTH=500;
@@ -391,7 +469,7 @@ WebMidi.enable(function (err) {
       G.midi.output = new LocalMidiOutput();
     }
   });
-  $('#sheet #outputs').val(G.midi.config.output).trigger('change');
+  $('#sheet #outputs').val(G.midi.config.output).change();
 
   // Listen to Web MIDI state events.
   WebMidi.addListener('connected', (event) => {
@@ -419,7 +497,7 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     G.midi.output = new LocalMidiOutput();
   });
-  $('#sheet #soundfonts').val(G.midi.config.soundfont);
+  $('#sheet #soundfonts').val(G.midi.config.soundfont).change();
 
   // Marker mode.
   $('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
@@ -433,7 +511,7 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     G.midi.tuning = tunings.find((t) => t.key === G.midi.config.tuning);
   });
-  $('#sheet #tunings').val(G.midi.config.tuning).trigger('change');
+  $('#sheet #tunings').val(G.midi.config.tuning).change();
 
   // Handle "Play" button.
   $('#sheet #play').on('click', () => {
