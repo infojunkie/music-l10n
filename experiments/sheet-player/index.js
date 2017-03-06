@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import WebMidi, { Output } from 'webmidi';
 import $ from 'jquery';
 import store from 'store';
@@ -94,6 +95,7 @@ let G = {
       sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
       marker_mode: 'measure',
       soundfont: 'musyngkite',
+      instrument: 'acoustic_grand_piano',
       tuning: '12tet',
     }
   },
@@ -124,13 +126,14 @@ class LocalMidiOutput {
   load() {
     const that = this;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    G.midi.ac = new AudioContext();
+    G.midi.ac = G.midi.ac || new AudioContext();
     $('#sheet #play').prop('disabled', true);
-    Soundfont.instrument(G.midi.ac, 'acoustic_grand_piano', { soundfont: G.midi.config.soundfont, nameToUrl: (name, soundfont, format) => {
+    Soundfont.instrument(G.midi.ac, G.midi.config.instrument, { soundfont: G.midi.config.soundfont, nameToUrl: (name, soundfont, format) => {
       format = format || 'mp3';
       const url = soundfonts.data[soundfont].url;
       return url + name + '-' + format + '.js';
-    }}).then(function (instrument) {
+    }})
+    .then(function (instrument) {
       that.instrument = instrument;
       $('#sheet #play').prop('disabled', false);
     });
@@ -173,7 +176,7 @@ function getKeyAccidentals(keySignature) {
 // Convert a note to a MIDI message.
 // Convert microtones into MIDI pitch bends.
 function playNote(note, time, duration) {
-  let [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, note.accidental, note.octave);
+  const [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, note.accidental, note.octave);
   if (!midi) return;
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
@@ -183,7 +186,7 @@ function playNote(note, time, duration) {
     duration: duration
   });
   if (pb) {
-    let endTime = time + duration;
+    const endTime = time + duration;
     G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
   }
 }
@@ -485,9 +488,9 @@ WebMidi.enable(function (err) {
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
     $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
   });
-  $('#sheet #channels').val(G.midi.config.channel);
+  $('#sheet #channels').val(G.midi.config.channel).change();
 
-  // Soundfonts.
+  // Soundfonts and instruments.
   for (const sf in soundfonts.data) {
     const soundfont = soundfonts.data[sf];
     $('#sheet #soundfonts').append($('<option>', { text: soundfont.name, value: sf }));
@@ -496,8 +499,31 @@ WebMidi.enable(function (err) {
     G.midi.config.soundfont = $('#sheet #soundfonts').val();
     store.set('G.midi.config', G.midi.config);
     G.midi.output = new LocalMidiOutput();
+
+    // Update the instruments list.
+    fetch(soundfonts.data[G.midi.config.soundfont].url + '/names.json')
+    .then(function(response) {
+      return response.json();
+    })
+    .catch(function(e) {
+      return ['acoustic_grand_piano'];
+    })
+    .then(function(instruments) {
+      instruments.forEach((instrument) => {
+        $('#sheet #instruments').append($('<option>', { text: instrument, value: instrument }));
+      });
+      if (instruments.indexOf(G.midi.config.instrument) === -1) {
+        G.midi.config.instrument = instruments[0];
+      }
+      $('#sheet #instruments').val(G.midi.config.instrument).change();
+    });
   });
   $('#sheet #soundfonts').val(G.midi.config.soundfont).change();
+  $('#sheet #instruments').on('change', () => {
+    G.midi.config.instrument = $('#sheet #instruments').val();
+    store.set('G.midi.config', G.midi.config);
+    G.midi.output = new LocalMidiOutput();
+  });
 
   // Marker mode.
   $('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');

@@ -44,45 +44,522 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(1);
+	module.exports = __webpack_require__(2);
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	(function(self) {
+	  'use strict';
+	
+	  if (self.fetch) {
+	    return
+	  }
+	
+	  var support = {
+	    searchParams: 'URLSearchParams' in self,
+	    iterable: 'Symbol' in self && 'iterator' in Symbol,
+	    blob: 'FileReader' in self && 'Blob' in self && (function() {
+	      try {
+	        new Blob()
+	        return true
+	      } catch(e) {
+	        return false
+	      }
+	    })(),
+	    formData: 'FormData' in self,
+	    arrayBuffer: 'ArrayBuffer' in self
+	  }
+	
+	  if (support.arrayBuffer) {
+	    var viewClasses = [
+	      '[object Int8Array]',
+	      '[object Uint8Array]',
+	      '[object Uint8ClampedArray]',
+	      '[object Int16Array]',
+	      '[object Uint16Array]',
+	      '[object Int32Array]',
+	      '[object Uint32Array]',
+	      '[object Float32Array]',
+	      '[object Float64Array]'
+	    ]
+	
+	    var isDataView = function(obj) {
+	      return obj && DataView.prototype.isPrototypeOf(obj)
+	    }
+	
+	    var isArrayBufferView = ArrayBuffer.isView || function(obj) {
+	      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+	    }
+	  }
+	
+	  function normalizeName(name) {
+	    if (typeof name !== 'string') {
+	      name = String(name)
+	    }
+	    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+	      throw new TypeError('Invalid character in header field name')
+	    }
+	    return name.toLowerCase()
+	  }
+	
+	  function normalizeValue(value) {
+	    if (typeof value !== 'string') {
+	      value = String(value)
+	    }
+	    return value
+	  }
+	
+	  // Build a destructive iterator for the value list
+	  function iteratorFor(items) {
+	    var iterator = {
+	      next: function() {
+	        var value = items.shift()
+	        return {done: value === undefined, value: value}
+	      }
+	    }
+	
+	    if (support.iterable) {
+	      iterator[Symbol.iterator] = function() {
+	        return iterator
+	      }
+	    }
+	
+	    return iterator
+	  }
+	
+	  function Headers(headers) {
+	    this.map = {}
+	
+	    if (headers instanceof Headers) {
+	      headers.forEach(function(value, name) {
+	        this.append(name, value)
+	      }, this)
+	    } else if (Array.isArray(headers)) {
+	      headers.forEach(function(header) {
+	        this.append(header[0], header[1])
+	      }, this)
+	    } else if (headers) {
+	      Object.getOwnPropertyNames(headers).forEach(function(name) {
+	        this.append(name, headers[name])
+	      }, this)
+	    }
+	  }
+	
+	  Headers.prototype.append = function(name, value) {
+	    name = normalizeName(name)
+	    value = normalizeValue(value)
+	    var oldValue = this.map[name]
+	    this.map[name] = oldValue ? oldValue+','+value : value
+	  }
+	
+	  Headers.prototype['delete'] = function(name) {
+	    delete this.map[normalizeName(name)]
+	  }
+	
+	  Headers.prototype.get = function(name) {
+	    name = normalizeName(name)
+	    return this.has(name) ? this.map[name] : null
+	  }
+	
+	  Headers.prototype.has = function(name) {
+	    return this.map.hasOwnProperty(normalizeName(name))
+	  }
+	
+	  Headers.prototype.set = function(name, value) {
+	    this.map[normalizeName(name)] = normalizeValue(value)
+	  }
+	
+	  Headers.prototype.forEach = function(callback, thisArg) {
+	    for (var name in this.map) {
+	      if (this.map.hasOwnProperty(name)) {
+	        callback.call(thisArg, this.map[name], name, this)
+	      }
+	    }
+	  }
+	
+	  Headers.prototype.keys = function() {
+	    var items = []
+	    this.forEach(function(value, name) { items.push(name) })
+	    return iteratorFor(items)
+	  }
+	
+	  Headers.prototype.values = function() {
+	    var items = []
+	    this.forEach(function(value) { items.push(value) })
+	    return iteratorFor(items)
+	  }
+	
+	  Headers.prototype.entries = function() {
+	    var items = []
+	    this.forEach(function(value, name) { items.push([name, value]) })
+	    return iteratorFor(items)
+	  }
+	
+	  if (support.iterable) {
+	    Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+	  }
+	
+	  function consumed(body) {
+	    if (body.bodyUsed) {
+	      return Promise.reject(new TypeError('Already read'))
+	    }
+	    body.bodyUsed = true
+	  }
+	
+	  function fileReaderReady(reader) {
+	    return new Promise(function(resolve, reject) {
+	      reader.onload = function() {
+	        resolve(reader.result)
+	      }
+	      reader.onerror = function() {
+	        reject(reader.error)
+	      }
+	    })
+	  }
+	
+	  function readBlobAsArrayBuffer(blob) {
+	    var reader = new FileReader()
+	    var promise = fileReaderReady(reader)
+	    reader.readAsArrayBuffer(blob)
+	    return promise
+	  }
+	
+	  function readBlobAsText(blob) {
+	    var reader = new FileReader()
+	    var promise = fileReaderReady(reader)
+	    reader.readAsText(blob)
+	    return promise
+	  }
+	
+	  function readArrayBufferAsText(buf) {
+	    var view = new Uint8Array(buf)
+	    var chars = new Array(view.length)
+	
+	    for (var i = 0; i < view.length; i++) {
+	      chars[i] = String.fromCharCode(view[i])
+	    }
+	    return chars.join('')
+	  }
+	
+	  function bufferClone(buf) {
+	    if (buf.slice) {
+	      return buf.slice(0)
+	    } else {
+	      var view = new Uint8Array(buf.byteLength)
+	      view.set(new Uint8Array(buf))
+	      return view.buffer
+	    }
+	  }
+	
+	  function Body() {
+	    this.bodyUsed = false
+	
+	    this._initBody = function(body) {
+	      this._bodyInit = body
+	      if (!body) {
+	        this._bodyText = ''
+	      } else if (typeof body === 'string') {
+	        this._bodyText = body
+	      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+	        this._bodyBlob = body
+	      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+	        this._bodyFormData = body
+	      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+	        this._bodyText = body.toString()
+	      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+	        this._bodyArrayBuffer = bufferClone(body.buffer)
+	        // IE 10-11 can't handle a DataView body.
+	        this._bodyInit = new Blob([this._bodyArrayBuffer])
+	      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+	        this._bodyArrayBuffer = bufferClone(body)
+	      } else {
+	        throw new Error('unsupported BodyInit type')
+	      }
+	
+	      if (!this.headers.get('content-type')) {
+	        if (typeof body === 'string') {
+	          this.headers.set('content-type', 'text/plain;charset=UTF-8')
+	        } else if (this._bodyBlob && this._bodyBlob.type) {
+	          this.headers.set('content-type', this._bodyBlob.type)
+	        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+	          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+	        }
+	      }
+	    }
+	
+	    if (support.blob) {
+	      this.blob = function() {
+	        var rejected = consumed(this)
+	        if (rejected) {
+	          return rejected
+	        }
+	
+	        if (this._bodyBlob) {
+	          return Promise.resolve(this._bodyBlob)
+	        } else if (this._bodyArrayBuffer) {
+	          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+	        } else if (this._bodyFormData) {
+	          throw new Error('could not read FormData body as blob')
+	        } else {
+	          return Promise.resolve(new Blob([this._bodyText]))
+	        }
+	      }
+	
+	      this.arrayBuffer = function() {
+	        if (this._bodyArrayBuffer) {
+	          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+	        } else {
+	          return this.blob().then(readBlobAsArrayBuffer)
+	        }
+	      }
+	    }
+	
+	    this.text = function() {
+	      var rejected = consumed(this)
+	      if (rejected) {
+	        return rejected
+	      }
+	
+	      if (this._bodyBlob) {
+	        return readBlobAsText(this._bodyBlob)
+	      } else if (this._bodyArrayBuffer) {
+	        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+	      } else if (this._bodyFormData) {
+	        throw new Error('could not read FormData body as text')
+	      } else {
+	        return Promise.resolve(this._bodyText)
+	      }
+	    }
+	
+	    if (support.formData) {
+	      this.formData = function() {
+	        return this.text().then(decode)
+	      }
+	    }
+	
+	    this.json = function() {
+	      return this.text().then(JSON.parse)
+	    }
+	
+	    return this
+	  }
+	
+	  // HTTP methods whose capitalization should be normalized
+	  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+	
+	  function normalizeMethod(method) {
+	    var upcased = method.toUpperCase()
+	    return (methods.indexOf(upcased) > -1) ? upcased : method
+	  }
+	
+	  function Request(input, options) {
+	    options = options || {}
+	    var body = options.body
+	
+	    if (input instanceof Request) {
+	      if (input.bodyUsed) {
+	        throw new TypeError('Already read')
+	      }
+	      this.url = input.url
+	      this.credentials = input.credentials
+	      if (!options.headers) {
+	        this.headers = new Headers(input.headers)
+	      }
+	      this.method = input.method
+	      this.mode = input.mode
+	      if (!body && input._bodyInit != null) {
+	        body = input._bodyInit
+	        input.bodyUsed = true
+	      }
+	    } else {
+	      this.url = String(input)
+	    }
+	
+	    this.credentials = options.credentials || this.credentials || 'omit'
+	    if (options.headers || !this.headers) {
+	      this.headers = new Headers(options.headers)
+	    }
+	    this.method = normalizeMethod(options.method || this.method || 'GET')
+	    this.mode = options.mode || this.mode || null
+	    this.referrer = null
+	
+	    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+	      throw new TypeError('Body not allowed for GET or HEAD requests')
+	    }
+	    this._initBody(body)
+	  }
+	
+	  Request.prototype.clone = function() {
+	    return new Request(this, { body: this._bodyInit })
+	  }
+	
+	  function decode(body) {
+	    var form = new FormData()
+	    body.trim().split('&').forEach(function(bytes) {
+	      if (bytes) {
+	        var split = bytes.split('=')
+	        var name = split.shift().replace(/\+/g, ' ')
+	        var value = split.join('=').replace(/\+/g, ' ')
+	        form.append(decodeURIComponent(name), decodeURIComponent(value))
+	      }
+	    })
+	    return form
+	  }
+	
+	  function parseHeaders(rawHeaders) {
+	    var headers = new Headers()
+	    rawHeaders.split(/\r?\n/).forEach(function(line) {
+	      var parts = line.split(':')
+	      var key = parts.shift().trim()
+	      if (key) {
+	        var value = parts.join(':').trim()
+	        headers.append(key, value)
+	      }
+	    })
+	    return headers
+	  }
+	
+	  Body.call(Request.prototype)
+	
+	  function Response(bodyInit, options) {
+	    if (!options) {
+	      options = {}
+	    }
+	
+	    this.type = 'default'
+	    this.status = 'status' in options ? options.status : 200
+	    this.ok = this.status >= 200 && this.status < 300
+	    this.statusText = 'statusText' in options ? options.statusText : 'OK'
+	    this.headers = new Headers(options.headers)
+	    this.url = options.url || ''
+	    this._initBody(bodyInit)
+	  }
+	
+	  Body.call(Response.prototype)
+	
+	  Response.prototype.clone = function() {
+	    return new Response(this._bodyInit, {
+	      status: this.status,
+	      statusText: this.statusText,
+	      headers: new Headers(this.headers),
+	      url: this.url
+	    })
+	  }
+	
+	  Response.error = function() {
+	    var response = new Response(null, {status: 0, statusText: ''})
+	    response.type = 'error'
+	    return response
+	  }
+	
+	  var redirectStatuses = [301, 302, 303, 307, 308]
+	
+	  Response.redirect = function(url, status) {
+	    if (redirectStatuses.indexOf(status) === -1) {
+	      throw new RangeError('Invalid status code')
+	    }
+	
+	    return new Response(null, {status: status, headers: {location: url}})
+	  }
+	
+	  self.Headers = Headers
+	  self.Request = Request
+	  self.Response = Response
+	
+	  self.fetch = function(input, init) {
+	    return new Promise(function(resolve, reject) {
+	      var request = new Request(input, init)
+	      var xhr = new XMLHttpRequest()
+	
+	      xhr.onload = function() {
+	        var options = {
+	          status: xhr.status,
+	          statusText: xhr.statusText,
+	          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+	        }
+	        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+	        var body = 'response' in xhr ? xhr.response : xhr.responseText
+	        resolve(new Response(body, options))
+	      }
+	
+	      xhr.onerror = function() {
+	        reject(new TypeError('Network request failed'))
+	      }
+	
+	      xhr.ontimeout = function() {
+	        reject(new TypeError('Network request failed'))
+	      }
+	
+	      xhr.open(request.method, request.url, true)
+	
+	      if (request.credentials === 'include') {
+	        xhr.withCredentials = true
+	      }
+	
+	      if ('responseType' in xhr && support.blob) {
+	        xhr.responseType = 'blob'
+	      }
+	
+	      request.headers.forEach(function(value, name) {
+	        xhr.setRequestHeader(name, value)
+	      })
+	
+	      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+	    })
+	  }
+	  self.fetch.polyfill = true
+	})(typeof self !== 'undefined' ? self : this);
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _webmidi = __webpack_require__(1);
+	__webpack_require__(1);
+	
+	var _webmidi = __webpack_require__(3);
 	
 	var _webmidi2 = _interopRequireDefault(_webmidi);
 	
-	var _jquery = __webpack_require__(2);
+	var _jquery = __webpack_require__(4);
 	
 	var _jquery2 = _interopRequireDefault(_jquery);
 	
-	var _store = __webpack_require__(3);
+	var _store = __webpack_require__(5);
 	
 	var _store2 = _interopRequireDefault(_store);
 	
-	var _vexflow = __webpack_require__(4);
+	var _vexflow = __webpack_require__(6);
 	
 	var _vexflow2 = _interopRequireDefault(_vexflow);
 	
-	var _tonal = __webpack_require__(5);
+	var _tonal = __webpack_require__(7);
 	
 	var _tonal2 = _interopRequireDefault(_tonal);
 	
-	var _soundfontPlayer = __webpack_require__(33);
+	var _soundfontPlayer = __webpack_require__(35);
 	
 	var _soundfontPlayer2 = _interopRequireDefault(_soundfontPlayer);
 	
-	var _noteParser = __webpack_require__(8);
+	var _noteParser = __webpack_require__(10);
 	
 	var _noteParser2 = _interopRequireDefault(_noteParser);
 	
-	var _sheets = __webpack_require__(47);
+	var _sheets = __webpack_require__(49);
 	
 	var _sheets2 = _interopRequireDefault(_sheets);
 	
-	var _soundfonts = __webpack_require__(48);
+	var _soundfonts = __webpack_require__(50);
 	
 	var _soundfonts2 = _interopRequireDefault(_soundfonts);
 	
@@ -192,6 +669,7 @@
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
 	      marker_mode: 'measure',
 	      soundfont: 'musyngkite',
+	      instrument: 'acoustic_grand_piano',
 	      tuning: '12tet'
 	    }
 	  },
@@ -234,9 +712,9 @@
 	    value: function load() {
 	      var that = this;
 	      var AudioContext = window.AudioContext || window.webkitAudioContext;
-	      G.midi.ac = new AudioContext();
+	      G.midi.ac = G.midi.ac || new AudioContext();
 	      (0, _jquery2.default)('#sheet #play').prop('disabled', true);
-	      _soundfontPlayer2.default.instrument(G.midi.ac, 'acoustic_grand_piano', { soundfont: G.midi.config.soundfont, nameToUrl: function nameToUrl(name, soundfont, format) {
+	      _soundfontPlayer2.default.instrument(G.midi.ac, G.midi.config.instrument, { soundfont: G.midi.config.soundfont, nameToUrl: function nameToUrl(name, soundfont, format) {
 	          format = format || 'mp3';
 	          var url = _soundfonts2.default.data[soundfont].url;
 	          return url + name + '-' + format + '.js';
@@ -653,9 +1131,9 @@
 	  }).concat(['all']).forEach(function (channel) {
 	    (0, _jquery2.default)('#sheet #channels').append((0, _jquery2.default)('<option>', { value: channel, text: channel }));
 	  });
-	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel);
+	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel).change();
 	
-	  // Soundfonts.
+	  // Soundfonts and instruments.
 	  for (var sf in _soundfonts2.default.data) {
 	    var soundfont = _soundfonts2.default.data[sf];
 	    (0, _jquery2.default)('#sheet #soundfonts').append((0, _jquery2.default)('<option>', { text: soundfont.name, value: sf }));
@@ -664,8 +1142,28 @@
 	    G.midi.config.soundfont = (0, _jquery2.default)('#sheet #soundfonts').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    G.midi.output = new LocalMidiOutput();
+	
+	    // Update the instruments list.
+	    fetch(_soundfonts2.default.data[G.midi.config.soundfont].url + '/names.json').then(function (response) {
+	      return response.json();
+	    }).catch(function (e) {
+	      return ['acoustic_grand_piano'];
+	    }).then(function (instruments) {
+	      instruments.forEach(function (instrument) {
+	        (0, _jquery2.default)('#sheet #instruments').append((0, _jquery2.default)('<option>', { text: instrument, value: instrument }));
+	      });
+	      if (instruments.indexOf(G.midi.config.instrument) === -1) {
+	        G.midi.config.instrument = instruments[0];
+	      }
+	      (0, _jquery2.default)('#sheet #instruments').val(G.midi.config.instrument).change();
+	    });
 	  });
 	  (0, _jquery2.default)('#sheet #soundfonts').val(G.midi.config.soundfont).change();
+	  (0, _jquery2.default)('#sheet #instruments').on('change', function () {
+	    G.midi.config.instrument = (0, _jquery2.default)('#sheet #instruments').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	    G.midi.output = new LocalMidiOutput();
+	  });
 	
 	  // Marker mode.
 	  (0, _jquery2.default)('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
@@ -1154,7 +1652,7 @@
 	}
 
 /***/ },
-/* 1 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -1190,7 +1688,7 @@
 	var parsed;if(void 0===time)return 0;if(time&&time.substring&&"+"===time.substring(0,1)){if(parsed=parseFloat(time),!parsed)throw new TypeError("Invalid relative time format.");return parsed+wm.time}if(parsed=parseFloat(time),!parsed)throw new TypeError("Invalid absolute time format.");return parsed},Output.prototype._convertNoteToArray=function(note){var notes=[];return Array.isArray(note)||(note=[note]),note.forEach(function(item){notes.push(wm.guessNoteNumber(item))}),notes},Output.prototype._convertChannelToArray=function(channel){if(("all"===channel||void 0===channel)&&(channel=["all"]),Array.isArray(channel)||(channel=[channel]),channel.indexOf("all")>-1){channel=[];for(var i=1;16>=i;i++)channel.push(i)}return channel.forEach(function(ch){if(!(ch>=1&&16>=ch))throw new RangeError("MIDI channels must be between 1 and 16.")}),channel},Output.prototype._onMidiMessage=function(e){}, true?!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function(){return wm}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):"undefined"!=typeof module&&module.exports?module.exports=wm:scope.WebMidi||(scope.WebMidi=wm)}(this);
 
 /***/ },
-/* 2 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -11416,7 +11914,7 @@
 
 
 /***/ },
-/* 3 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {"use strict"
@@ -11614,7 +12112,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function webpackUniversalModuleDefinition(root, factory) {
@@ -35364,7 +35862,7 @@
 	//# sourceMappingURL=vexflow-debug.js.map
 
 /***/ },
-/* 5 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
@@ -35395,43 +35893,43 @@
 	var assign = Object.assign
 	var tonal = {}
 	
-	assign(tonal, __webpack_require__(6))
-	assign(tonal, __webpack_require__(11))
-	assign(tonal, __webpack_require__(12))
+	assign(tonal, __webpack_require__(8))
+	assign(tonal, __webpack_require__(13))
+	assign(tonal, __webpack_require__(14))
 	
-	tonal.note = __webpack_require__(14)
-	tonal.ivl = __webpack_require__(17)
-	tonal.midi = __webpack_require__(15)
-	tonal.freq = __webpack_require__(16)
-	tonal.range = __webpack_require__(18)
-	tonal.key = __webpack_require__(23)
+	tonal.note = __webpack_require__(16)
+	tonal.ivl = __webpack_require__(19)
+	tonal.midi = __webpack_require__(17)
+	tonal.freq = __webpack_require__(18)
+	tonal.range = __webpack_require__(20)
+	tonal.key = __webpack_require__(25)
 	
 	tonal.scale = function (name) { return tonal.scale.notes(name) }
-	assign(tonal.scale, __webpack_require__(26))
+	assign(tonal.scale, __webpack_require__(28))
 	tonal.chord = function (name) { return tonal.chord.notes(name) }
-	assign(tonal.chord, __webpack_require__(29))
+	assign(tonal.chord, __webpack_require__(31))
 	
-	tonal.pitch = __webpack_require__(7)
-	tonal.notation = __webpack_require__(24)
-	tonal.progression = __webpack_require__(31)
-	tonal.sonority = __webpack_require__(32)
+	tonal.pitch = __webpack_require__(9)
+	tonal.notation = __webpack_require__(26)
+	tonal.progression = __webpack_require__(33)
+	tonal.sonority = __webpack_require__(34)
 	
 	if (typeof module === 'object' && module.exports) module.exports = tonal
 	if (typeof window !== 'undefined') window.Tonal = tonal
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalDistance = __webpack_require__(12);
-	var toArr = __webpack_require__(13);
+	var tonalPitch = __webpack_require__(9);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalDistance = __webpack_require__(14);
+	var toArr = __webpack_require__(15);
 	
 	// utility
 	var isArr = Array.isArray
@@ -35706,16 +36204,16 @@
 	exports.permutations = permutations;
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(8);
-	var intervalNotation = __webpack_require__(9);
-	var tonalEncoding = __webpack_require__(10);
+	var noteParser = __webpack_require__(10);
+	var intervalNotation = __webpack_require__(11);
+	var tonalEncoding = __webpack_require__(12);
 	
 	/**
 	 * Create a pitch
@@ -35983,7 +36481,7 @@
 	exports.pitchFn = pitchFn;
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -36186,7 +36684,7 @@
 
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -36348,7 +36846,7 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -36412,14 +36910,14 @@
 	exports.decode = decode;
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(7);
+	var tonalPitch = __webpack_require__(9);
 	
 	function trBy (i, p) {
 	  var t = tonalPitch.pType(p)
@@ -36485,14 +36983,14 @@
 	exports.trFifths = trFifths;
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(7);
+	var tonalPitch = __webpack_require__(9);
 	
 	// substract two pitches
 	function substr (a, b) {
@@ -36552,7 +37050,7 @@
 	exports.semitones = semitones;
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -36574,18 +37072,18 @@
 
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(8);
-	var tonalPitch = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalMidi = __webpack_require__(15);
-	var tonalFreq = __webpack_require__(16);
+	var noteParser = __webpack_require__(10);
+	var tonalPitch = __webpack_require__(9);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalMidi = __webpack_require__(17);
+	var tonalFreq = __webpack_require__(18);
 	
 	/**
 	 * Get the note midi number
@@ -36834,7 +37332,7 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -36843,7 +37341,7 @@
 	
 	function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 	
-	var parser = _interopDefault(__webpack_require__(8));
+	var parser = _interopDefault(__webpack_require__(10));
 	
 	/**
 	 * Convert the given note to a midi note number. If you pass a midi number it
@@ -36892,14 +37390,14 @@
 	exports.note = note;
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(15);
+	var tonalMidi = __webpack_require__(17);
 	
 	// decorate a function to round the numeric result to a max
 	function round (m, fn) {
@@ -37012,15 +37510,15 @@
 	exports.cents = cents;
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var intervalNotation = __webpack_require__(9);
-	var tonalPitch = __webpack_require__(7);
+	var intervalNotation = __webpack_require__(11);
+	var tonalPitch = __webpack_require__(9);
 	
 	/**
 	 * Get interval name. Can be used to test if it's an interval. It accepts intervals
@@ -37246,17 +37744,17 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalArray = __webpack_require__(6);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalMidi = __webpack_require__(15);
-	var tonalPitchset = __webpack_require__(19);
+	var tonalArray = __webpack_require__(8);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalMidi = __webpack_require__(17);
+	var tonalPitchset = __webpack_require__(21);
 	
 	function isNum (n) { return typeof n === 'number' }
 	// convert notes to midi if needed
@@ -37348,17 +37846,17 @@
 	exports.pitchSet = pitchSet;
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalPitch = __webpack_require__(7);
-	var tonalNote = __webpack_require__(20);
-	var tonalArray = __webpack_require__(6);
-	var tonalTranspose = __webpack_require__(11);
+	var tonalPitch = __webpack_require__(9);
+	var tonalNote = __webpack_require__(22);
+	var tonalArray = __webpack_require__(8);
+	var tonalTranspose = __webpack_require__(13);
 	
 	function toInt (set) { return parseInt(chroma(set), 2) }
 	function pitchChr (p) { p = tonalPitch.asPitch(p); return p ? tonalPitch.chr(p) : null }
@@ -37538,18 +38036,18 @@
 	exports.filter = filter;
 
 /***/ },
-/* 20 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var noteParser = __webpack_require__(8);
-	var tonalPitch = __webpack_require__(7);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalMidi = __webpack_require__(21);
-	var tonalFreq = __webpack_require__(22);
+	var noteParser = __webpack_require__(10);
+	var tonalPitch = __webpack_require__(9);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalMidi = __webpack_require__(23);
+	var tonalFreq = __webpack_require__(24);
 	
 	/**
 	 * Get the note midi number
@@ -37798,7 +38296,7 @@
 	exports.simplify = simplify;
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -37807,7 +38305,7 @@
 	
 	function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 	
-	var parser = _interopDefault(__webpack_require__(8));
+	var parser = _interopDefault(__webpack_require__(10));
 	
 	/**
 	 * Test if the given number is a valid midi note number
@@ -37869,14 +38367,14 @@
 	exports.toNote = toNote;
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(21);
+	var tonalMidi = __webpack_require__(23);
 	
 	/**
 	 * Return a function that converts midi or notes names to frequency using
@@ -37967,19 +38465,19 @@
 	exports.cents = cents;
 
 /***/ },
-/* 23 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNotation = __webpack_require__(24);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalNote = __webpack_require__(14);
-	var tonalRange = __webpack_require__(18);
-	var tonalArray = __webpack_require__(6);
-	var tonalHarmonizer = __webpack_require__(25);
+	var tonalNotation = __webpack_require__(26);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalNote = __webpack_require__(16);
+	var tonalRange = __webpack_require__(20);
+	var tonalArray = __webpack_require__(8);
+	var tonalHarmonizer = __webpack_require__(27);
 	
 	var isArr = Array.isArray
 	// Order matters: use an array
@@ -38202,7 +38700,7 @@
 	exports.accidentals = accidentals;
 
 /***/ },
-/* 24 */
+/* 26 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -38310,16 +38808,16 @@
 	exports.toAcc = toAcc;
 
 /***/ },
-/* 25 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalTranspose = __webpack_require__(11);
-	var tonalDistance = __webpack_require__(12);
-	var tonalArray = __webpack_require__(6);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalDistance = __webpack_require__(14);
+	var tonalArray = __webpack_require__(8);
 	
 	/**
 	 * Given a list of notes, return the distance from the first note to the rest.
@@ -38393,20 +38891,20 @@
 	exports.harmonize = harmonize;
 
 /***/ },
-/* 26 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalDictionary = __webpack_require__(27);
-	var tonalArray = __webpack_require__(6);
-	var tonalNote = __webpack_require__(14);
-	var tonalPitch = __webpack_require__(7);
-	var tonalHarmonizer = __webpack_require__(25);
+	var tonalDictionary = __webpack_require__(29);
+	var tonalArray = __webpack_require__(8);
+	var tonalNote = __webpack_require__(16);
+	var tonalPitch = __webpack_require__(9);
+	var tonalHarmonizer = __webpack_require__(27);
 	
-	var DATA = __webpack_require__(28)
+	var DATA = __webpack_require__(30)
 	
 	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
 	
@@ -38488,16 +38986,16 @@
 	exports.detect = detect;
 
 /***/ },
-/* 27 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalArray = __webpack_require__(6);
-	var tonalNote = __webpack_require__(14);
-	var tonalPitchset = __webpack_require__(19);
+	var tonalArray = __webpack_require__(8);
+	var tonalNote = __webpack_require__(16);
+	var tonalPitchset = __webpack_require__(21);
 	
 	/**
 	 * This module contains functions to query tonal dictionaries.
@@ -38622,7 +39120,7 @@
 	exports.detector = detector;
 
 /***/ },
-/* 28 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -38947,21 +39445,21 @@
 	};
 
 /***/ },
-/* 29 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalDictionary = __webpack_require__(27);
-	var tonalArray = __webpack_require__(6);
-	var tonalPitch = __webpack_require__(7);
-	var tonalNote = __webpack_require__(14);
-	var noteParser = __webpack_require__(8);
-	var tonalHarmonizer = __webpack_require__(25);
+	var tonalDictionary = __webpack_require__(29);
+	var tonalArray = __webpack_require__(8);
+	var tonalPitch = __webpack_require__(9);
+	var tonalNote = __webpack_require__(16);
+	var noteParser = __webpack_require__(10);
+	var tonalHarmonizer = __webpack_require__(27);
 	
-	var DATA = __webpack_require__(30)
+	var DATA = __webpack_require__(32)
 	
 	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
 	
@@ -39098,7 +39596,7 @@
 	exports.parse = parse;
 
 /***/ },
-/* 30 */
+/* 32 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -39665,20 +40163,20 @@
 	};
 
 /***/ },
-/* 31 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNote = __webpack_require__(14);
-	var tonalInterval = __webpack_require__(17);
-	var tonalArray = __webpack_require__(6);
-	var tonalTranspose = __webpack_require__(11);
-	var tonalDistance = __webpack_require__(12);
-	var tonalChord = __webpack_require__(29);
-	var tonalNotation = __webpack_require__(24);
+	var tonalNote = __webpack_require__(16);
+	var tonalInterval = __webpack_require__(19);
+	var tonalArray = __webpack_require__(8);
+	var tonalTranspose = __webpack_require__(13);
+	var tonalDistance = __webpack_require__(14);
+	var tonalChord = __webpack_require__(31);
+	var tonalNotation = __webpack_require__(26);
 	
 	/**
 	 * Given a chord progression and a tonic, return the chord progression
@@ -39783,16 +40281,16 @@
 	exports.parseRomanChord = parseRomanChord;
 
 /***/ },
-/* 32 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalInterval = __webpack_require__(17);
-	var tonalPitch = __webpack_require__(7);
-	var tonalArray = __webpack_require__(6);
+	var tonalInterval = __webpack_require__(19);
+	var tonalPitch = __webpack_require__(9);
+	var tonalArray = __webpack_require__(8);
 	
 	/**
 	 * Get the intervals analysis of a collection of notes
@@ -39838,13 +40336,13 @@
 	exports.density = density;
 
 /***/ },
-/* 33 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var load = __webpack_require__(34)
-	var player = __webpack_require__(37)
+	var load = __webpack_require__(36)
+	var player = __webpack_require__(39)
 	
 	/**
 	 * Load a soundfont instrument. It returns a promise that resolves to a
@@ -39920,7 +40418,7 @@
 	
 	// In the 1.0.0 release it will be:
 	// var Soundfont = {}
-	var Soundfont = __webpack_require__(46)
+	var Soundfont = __webpack_require__(48)
 	Soundfont.instrument = instrument
 	Soundfont.nameToUrl = nameToUrl
 	
@@ -39929,13 +40427,13 @@
 
 
 /***/ },
-/* 34 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var base64 = __webpack_require__(35)
-	var fetch = __webpack_require__(36)
+	var base64 = __webpack_require__(37)
+	var fetch = __webpack_require__(38)
 	
 	// Given a regex, return a function that test if against a string
 	function fromRegex (r) {
@@ -40082,7 +40580,7 @@
 
 
 /***/ },
-/* 35 */
+/* 37 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -40124,7 +40622,7 @@
 
 
 /***/ },
-/* 36 */
+/* 38 */
 /***/ function(module, exports) {
 
 	/* global XMLHttpRequest */
@@ -40154,16 +40652,16 @@
 
 
 /***/ },
-/* 37 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var player = __webpack_require__(38)
-	var events = __webpack_require__(40)
-	var notes = __webpack_require__(41)
-	var scheduler = __webpack_require__(43)
-	var midi = __webpack_require__(44)
+	var player = __webpack_require__(40)
+	var events = __webpack_require__(42)
+	var notes = __webpack_require__(43)
+	var scheduler = __webpack_require__(45)
+	var midi = __webpack_require__(46)
 	
 	function SamplePlayer (ac, source, options) {
 	  return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -40174,13 +40672,13 @@
 
 
 /***/ },
-/* 38 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* global AudioBuffer */
 	'use strict'
 	
-	var ADSR = __webpack_require__(39)
+	var ADSR = __webpack_require__(41)
 	
 	var EMPTY = {}
 	var DEFAULTS = {
@@ -40392,7 +40890,7 @@
 
 
 /***/ },
-/* 39 */
+/* 41 */
 /***/ function(module, exports) {
 
 	module.exports = ADSR
@@ -40558,7 +41056,7 @@
 
 
 /***/ },
-/* 40 */
+/* 42 */
 /***/ function(module, exports) {
 
 	
@@ -40590,12 +41088,12 @@
 
 
 /***/ },
-/* 41 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var note = __webpack_require__(42)
+	var note = __webpack_require__(44)
 	var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 	var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 	
@@ -40632,7 +41130,7 @@
 
 
 /***/ },
-/* 42 */
+/* 44 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -40787,7 +41285,7 @@
 
 
 /***/ },
-/* 43 */
+/* 45 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -40855,10 +41353,10 @@
 
 
 /***/ },
-/* 44 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var midimessage = __webpack_require__(45)
+	var midimessage = __webpack_require__(47)
 	
 	module.exports = function (player) {
 	  /**
@@ -40910,19 +41408,19 @@
 
 
 /***/ },
-/* 45 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var require;var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return require(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 	//# sourceMappingURL=dist/index.js.map
 
 /***/ },
-/* 46 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var parser = __webpack_require__(8)
+	var parser = __webpack_require__(10)
 	
 	/**
 	 * Create a Soundfont object
@@ -41063,7 +41561,7 @@
 
 
 /***/ },
-/* 47 */
+/* 49 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -41112,7 +41610,7 @@
 	};
 
 /***/ },
-/* 48 */
+/* 50 */
 /***/ function(module, exports) {
 
 	module.exports = {
