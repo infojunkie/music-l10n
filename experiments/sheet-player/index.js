@@ -501,6 +501,7 @@ WebMidi.enable(function (err) {
     G.midi.output = new LocalMidiOutput();
 
     // Update the instruments list.
+    $('#sheet #instruments').empty();
     fetch(soundfonts.data[G.midi.config.soundfont].url + '/names.json')
     .then(function(response) {
       return response.json();

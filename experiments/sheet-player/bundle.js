@@ -1144,6 +1144,7 @@
 	    G.midi.output = new LocalMidiOutput();
 	
 	    // Update the instruments list.
+	    (0, _jquery2.default)('#sheet #instruments').empty();
 	    fetch(_soundfonts2.default.data[G.midi.config.soundfont].url + '/names.json').then(function (response) {
 	      return response.json();
 	    }).catch(function (e) {
