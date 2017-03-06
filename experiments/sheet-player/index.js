@@ -465,10 +465,12 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
     if (G.midi.config.output !== 'local') {
       $('#sheet #soundfonts').prop('disabled', true);
+      $('#sheet #instruments').prop('disabled', true);
       G.midi.output = WebMidi.getOutputById(G.midi.config.output);
     }
     else {
       $('#sheet #soundfonts').prop('disabled', false);
+      $('#sheet #instruments').prop('disabled', false);
       G.midi.output = new LocalMidiOutput();
     }
   });

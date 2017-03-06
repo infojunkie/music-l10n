@@ -1107,9 +1107,11 @@
 	    _store2.default.set('G.midi.config', G.midi.config);
 	    if (G.midi.config.output !== 'local') {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', true);
+	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', true);
 	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
 	    } else {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', false);
+	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', false);
 	      G.midi.output = new LocalMidiOutput();
 	    }
 	  });
