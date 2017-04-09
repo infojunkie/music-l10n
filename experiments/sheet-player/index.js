@@ -96,6 +96,7 @@ let G = {
       marker_mode: 'measure',
       soundfont: 'musyngkite',
       instrument: 'acoustic_grand_piano',
+      drum: 'doumbek',
       tuning: '12tet',
     }
   },
@@ -447,7 +448,6 @@ function render(notes) {
 
   // Remember VexFlow structure.
   G.vf = vf;
-  console.log(G.vf);
 }
 
 // Initialize the Web MIDI system and the UI.
@@ -504,7 +504,7 @@ WebMidi.enable(function (err) {
 
     // Update the instruments list.
     $('#sheet #instruments').empty();
-    fetch(soundfonts.data[G.midi.config.soundfont].url + '/names.json')
+    fetch(soundfonts.data[G.midi.config.soundfont].url + 'names.json')
     .then(function(response) {
       return response.json();
     })

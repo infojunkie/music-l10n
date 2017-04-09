@@ -26,11 +26,12 @@ require 'base64'
 require 'fileutils'
 require 'midilib'
 require 'zlib'
+require 'json'
 include FileUtils
 
 BASE_DIR = "./soundfonts" # Base output path
 SOUNDFONT = ARGV[0] # Soundfont file path
-abort("Usage: #{File.basename($0)} path/to/soundfont.sf2 optional,list,of,comma,separated,instrument,patch,numbers") if SOUNDFONT.nil?
+abort("Usage: #{File.basename($0)} path/to/soundfont.sf2 [path/to/names.json] [list,of,instrument,patches]") if SOUNDFONT.nil?
 abort("Can't find soundfont: #{SOUNDFONT}") unless File.exists? SOUNDFONT
 
 # The encoders and tools are expected in your PATH. You can supply alternate
@@ -42,9 +43,11 @@ FLUIDSYNTH = `which fluidsynth`.chomp
 puts "Building the following instruments using font: " + SOUNDFONT
 
 # Display instrument names.
-INSTRUMENTS = ARGV[1].nil? ? [0] : ARGV[1].split(",").map { |s| s.to_i }
+PATCH_NAMES = ARGV[1].nil? ? MIDI::GM_PATCH_NAMES : JSON.parse(File.read(ARGV[1]))
+INSTRUMENTS = ARGV[2].nil? ? [0] : ARGV[2].split(",").map { |s| s.to_i }
 INSTRUMENTS.each do |i|
-  puts "    #{i}: " + MIDI::GM_PATCH_NAMES[i]
+  abort("Can't find instrument #{i} in given patch list.") if PATCH_NAMES[i].nil?
+  puts "    #{i}: " + PATCH_NAMES[i]
 end
 
 puts
@@ -162,8 +165,7 @@ def base64js(note, file, type)
 end
 
 def generate_audio(program)
-  include MIDI
-  instrument = GM_PATCH_NAMES[program]
+  instrument = PATCH_NAMES[program]
   instrument_key = instrument.downcase.gsub(/[^a-z0-9 ]/, "").gsub(/\s+/, "_")
 
   puts "Generating audio for: " + instrument + "(#{instrument_key})"
