@@ -878,6 +878,8 @@
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.DOUBLE:
 	                    // 2
+	                    G.midi.performance.sections.push(currentSection);
+	                    currentSection = new Section();
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.END:
 	                    // 3
@@ -1231,6 +1233,12 @@
 	    }).concat(['c5'])
 	  });
 	  G.sheets.unshift({
+	    name: 'Lamma bada yatathanna لما بدا يتثنى',
+	    notes: function notes() {
+	      return yatathanna();
+	    }
+	  });
+	  G.sheets.unshift({
 	    name: 'Yâ lâbesyn يا لابسين',
 	    notes: function notes() {
 	      return villoteau();
@@ -1255,6 +1263,55 @@
 	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
 	});
+	
+	// Create a sheet of https://musescore.com/infojunkie/lamma-bada-yatathanna
+	function yatathanna() {
+	  var vf = new _vexflow2.default.Flow.Factory({
+	    renderer: { elementId: 'sheet-vexflow', width: 1100, height: 900 }
+	  });
+	  var score = vf.EasyScore({ throwOnError: true });
+	
+	  var voice = score.voice.bind(score);
+	  var notes = score.notes.bind(score);
+	  var beam = score.beam.bind(score);
+	
+	  var x = 20,
+	      y = 80;
+	  function makeSystem(width) {
+	    var system = vf.System({ x: x, y: y, width: width, spaceBetweenStaves: 10 });
+	    x += width;
+	    return system;
+	  }
+	
+	  function id(id) {
+	    return registry.getElementById(id);
+	  }
+	
+	  score.set({ time: '10/8' });
+	
+	  /*  Pickup measure  */
+	  var system = makeSystem(120);
+	  system.addStave({
+	    voices: [voice(notes('d4/8', { stem: "up" })).setStrict(false)]
+	  }).addClef('treble').addTimeSignature('10/8').setTempo({ duration: "8", bpm: 120 }, -30).setEndBarType(_vexflow2.default.Flow.Barline.type.DOUBLE);
+	
+	  /*  Measure 1 */
+	  var system = makeSystem(680);
+	  system.addStave({
+	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, bb4/16', { stem: "up" }))).concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, d4/8', { stem: "up" })))]
+	  });
+	
+	  x = 20;
+	  y += 100;
+	
+	  /*  Measure 2 */
+	  var system = makeSystem(800);
+	  system.addStave({
+	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, bb4/16', { stem: "up" }))).concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, b4/8/r', { stem: "up" })))]
+	  }).setEndBarType(_vexflow2.default.Flow.Barline.type.END);
+	
+	  return vf;
+	}
 	
 	// Create a sheet of https://musescore.com/infojunkie/ya-labesyn
 	function villoteau() {
