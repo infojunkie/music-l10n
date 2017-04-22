@@ -1,17 +1,11 @@
 # Sheet Player
 
-## WAT?
-A MIDI-enabled sheet music navigator, player, and editor packaged as a web app.
+## Wat is this?
 
-Navigator means we can organize and query sheets. Anything from a C harmonic minor scale to a jazz standard or a Bach minuet.
-
-Player means we generate a stream of MIDI events corresponding to the sheet's sequence.
-
-Editor means we can create new sheets, e.g.:
-- by importing from MIDI files, MusicXML files, etc.,
-- by entering notes and scores in a textual format,
-- by applying functions to existing sheets or parts thereof (e.g. `add6thBelowEachNote` or `transposeUpA3rd`)
-- by receiving input from other MIDI sources e.g. keyboard or sequencer
+A demo of music localization in action. The sheet player supports the following features:
+- MIDI output or local sounds synthesis
+- Microtonal tunings including ability to replay piece in a different tuning
+- Microtonal key signatures
 
 [CHECK OUT THE DEMO!](http://ethereum.karimratib.me:8080/)
 
@@ -104,8 +98,8 @@ options snd-seq-dummy ports=4
 - Read and write MusicXML files
 - Read and write MIDI files
 - Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection")
-- The main sheet and scribbles should support standard actions: play/pause, export, embed, etc.
 - Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
+- Percussion track
 - Playback with auto-generated accompaniment
 - Refactor code, use React
 - Add "Sync" widget to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
