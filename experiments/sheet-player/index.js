@@ -76,7 +76,7 @@ function concat(a, b) { return a.concat(b); }
 const MIDI_START_TIME = 1;
 
 // Global state
-let G = {
+window.G = {
   midi: {
     ac: null,
     output: null,
@@ -102,6 +102,16 @@ let G = {
   },
   sheets: sheets.data
 };
+// G is a global variable that is a proxy to window.G
+// this allows to debug G in the JS console.
+function SimpleProxy(target) {
+  return new Proxy(target, {
+    get: function(target, name) {
+      return target[name];
+    }
+  });
+}
+var G = SimpleProxy(window.G);
 
 // Local MIDI output class that conforms to WedMidi.Output interface.
 class LocalMidiOutput {
@@ -171,7 +181,12 @@ function getKeyAccidentals(keySignature) {
     'Gb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b' },
     'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
   };
-  return ORNULL(accidentalsMap[keySignature.keySpec]);
+  const map = ORNULL(accidentalsMap[keySignature.keySpec]);
+  const keys = Object.keys(map);
+  keySignature.accList.forEach((acc, index) => {
+    map[ keys[index] ] = acc.type;
+  });
+  return map;
 }
 
 // Convert a note to a MIDI message.
@@ -581,7 +596,7 @@ WebMidi.enable(function (err) {
   });
   G.sheets.unshift({
     name: 'Yâ lâbesyn يا لابسين',
-    notes: () => villoteau()
+    notes: () => labesyn()
   });
   G.sheets.unshift({
     name: 'Bach Minuet in G',
@@ -624,10 +639,11 @@ function yatathanna() {
   score.set({time: '10/8'});
 
   /*  Pickup measure  */
-  var system = makeSystem(120);
+  var system = makeSystem(200);
   system.addStave({
     voices: [voice(notes('d4/8', {stem: "up"})).setStrict(false)]
   })
+  .addKeySignature('Bb')
   .addClef('treble')
   .addTimeSignature('10/8')
   .setTempo({ duration: "8", bpm: 120}, -30)
@@ -638,8 +654,8 @@ function yatathanna() {
   system.addStave({
     voices: [
       voice(notes('g4/q', {stem: "up"})
-      .concat(beam(notes('a4/16, bb4/16', {stem: "up"})))
-      .concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', {stem: "down"})))
+      .concat(beam(notes('a4/16, b4/16', {stem: "up"})))
+      .concat(beam(notes('c5/16, b4/16, b4/16, a4/16', {stem: "down"})))
       .concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', {stem: "up"})))
       .concat(notes('g4/q, d4/8', {stem: "up"}))
     )]
@@ -653,8 +669,8 @@ function yatathanna() {
   system.addStave({
     voices: [
       voice(notes('g4/q', {stem: "up"})
-      .concat(beam(notes('a4/16, bb4/16', {stem: "up"})))
-      .concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', {stem: "down"})))
+      .concat(beam(notes('a4/16, b4/16', {stem: "up"})))
+      .concat(beam(notes('c5/16, b4/16, b4/16, a4/16', {stem: "down"})))
       .concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', {stem: "up"})))
       .concat(notes('g4/q, b4/8/r', {stem: "up"}))
     )]
@@ -665,7 +681,7 @@ function yatathanna() {
 }
 
 // Create a sheet of https://musescore.com/infojunkie/ya-labesyn
-function villoteau() {
+function labesyn() {
   var vf = new Vex.Flow.Factory({
     renderer: {elementId: 'sheet-vexflow', width: 1100, height: 900}
   });
@@ -689,8 +705,9 @@ function villoteau() {
   /*  Measure 1 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('b4/r, f+4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
+    voices: [voice(notes('b4/r, f4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
   })
+  .addKeySignature('G', undefined, ['+'])
   .addClef('treble')
   .addTimeSignature('2/4')
   .setTempo({ name: "Moderato", duration: "q", bpm: 108}, -30);
@@ -699,19 +716,19 @@ function villoteau() {
   /*  Measure 2 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(notes('f+4/q', {stem: "up"}).concat(beam(notes('e4, f4', {stem: "up"}))))]
+    voices: [voice(notes('f4/q', {stem: "up"}).concat(beam(notes('e4, f4', {stem: "up"}))))]
   });
 
   /*  Measure 3 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(beam(notes('g4, a4', {stem: "up"})).concat(beam(notes('g4, f+4', {stem: "up"}))))]
+    voices: [voice(beam(notes('g4, a4', {stem: "up"})).concat(beam(notes('g4, f4', {stem: "up"}))))]
   });
 
   /*  Measure 4 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(beam(notes('g4, f+4', {stem: "up"})).concat(notes('e4/q', {stem: "up"})))]
+    voices: [voice(beam(notes('g4, f4', {stem: "up"})).concat(notes('e4/q', {stem: "up"})))]
   });
 
   /*  Measure 5 */
@@ -733,7 +750,7 @@ function villoteau() {
   /*  Measure 7 */
   var system = makeSystem(220);
   system.addStave({
-    voices: [voice(beam(notes('f+4, g4', {stem: "up"})).concat(beam(notes('e4, f4', {stem: "up"}))))]
+    voices: [voice(beam(notes('f4, g4', {stem: "up"})).concat(beam(notes('e4, f4', {stem: "up"}))))]
   });
 
   /*  Measure 8 */

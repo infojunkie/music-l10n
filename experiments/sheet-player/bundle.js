@@ -42,15 +42,15 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	__webpack_require__(1);
 	module.exports = __webpack_require__(2);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	(function(self) {
 	  'use strict';
@@ -515,9 +515,9 @@
 	})(typeof self !== 'undefined' ? self : this);
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -547,7 +547,7 @@
 	
 	var _tonal2 = _interopRequireDefault(_tonal);
 	
-	var _soundfontPlayer = __webpack_require__(35);
+	var _soundfontPlayer = __webpack_require__(36);
 	
 	var _soundfontPlayer2 = _interopRequireDefault(_soundfontPlayer);
 	
@@ -555,11 +555,11 @@
 	
 	var _noteParser2 = _interopRequireDefault(_noteParser);
 	
-	var _sheets = __webpack_require__(49);
+	var _sheets = __webpack_require__(50);
 	
 	var _sheets2 = _interopRequireDefault(_sheets);
 	
-	var _soundfonts = __webpack_require__(50);
+	var _soundfonts = __webpack_require__(51);
 	
 	var _soundfonts2 = _interopRequireDefault(_soundfonts);
 	
@@ -650,7 +650,7 @@
 	var MIDI_START_TIME = 1;
 	
 	// Global state
-	var G = {
+	window.G = {
 	  midi: {
 	    ac: null,
 	    output: null,
@@ -676,6 +676,16 @@
 	  },
 	  sheets: _sheets2.default.data
 	};
+	// G is a global variable that is a proxy to window.G
+	// this allows to debug G in the JS console.
+	function SimpleProxy(target) {
+	  return new Proxy(target, {
+	    get: function get(target, name) {
+	      return target[name];
+	    }
+	  });
+	}
+	var G = SimpleProxy(window.G);
 	
 	// Local MIDI output class that conforms to WedMidi.Output interface.
 	
@@ -784,7 +794,12 @@
 	    }
 	  }
 	
-	  return _ornull2;
+	  var map = _ornull2;
+	  var keys = Object.keys(map);
+	  keySignature.accList.forEach(function (acc, index) {
+	    map[keys[index]] = acc.type;
+	  });
+	  return map;
 	}
 	
 	// Convert a note to a MIDI message.
@@ -1241,7 +1256,7 @@
 	  G.sheets.unshift({
 	    name: 'Yâ lâbesyn يا لابسين',
 	    notes: function notes() {
-	      return villoteau();
+	      return labesyn();
 	    }
 	  });
 	  G.sheets.unshift({
@@ -1290,15 +1305,15 @@
 	  score.set({ time: '10/8' });
 	
 	  /*  Pickup measure  */
-	  var system = makeSystem(120);
+	  var system = makeSystem(200);
 	  system.addStave({
 	    voices: [voice(notes('d4/8', { stem: "up" })).setStrict(false)]
-	  }).addClef('treble').addTimeSignature('10/8').setTempo({ duration: "8", bpm: 120 }, -30).setEndBarType(_vexflow2.default.Flow.Barline.type.DOUBLE);
+	  }).addKeySignature('Bb').addClef('treble').addTimeSignature('10/8').setTempo({ duration: "8", bpm: 120 }, -30).setEndBarType(_vexflow2.default.Flow.Barline.type.DOUBLE);
 	
 	  /*  Measure 1 */
 	  var system = makeSystem(680);
 	  system.addStave({
-	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, bb4/16', { stem: "up" }))).concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, d4/8', { stem: "up" })))]
+	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, b4/16', { stem: "up" }))).concat(beam(notes('c5/16, b4/16, b4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, d4/8', { stem: "up" })))]
 	  });
 	
 	  x = 20;
@@ -1307,14 +1322,14 @@
 	  /*  Measure 2 */
 	  var system = makeSystem(800);
 	  system.addStave({
-	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, bb4/16', { stem: "up" }))).concat(beam(notes('c5/16, bb4/16, bb4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, b4/8/r', { stem: "up" })))]
+	    voices: [voice(notes('g4/q', { stem: "up" }).concat(beam(notes('a4/16, b4/16', { stem: "up" }))).concat(beam(notes('c5/16, b4/16, b4/16, a4/16', { stem: "down" }))).concat(beam(notes('a4/16, g4/16, g4/16, f#4/16', { stem: "up" }))).concat(notes('g4/q, b4/8/r', { stem: "up" })))]
 	  }).setEndBarType(_vexflow2.default.Flow.Barline.type.END);
 	
 	  return vf;
 	}
 	
 	// Create a sheet of https://musescore.com/infojunkie/ya-labesyn
-	function villoteau() {
+	function labesyn() {
 	  var vf = new _vexflow2.default.Flow.Factory({
 	    renderer: { elementId: 'sheet-vexflow', width: 1100, height: 900 }
 	  });
@@ -1341,26 +1356,26 @@
 	  /*  Measure 1 */
 	  var system = makeSystem(220);
 	  system.addStave({
-	    voices: [voice(notes('b4/r, f+4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
-	  }).addClef('treble').addTimeSignature('2/4').setTempo({ name: "Moderato", duration: "q", bpm: 108 }, -30);
+	    voices: [voice(notes('b4/r, f4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
+	  }).addKeySignature('G', undefined, ['+']).addClef('treble').addTimeSignature('2/4').setTempo({ name: "Moderato", duration: "q", bpm: 108 }, -30);
 	  system.addConnector('singleLeft');
 	
 	  /*  Measure 2 */
 	  var system = makeSystem(220);
 	  system.addStave({
-	    voices: [voice(notes('f+4/q', { stem: "up" }).concat(beam(notes('e4, f4', { stem: "up" }))))]
+	    voices: [voice(notes('f4/q', { stem: "up" }).concat(beam(notes('e4, f4', { stem: "up" }))))]
 	  });
 	
 	  /*  Measure 3 */
 	  var system = makeSystem(220);
 	  system.addStave({
-	    voices: [voice(beam(notes('g4, a4', { stem: "up" })).concat(beam(notes('g4, f+4', { stem: "up" }))))]
+	    voices: [voice(beam(notes('g4, a4', { stem: "up" })).concat(beam(notes('g4, f4', { stem: "up" }))))]
 	  });
 	
 	  /*  Measure 4 */
 	  var system = makeSystem(220);
 	  system.addStave({
-	    voices: [voice(beam(notes('g4, f+4', { stem: "up" })).concat(notes('e4/q', { stem: "up" })))]
+	    voices: [voice(beam(notes('g4, f4', { stem: "up" })).concat(notes('e4/q', { stem: "up" })))]
 	  });
 	
 	  /*  Measure 5 */
@@ -1382,7 +1397,7 @@
 	  /*  Measure 7 */
 	  var system = makeSystem(220);
 	  system.addStave({
-	    voices: [voice(beam(notes('f+4, g4', { stem: "up" })).concat(beam(notes('e4, f4', { stem: "up" }))))]
+	    voices: [voice(beam(notes('f4, g4', { stem: "up" })).concat(beam(notes('e4, f4', { stem: "up" }))))]
 	  });
 	
 	  /*  Measure 8 */
@@ -1711,13 +1726,13 @@
 	  return vf;
 	}
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
 	
-	WebMidi v2.0.0-rc.3
+	WebMidi v2.0.0-rc.5
 	
 	WebMidi.js helps you tame the Web MIDI API. Send and receive MIDI messages with ease. Control instruments with user-friendly functions (playNote, sendPitchBend, etc.). React to MIDI input with simple event listeners (noteon, pitchbend, controlchange, etc.).
 	https://github.com/cotejp/webmidi
@@ -1744,25 +1759,25 @@
 	
 	*/
 	
-	!function(scope){"use strict";function WebMidi(){if(WebMidi.prototype._singleton)throw new Error("WebMidi is a singleton, it cannot be instantiated directly.");WebMidi.prototype._singleton=this,this._inputs=[],this._outputs=[],this._userHandlers={},this._stateChangeQueue=[],this._processingStateChange=!1,this._midiInterfaceEvents=["connected","disconnected"],this._notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],this._semitones={C:0,D:2,E:4,F:5,G:7,A:9,B:11},Object.defineProperties(this,{MIDI_SYSTEM_MESSAGES:{value:{sysex:240,timecode:241,songposition:242,songselect:243,tuningrequest:246,sysexend:247,clock:248,start:250,"continue":251,stop:252,activesensing:254,reset:255,unknownsystemmessage:-1},writable:!1,enumerable:!0,configurable:!1},MIDI_CHANNEL_MESSAGES:{value:{noteoff:8,noteon:9,keyaftertouch:10,controlchange:11,channelmode:11,programchange:12,channelaftertouch:13,pitchbend:14},writable:!1,enumerable:!0,configurable:!1},MIDI_REGISTERED_PARAMETER:{value:{pitchbendrange:[0,0],channelfinetuning:[0,1],channelcoarsetuning:[0,2],tuningprogram:[0,3],tuningbank:[0,4],modulationrange:[0,5],azimuthangle:[61,0],elevationangle:[61,1],gain:[61,2],distanceratio:[61,3],maximumdistance:[61,4],maximumdistancegain:[61,5],referencedistanceratio:[61,6],panspreadangle:[61,7],rollangle:[61,8]},writable:!1,enumerable:!0,configurable:!1},MIDI_CONTROL_CHANGE_MESSAGES:{value:{bankselectcoarse:0,modulationwheelcoarse:1,breathcontrollercoarse:2,footcontrollercoarse:4,portamentotimecoarse:5,dataentrycoarse:6,volumecoarse:7,balancecoarse:8,pancoarse:10,expressioncoarse:11,effectcontrol1coarse:12,effectcontrol2coarse:13,generalpurposeslider1:16,generalpurposeslider2:17,generalpurposeslider3:18,generalpurposeslider4:19,bankselectfine:32,modulationwheelfine:33,breathcontrollerfine:34,footcontrollerfine:36,portamentotimefine:37,dataentryfine:38,volumefine:39,balancefine:40,panfine:42,expressionfine:43,effectcontrol1fine:44,effectcontrol2fine:45,holdpedal:64,portamento:65,sustenutopedal:66,softpedal:67,legatopedal:68,hold2pedal:69,soundvariation:70,resonance:71,soundreleasetime:72,soundattacktime:73,brightness:74,soundcontrol6:75,soundcontrol7:76,soundcontrol8:77,soundcontrol9:78,soundcontrol10:79,generalpurposebutton1:80,generalpurposebutton2:81,generalpurposebutton3:82,generalpurposebutton4:83,reverblevel:91,tremololevel:92,choruslevel:93,celestelevel:94,phaserlevel:95,databuttonincrement:96,databuttondecrement:97,nonregisteredparametercoarse:98,nonregisteredparameterfine:99,registeredparametercoarse:100,registeredparameterfine:101},writable:!1,enumerable:!0,configurable:!1},MIDI_CHANNEL_MODE_MESSAGES:{value:{allsoundoff:120,resetallcontrollers:121,localcontrol:122,allnotesoff:123,omnimodeoff:124,omnimodeon:125,monomodeon:126,polymodeon:127},writable:!1,enumerable:!0,configurable:!1}}),Object.defineProperties(this,{supported:{enumerable:!0,get:function(){return"requestMIDIAccess"in navigator}},enabled:{enumerable:!0,get:function(){return void 0!==this["interface"]}.bind(this)},inputs:{enumerable:!0,get:function(){return this._inputs}.bind(this)},outputs:{enumerable:!0,get:function(){return this._outputs}.bind(this)},sysexEnabled:{enumerable:!0,get:function(){return!(!this["interface"]||!this["interface"].sysexEnabled)}.bind(this)},time:{enumerable:!0,get:function(){return window.performance.now()}}})}function Input(midiInput){var that=this;this._userHandlers={channel:{},system:{}},this._midiInput=midiInput,Object.defineProperties(this,{connection:{enumerable:!0,get:function(){return that._midiInput.connection}},id:{enumerable:!0,get:function(){return that._midiInput.id}},manufacturer:{enumerable:!0,get:function(){return that._midiInput.manufacturer}},name:{enumerable:!0,get:function(){return that._midiInput.name}},state:{enumerable:!0,get:function(){return that._midiInput.state}}}),this._initializeUserHandlers()}function Output(midiOutput){var that=this;this._midiOutput=midiOutput,Object.defineProperties(this,{connection:{enumerable:!0,get:function(){return that._midiOutput.connection}},id:{enumerable:!0,get:function(){return that._midiOutput.id}},manufacturer:{enumerable:!0,get:function(){return that._midiOutput.manufacturer}},name:{enumerable:!0,get:function(){return that._midiOutput.name}},state:{enumerable:!0,get:function(){return that._midiOutput.state}}})}var wm=new WebMidi;WebMidi.prototype.enable=function(callback,sysex){return this.enabled?void 0:this.supported?void navigator.requestMIDIAccess({sysex:sysex}).then(function(midiAccess){this["interface"]=midiAccess,this._resetInterfaceUserHandlers(),this["interface"].onstatechange=this._onInterfaceStateChange.bind(this),this._onInterfaceStateChange(null),"function"==typeof callback&&callback.call(this)}.bind(this),function(err){"function"==typeof callback&&callback.call(this,err)}.bind(this)):void("function"==typeof callback&&callback(new Error("The Web MIDI API is not supported by your browser.")))},WebMidi.prototype.disable=function(){if(!this.supported)throw new Error("The Web MIDI API is not supported by your browser.");this["interface"]=void 0,this._inputs=[],this._outputs=[],this._resetInterfaceUserHandlers()},WebMidi.prototype.addListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before adding event listeners.");if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(!(this._midiInterfaceEvents.indexOf(type)>=0))throw new TypeError("The specified event type is not supported.");return this._userHandlers[type].push(listener),this},WebMidi.prototype.hasListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before checking event listeners.");if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(!(this._midiInterfaceEvents.indexOf(type)>=0))throw new TypeError("The specified event type is not supported.");for(var o=0;o<this._userHandlers[type].length;o++)if(this._userHandlers[type][o]===listener)return!0;return!1},WebMidi.prototype.removeListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before removing event listeners.");if(void 0!==listener&&"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(this._midiInterfaceEvents.indexOf(type)>=0)if(listener)for(var o=0;o<this._userHandlers[type].length;o++)this._userHandlers[type][o]===listener&&this._userHandlers[type].splice(o,1);else this._userHandlers[type]=[];else{if(void 0!==type)throw new TypeError("The specified event type is not supported.");this._resetInterfaceUserHandlers()}return this},WebMidi.prototype.getInputById=function(id){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.inputs.length;i++)if(this.inputs[i].id===id)return this.inputs[i];return!1},WebMidi.prototype.getOutputById=function(id){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.outputs.length;i++)if(this.outputs[i].id===id)return this.outputs[i];return!1},WebMidi.prototype.getInputByName=function(name){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.inputs.length;i++)if(~this.inputs[i].name.indexOf(name))return this.inputs[i];return!1},WebMidi.prototype.getOutputByName=function(name){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.outputs.length;i++)if(~this.outputs[i].name.indexOf(name))return this.outputs[i];return!1},WebMidi.prototype.guessNoteNumber=function(input){var output=!1;if(input&&input.toFixed&&input>=0&&127>=input?output=Math.round(input):parseInt(input)>=0&&parseInt(input)<=127?output=parseInt(input):("string"==typeof input||input instanceof String)&&(output=this.noteNameToNumber(input)),output===!1)throw new Error("Invalid note number ("+input+").");return output},WebMidi.prototype.noteNameToNumber=function(name){"string"!=typeof name&&(name="");var matches=name.match(/([CDEFGAB])(#{0,2}|b{0,2})(-?\d+)/i);if(!matches)throw new RangeError("Invalid note name.");var semitones=wm._semitones[matches[1].toUpperCase()],octave=parseInt(matches[3]),result=12*(octave+2)+semitones;if(matches[2].toLowerCase().indexOf("b")>-1?result-=matches[2].length:matches[2].toLowerCase().indexOf("#")>-1&&(result+=matches[2].length),0>semitones||-2>octave||octave>8||0>result||result>127)throw new RangeError("Invalid note name or note outside valid range.");return result},WebMidi.prototype._updateInputsAndOutputs=function(){this._updateInputs(),this._updateOutputs()},WebMidi.prototype._updateInputs=function(){for(var i=0;i<this._inputs.length;i++){for(var remove=!0,updated=this["interface"].inputs.values(),input=updated.next();input&&!input.done;input=updated.next())if(this._inputs[i]._midiInput===input.value){remove=!1;break}remove&&this._inputs.splice(i,1)}this["interface"].inputs.forEach(function(nInput){for(var add=!0,j=0;j<this._inputs.length;j++)this._inputs[j]._midiInput===nInput&&(add=!1);add&&this._inputs.push(this._createInput(nInput))}.bind(this))},WebMidi.prototype._updateOutputs=function(){for(var i=0;i<this._outputs.length;i++){for(var remove=!0,updated=this["interface"].outputs.values(),output=updated.next();output&&!output.done;output=updated.next())if(this._outputs[i]._midiOutput===output.value){remove=!1;break}remove&&this._outputs.splice(i,1)}this["interface"].outputs.forEach(function(nOutput){for(var add=!0,j=0;j<this._outputs.length;j++)this._outputs[j]._midiOutput===nOutput&&(add=!1);add&&this._outputs.push(this._createOutput(nOutput))}.bind(this))},WebMidi.prototype._createInput=function(midiInput){var input=new Input(midiInput);return input._midiInput.onmidimessage=input._onMidiMessage.bind(input),input},WebMidi.prototype._createOutput=function(midiOutput){var output=new Output(midiOutput);return output._midiOutput.onmidimessage=output._onMidiMessage.bind(output),output},WebMidi.prototype._onInterfaceStateChange=function(e){if(this._stateChangeQueue.push(e),!this._processingStateChange){for(this._processingStateChange=!0;this._stateChangeQueue.length>0;)this._processStateChange(this._stateChangeQueue.shift());this._processingStateChange=!1}},WebMidi.prototype._processStateChange=function(e){if(this._updateInputsAndOutputs(),null!==e){var event={timestamp:e.timeStamp,type:e.port.state,id:e.port.id,manufacturer:e.port.manufacturer,name:e.port.name};"connected"===e.port.state&&("output"===e.port.type?event.output=this.getOutputById(e.port.id):"input"===e.port.type&&(event.input=this.getInputById(e.port.id))),this._userHandlers[e.port.state].forEach(function(handler){handler(event)})}},WebMidi.prototype._resetInterfaceUserHandlers=function(){for(var i=0;i<this._midiInterfaceEvents.length;i++)this._userHandlers[this._midiInterfaceEvents[i]]=[]},Input.prototype.addListener=function(type,channel,listener){var that=this;if(void 0===channel&&(channel="all"),Array.isArray(channel)||(channel=[channel]),channel.forEach(function(item){if("all"!==item&&!(item>=1&&16>=item))throw new RangeError("The 'channel' parameter is invalid.")}),"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(wm.MIDI_SYSTEM_MESSAGES[type])this._userHandlers.system[type]||(this._userHandlers.system[type]=[]),this._userHandlers.system[type].push(listener);else{if(!wm.MIDI_CHANNEL_MESSAGES[type])throw new TypeError("The specified event type is not supported.");if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}this._userHandlers.channel[type]||(this._userHandlers.channel[type]=[]),channel.forEach(function(ch){that._userHandlers.channel[type][ch]||(that._userHandlers.channel[type][ch]=[]),that._userHandlers.channel[type][ch].push(listener)})}return this},Input.prototype.on=Input.prototype.addListener,Input.prototype.hasListener=function(type,channel,listener){var that=this;if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(void 0===channel&&(channel="all"),channel.constructor!==Array&&(channel=[channel]),wm.MIDI_SYSTEM_MESSAGES[type]){for(var o=0;o<this._userHandlers.system[type].length;o++)if(this._userHandlers.system[type][o]===listener)return!0}else if(wm.MIDI_CHANNEL_MESSAGES[type]){if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}return this._userHandlers.channel[type]?channel.every(function(chNum){var listeners=that._userHandlers.channel[type][chNum];return listeners&&listeners.indexOf(listener)>-1}):!1}return!1},Input.prototype.removeListener=function(type,channel,listener){var that=this;if(void 0!==listener&&"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(void 0===channel&&(channel="all"),channel.constructor!==Array&&(channel=[channel]),wm.MIDI_SYSTEM_MESSAGES[type])if(void 0===listener)this._userHandlers.system[type]=[];else for(var o=0;o<this._userHandlers.system[type].length;o++)this._userHandlers.system[type][o]===listener&&this._userHandlers.system[type].splice(o,1);else if(wm.MIDI_CHANNEL_MESSAGES[type]){if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}if(!this._userHandlers.channel[type])return this;channel.forEach(function(chNum){var listeners=that._userHandlers.channel[type][chNum];if(listeners)if(void 0===listener)that._userHandlers.channel[type][chNum]=[];else for(var l=0;l<listeners.length;l++)listeners[l]===listener&&listeners.splice(l,1)})}else{if(void 0!==type)throw new TypeError("The specified event type is not supported.");this._initializeUserHandlers()}return this},Input.prototype._initializeUserHandlers=function(){for(var prop1 in wm.MIDI_CHANNEL_MESSAGES)wm.MIDI_CHANNEL_MESSAGES.hasOwnProperty(prop1)&&(this._userHandlers.channel[prop1]={});for(var prop2 in wm.MIDI_SYSTEM_MESSAGES)wm.MIDI_SYSTEM_MESSAGES.hasOwnProperty(prop2)&&(this._userHandlers.system[prop2]=[])},Input.prototype._onMidiMessage=function(e){e.data[0]<240?this._parseChannelEvent(e):e.data[0]<=255&&this._parseSystemEvent(e)},Input.prototype._parseChannelEvent=function(e){var data1,data2,command=e.data[0]>>4,channel=(15&e.data[0])+1;e.data.length>1&&(data1=e.data[1],data2=e.data.length>2?e.data[2]:void 0);var event={target:this,data:e.data,timestamp:e.timeStamp,channel:channel};command===wm.MIDI_CHANNEL_MESSAGES.noteoff||command===wm.MIDI_CHANNEL_MESSAGES.noteon&&0===data2?(event.type="noteoff",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.velocity=data2/127,event.rawVelocity=data2):command===wm.MIDI_CHANNEL_MESSAGES.noteon?(event.type="noteon",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.velocity=data2/127,event.rawVelocity=data2):command===wm.MIDI_CHANNEL_MESSAGES.keyaftertouch?(event.type="keyaftertouch",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.value=data2/127):command===wm.MIDI_CHANNEL_MESSAGES.controlchange&&data1>=0&&119>=data1?(event.type="controlchange",event.controller={number:data1,name:this.getCcNameByNumber(data1)},event.value=data2):command===wm.MIDI_CHANNEL_MESSAGES.channelmode&&data1>=120&&127>=data1?(event.type="channelmode",event.controller={number:data1,name:this.getChannelModeByNumber(data1)},event.value=data2):command===wm.MIDI_CHANNEL_MESSAGES.programchange?(event.type="programchange",event.value=data1):command===wm.MIDI_CHANNEL_MESSAGES.channelaftertouch?(event.type="channelaftertouch",event.value=data1/127):command===wm.MIDI_CHANNEL_MESSAGES.pitchbend?(event.type="pitchbend",event.value=((data2<<7)+data1-8192)/8192):event.type="unknownchannelmessage",this._userHandlers.channel[event.type]&&this._userHandlers.channel[event.type][channel]&&this._userHandlers.channel[event.type][channel].forEach(function(callback){callback(event)})},Input.prototype.getCcNameByNumber=function(number){if(number=parseInt(number),!(number>=0&&119>=number))throw new RangeError("The control change number must be between 0 and 119.");for(var cc in wm.MIDI_CONTROL_CHANGE_MESSAGES)if(number===wm.MIDI_CONTROL_CHANGE_MESSAGES[cc])return cc;return void 0},Input.prototype.getChannelModeByNumber=function(number){if(number=parseInt(number),!(number>=120&&status<=127))throw new RangeError("The control change number must be between 120 and 127.");for(var cm in wm.MIDI_CHANNEL_MODE_MESSAGES)if(number===wm.MIDI_CHANNEL_MODE_MESSAGES[cm])return cm},Input.prototype._parseSystemEvent=function(e){var command=e.data[0],event={target:this,data:e.data,timestamp:e.timeStamp};command===wm.MIDI_SYSTEM_MESSAGES.sysex?event.type="sysex":command===wm.MIDI_SYSTEM_MESSAGES.timecode?event.type="timecode":command===wm.MIDI_SYSTEM_MESSAGES.songposition?event.type="songposition":command===wm.MIDI_SYSTEM_MESSAGES.songselect?(event.type="songselect",event.song=e.data[1]):command===wm.MIDI_SYSTEM_MESSAGES.tuningrequest?event.type="tuningrequest":command===wm.MIDI_SYSTEM_MESSAGES.clock?event.type="clock":command===wm.MIDI_SYSTEM_MESSAGES.start?event.type="start":command===wm.MIDI_SYSTEM_MESSAGES["continue"]?event.type="continue":command===wm.MIDI_SYSTEM_MESSAGES.stop?event.type="stop":command===wm.MIDI_SYSTEM_MESSAGES.activesensing?event.type="activesensing":command===wm.MIDI_SYSTEM_MESSAGES.reset?event.type="reset":event.type="unknownsystemmessage",this._userHandlers.system[event.type]&&this._userHandlers.system[event.type].forEach(function(callback){callback(event)})},Output.prototype.send=function(status,data,timestamp){if(!(status>=128&&255>=status))throw new RangeError("The status byte must be an integer between 128 (0x80) and 255 (0xFF).");Array.isArray(data)||(data=parseInt(data)>=0&&parseInt(data)<=127?[parseInt(data)]:[]);var message=[status];return data.forEach(function(item){if(!(item>=0&&255>=item))throw new RangeError("The data bytes must be integers between 0 (0x00) and 255 (0xFF).");message.push(item)}),this._midiOutput.send(message,parseFloat(timestamp)||0),this},Output.prototype.sendSysex=function(manufacturer,data,options){if(!wm.sysexEnabled)throw new Error("SysEx message support must first be activated.");return options=options||{},manufacturer=[].concat(manufacturer),data.forEach(function(item){if(0>item||item>127)throw new RangeError("The data bytes of a SysEx message must be integers between 0 (0x00) and 127 (0x7F).")}),data=manufacturer.concat(data,wm.MIDI_SYSTEM_MESSAGES.sysexend),this.send(wm.MIDI_SYSTEM_MESSAGES.sysex,data,options.time),this},Output.prototype.sendTimecodeQuarterFrame=function(value,options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.timecode,value,options.time),this},Output.prototype.sendSongPosition=function(value,options){value=parseInt(value)||0,options=options||{};var msb=value>>7&127,lsb=127&value;return this.send(wm.MIDI_SYSTEM_MESSAGES.songposition,[msb,lsb],options.time),this},Output.prototype.sendSongSelect=function(value,options){if(value=parseInt(value),options=options||{},!(value>=0&&127>=value))throw new RangeError("The song number must be between 0 and 127.");return this.send(wm.MIDI_SYSTEM_MESSAGES.songselect,[value],options.time),this},Output.prototype.sendTuningRequest=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.tuningrequest,void 0,options.time),this},Output.prototype.sendClock=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.clock,void 0,options.time),this},Output.prototype.sendStart=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.start,void 0,options.time),this},Output.prototype.sendContinue=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES["continue"],void 0,options.time),this},Output.prototype.sendStop=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.stop,void 0,options.time),this},Output.prototype.sendActiveSensing=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.activesensing,void 0,options.time),this},Output.prototype.sendReset=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.reset,void 0,options.time),this},Output.prototype.stopNote=function(note,channel,options){if("all"===note)return this.sendChannelMode("allnotesoff",0,channel,options);var nVelocity=64;return options=options||{},options.velocity=parseFloat(options.velocity),options.rawVelocity?!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=127&&(nVelocity=options.velocity):!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=1&&(nVelocity=127*options.velocity),this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteoff<<4)+(ch-1),[item,Math.round(nVelocity)],this._parseTimeParameter(options.time))}.bind(this))}.bind(this)),this},Output.prototype.playNote=function(note,channel,options){var nVelocity=64;if(options=options||{},options.velocity=parseFloat(options.velocity),options.rawVelocity?!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=127&&(nVelocity=options.velocity):!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=1&&(nVelocity=127*options.velocity),options.time=this._parseTimeParameter(options.time)||0,this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteon<<4)+(ch-1),[item,Math.round(nVelocity)],options.time)}.bind(this))}.bind(this)),void 0!==options.duration){var nRelease=64;options.release=parseFloat(options.release),options.rawVelocity?!isNaN(options.release)&&options.release>=0&&options.release<=127&&(nRelease=options.release):!isNaN(options.release)&&options.release>=0&&options.release<=1&&(nRelease=127*options.release),this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteoff<<4)+(ch-1),[item,Math.round(nRelease)],options.time+options.duration)}.bind(this))}.bind(this))}return this},Output.prototype.sendKeyAftertouch=function(note,channel,pressure,options){var that=this;if(options=options||{},1>channel||channel>16)throw new RangeError("The channel must be between 1 and 16.");pressure=parseFloat(pressure),(isNaN(pressure)||0>pressure||pressure>1)&&(pressure=.5);var nPressure=Math.round(127*pressure);return this._convertNoteToArray(note).forEach(function(item){that._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.keyaftertouch<<4)+(ch-1),[item,nPressure],that._parseTimeParameter(options.time))})}),this},Output.prototype.sendControlChange=function(controller,value,channel,options){if(options=options||{},"string"==typeof controller){if(controller=wm.MIDI_CONTROL_CHANGE_MESSAGES[controller],!controller)throw new TypeError("Invalid controller name.")}else if(controller=parseInt(controller),!(controller>=0&&119>=controller))throw new RangeError("Controller numbers must be between 0 and 119.");if(value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("Controller value must be between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.controlchange<<4)+(ch-1),[controller,value],this._parseTimeParameter(options.time))}.bind(this)),this},Output.prototype._selectRegisteredParameter=function(parameter,channel,time){var that=this;if(parameter[0]=parseInt(parameter[0]),!(parameter[0]>=0&&parameter[0]<=127))throw new RangeError("The control65 value must be between 0 and 127");if(parameter[1]=parseInt(parameter[1]),!(parameter[1]>=0&&parameter[1]<=127))throw new RangeError("The control64 value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(101,parameter[0],channel,{time:time}),that.sendControlChange(100,parameter[1],channel,{time:time})}),this},Output.prototype._selectNonRegisteredParameter=function(parameter,channel,time){var that=this;if(parameter[0]=parseInt(parameter[0]),!(parameter[0]>=0&&parameter[0]<=127))throw new RangeError("The control63 value must be between 0 and 127");if(parameter[1]=parseInt(parameter[1]),!(parameter[1]>=0&&parameter[1]<=127))throw new RangeError("The control62 value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(99,parameter[0],channel,{time:time}),that.sendControlChange(98,parameter[1],channel,{time:time})}),this},Output.prototype._setCurrentRegisteredParameter=function(data,channel,time){var that=this;if(data=[].concat(data),data[0]=parseInt(data[0]),!(data[0]>=0&&data[0]<=127))throw new RangeError("The msb value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(6,data[0],channel,{time:time})}),data[1]=parseInt(data[1]),data[1]>=0&&data[1]<=127&&this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(38,data[1],channel,{time:time})}),this},Output.prototype._deselectRegisteredParameter=function(channel,time){var that=this;return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(101,127,channel,{time:time}),that.sendControlChange(100,127,channel,{time:time})}),this},Output.prototype.setRegisteredParameter=function(parameter,data,channel,options){var that=this;if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new Error("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){that._selectRegisteredParameter(parameter,channel,options.time),that._setCurrentRegisteredParameter(data,channel,options.time),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.setNonRegisteredParameter=function(parameter,data,channel,options){var that=this;if(options=options||{},!(parameter[0]>=0&&parameter[0]<=127&&parameter[1]>=0&&parameter[1]<=127))throw new Error("Position 0 and 1 of the 2-position parameter array must both be between 0 and 127.");return data=[].concat(data),this._convertChannelToArray(channel).forEach(function(ch){that._selectNonRegisteredParameter(parameter,channel,options.time),that._setCurrentRegisteredParameter(data,channel,options.time),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.incrementRegisteredParameter=function(parameter,channel,options){var that=this;if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new Error("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){that._selectRegisteredParameter(parameter,channel,options.time),that.sendControlChange(96,0,channel,{time:options.time}),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.decrementRegisteredParameter=function(parameter,channel,options){if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new TypeError("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){this._selectRegisteredParameter(parameter,channel,options.time),this.sendControlChange(97,0,channel,{time:options.time}),this._deselectRegisteredParameter(channel,options.time)}.bind(this)),this},Output.prototype.setPitchBendRange=function(semitones,cents,channel,options){var that=this;if(options=options||{},semitones=parseInt(semitones)||0,!(semitones>=0&&127>=semitones))throw new RangeError("The semitones value must be between 0 and 127");if(cents=parseInt(cents)||0,!(cents>=0&&127>=cents))throw new RangeError("The cents value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("pitchbendrange",[semitones,cents],channel,{time:options.time})}),this},Output.prototype.setModulationRange=function(semitones,cents,channel,options){var that=this;if(options=options||{},semitones=parseInt(semitones)||0,!(semitones>=0&&127>=semitones))throw new RangeError("The semitones value must be between 0 and 127");if(cents=parseInt(cents)||0,!(cents>=0&&127>=cents))throw new RangeError("The cents value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("modulationrange",[semitones,cents],channel,{time:options.time})}),this},Output.prototype.setMasterTuning=function(value,channel,options){var that=this;if(options=options||{},value=parseFloat(value)||0,-65>=value||value>=64)throw new RangeError("The value must be a decimal number larger than -65 and smaller than 64.");var coarse=parseInt(value)+64,fine=value-parseInt(value);fine=Math.round((fine+1)/2*16383);var msb=fine>>7&127,lsb=127&fine;return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("channelcoarsetuning",coarse,channel,{time:options.time}),that.setRegisteredParameter("channelfinetuning",[msb,lsb],channel,{time:options.time})}),this},Output.prototype.setTuningProgram=function(value,channel,options){var that=this;if(options=options||{},value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("The program value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("tuningprogram",value,channel,{time:options.time})}),this},Output.prototype.setTuningBank=function(value,channel,options){var that=this;if(options=options||{},value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("The bank value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("tuningbank",value,channel,{time:options.time})}),this},Output.prototype.sendChannelMode=function(command,value,channel,options){var that=this;if(options=options||{},"string"==typeof command){if(command=wm.MIDI_CHANNEL_MODE_MESSAGES[command],!command)throw new TypeError("Invalid channel mode message name.")}else if(command=parseInt(command),!(command>=120&&127>=command))throw new RangeError("Channel mode numerical identifiers must be between 120 and 127.");if(value=parseInt(value),isNaN(value)||0>value||value>127)throw new RangeError("Value must be integers between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.channelmode<<4)+(ch-1),[command,value],that._parseTimeParameter(options.time))}),this},Output.prototype.sendProgramChange=function(program,channel,options){var that=this;if(options=options||{},program=parseInt(program),isNaN(program)||0>program||program>127)throw new RangeError("Program numbers must be between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.programchange<<4)+(ch-1),[program],that._parseTimeParameter(options.time))}),this},Output.prototype.sendChannelAftertouch=function(pressure,channel,options){var that=this;options=options||{},pressure=parseFloat(pressure),(isNaN(pressure)||0>pressure||pressure>1)&&(pressure=.5);var nPressure=Math.round(127*pressure);return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.channelaftertouch<<4)+(ch-1),[nPressure],that._parseTimeParameter(options.time))}),this},Output.prototype.sendPitchBend=function(bend,channel,options){var that=this;if(options=options||{},bend=parseFloat(bend),isNaN(bend)||-1>bend||bend>1)throw new RangeError("Pitch bend value must be between -1 and 1.");var nLevel=Math.round((bend+1)/2*16383),msb=nLevel>>7&127,lsb=127&nLevel;return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.pitchbend<<4)+(ch-1),[lsb,msb],that._parseTimeParameter(options.time))}),this},Output.prototype._parseTimeParameter=function(time){
-	var parsed;if(void 0===time)return 0;if(time&&time.substring&&"+"===time.substring(0,1)){if(parsed=parseFloat(time),!parsed)throw new TypeError("Invalid relative time format.");return parsed+wm.time}if(parsed=parseFloat(time),!parsed)throw new TypeError("Invalid absolute time format.");return parsed},Output.prototype._convertNoteToArray=function(note){var notes=[];return Array.isArray(note)||(note=[note]),note.forEach(function(item){notes.push(wm.guessNoteNumber(item))}),notes},Output.prototype._convertChannelToArray=function(channel){if(("all"===channel||void 0===channel)&&(channel=["all"]),Array.isArray(channel)||(channel=[channel]),channel.indexOf("all")>-1){channel=[];for(var i=1;16>=i;i++)channel.push(i)}return channel.forEach(function(ch){if(!(ch>=1&&16>=ch))throw new RangeError("MIDI channels must be between 1 and 16.")}),channel},Output.prototype._onMidiMessage=function(e){}, true?!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function(){return wm}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):"undefined"!=typeof module&&module.exports?module.exports=wm:scope.WebMidi||(scope.WebMidi=wm)}(this);
+	!function(scope){"use strict";function WebMidi(){if(WebMidi.prototype._singleton)throw new Error("WebMidi is a singleton, it cannot be instantiated directly.");WebMidi.prototype._singleton=this,this._inputs=[],this._outputs=[],this._userHandlers={},this._stateChangeQueue=[],this._processingStateChange=!1,this._midiInterfaceEvents=["connected","disconnected"],this._notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],this._semitones={C:0,D:2,E:4,F:5,G:7,A:9,B:11},Object.defineProperties(this,{MIDI_SYSTEM_MESSAGES:{value:{sysex:240,timecode:241,songposition:242,songselect:243,tuningrequest:246,sysexend:247,clock:248,start:250,"continue":251,stop:252,activesensing:254,reset:255,unknownsystemmessage:-1},writable:!1,enumerable:!0,configurable:!1},MIDI_CHANNEL_MESSAGES:{value:{noteoff:8,noteon:9,keyaftertouch:10,controlchange:11,channelmode:11,programchange:12,channelaftertouch:13,pitchbend:14},writable:!1,enumerable:!0,configurable:!1},MIDI_REGISTERED_PARAMETER:{value:{pitchbendrange:[0,0],channelfinetuning:[0,1],channelcoarsetuning:[0,2],tuningprogram:[0,3],tuningbank:[0,4],modulationrange:[0,5],azimuthangle:[61,0],elevationangle:[61,1],gain:[61,2],distanceratio:[61,3],maximumdistance:[61,4],maximumdistancegain:[61,5],referencedistanceratio:[61,6],panspreadangle:[61,7],rollangle:[61,8]},writable:!1,enumerable:!0,configurable:!1},MIDI_CONTROL_CHANGE_MESSAGES:{value:{bankselectcoarse:0,modulationwheelcoarse:1,breathcontrollercoarse:2,footcontrollercoarse:4,portamentotimecoarse:5,dataentrycoarse:6,volumecoarse:7,balancecoarse:8,pancoarse:10,expressioncoarse:11,effectcontrol1coarse:12,effectcontrol2coarse:13,generalpurposeslider1:16,generalpurposeslider2:17,generalpurposeslider3:18,generalpurposeslider4:19,bankselectfine:32,modulationwheelfine:33,breathcontrollerfine:34,footcontrollerfine:36,portamentotimefine:37,dataentryfine:38,volumefine:39,balancefine:40,panfine:42,expressionfine:43,effectcontrol1fine:44,effectcontrol2fine:45,holdpedal:64,portamento:65,sustenutopedal:66,softpedal:67,legatopedal:68,hold2pedal:69,soundvariation:70,resonance:71,soundreleasetime:72,soundattacktime:73,brightness:74,soundcontrol6:75,soundcontrol7:76,soundcontrol8:77,soundcontrol9:78,soundcontrol10:79,generalpurposebutton1:80,generalpurposebutton2:81,generalpurposebutton3:82,generalpurposebutton4:83,reverblevel:91,tremololevel:92,choruslevel:93,celestelevel:94,phaserlevel:95,databuttonincrement:96,databuttondecrement:97,nonregisteredparametercoarse:98,nonregisteredparameterfine:99,registeredparametercoarse:100,registeredparameterfine:101},writable:!1,enumerable:!0,configurable:!1},MIDI_CHANNEL_MODE_MESSAGES:{value:{allsoundoff:120,resetallcontrollers:121,localcontrol:122,allnotesoff:123,omnimodeoff:124,omnimodeon:125,monomodeon:126,polymodeon:127},writable:!1,enumerable:!0,configurable:!1}}),Object.defineProperties(this,{supported:{enumerable:!0,get:function(){return"requestMIDIAccess"in navigator}},enabled:{enumerable:!0,get:function(){return void 0!==this["interface"]}.bind(this)},inputs:{enumerable:!0,get:function(){return this._inputs}.bind(this)},outputs:{enumerable:!0,get:function(){return this._outputs}.bind(this)},sysexEnabled:{enumerable:!0,get:function(){return!(!this["interface"]||!this["interface"].sysexEnabled)}.bind(this)},time:{enumerable:!0,get:function(){return window.performance.now()}}})}function Input(midiInput){var that=this;this._userHandlers={channel:{},system:{}},this._midiInput=midiInput,Object.defineProperties(this,{connection:{enumerable:!0,get:function(){return that._midiInput.connection}},id:{enumerable:!0,get:function(){return that._midiInput.id}},manufacturer:{enumerable:!0,get:function(){return that._midiInput.manufacturer}},name:{enumerable:!0,get:function(){return that._midiInput.name}},state:{enumerable:!0,get:function(){return that._midiInput.state}}}),this._initializeUserHandlers()}function Output(midiOutput){var that=this;this._midiOutput=midiOutput,Object.defineProperties(this,{connection:{enumerable:!0,get:function(){return that._midiOutput.connection}},id:{enumerable:!0,get:function(){return that._midiOutput.id}},manufacturer:{enumerable:!0,get:function(){return that._midiOutput.manufacturer}},name:{enumerable:!0,get:function(){return that._midiOutput.name}},state:{enumerable:!0,get:function(){return that._midiOutput.state}}})}var wm=new WebMidi;WebMidi.prototype.enable=function(callback,sysex){return this.enabled?void 0:this.supported?void navigator.requestMIDIAccess({sysex:sysex}).then(function(midiAccess){this["interface"]=midiAccess,this._resetInterfaceUserHandlers(),this["interface"].onstatechange=this._onInterfaceStateChange.bind(this),this._onInterfaceStateChange(null),"function"==typeof callback&&callback.call(this)}.bind(this),function(err){"function"==typeof callback&&callback.call(this,err)}.bind(this)):void("function"==typeof callback&&callback(new Error("The Web MIDI API is not supported by your browser.")))},WebMidi.prototype.disable=function(){if(!this.supported)throw new Error("The Web MIDI API is not supported by your browser.");this["interface"]=void 0,this._inputs=[],this._outputs=[],this._resetInterfaceUserHandlers()},WebMidi.prototype.addListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before adding event listeners.");if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(!(this._midiInterfaceEvents.indexOf(type)>=0))throw new TypeError("The specified event type is not supported.");return this._userHandlers[type].push(listener),this},WebMidi.prototype.hasListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before checking event listeners.");if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(!(this._midiInterfaceEvents.indexOf(type)>=0))throw new TypeError("The specified event type is not supported.");for(var o=0;o<this._userHandlers[type].length;o++)if(this._userHandlers[type][o]===listener)return!0;return!1},WebMidi.prototype.removeListener=function(type,listener){if(!this.enabled)throw new Error("WebMidi must be enabled before removing event listeners.");if(void 0!==listener&&"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(this._midiInterfaceEvents.indexOf(type)>=0)if(listener)for(var o=0;o<this._userHandlers[type].length;o++)this._userHandlers[type][o]===listener&&this._userHandlers[type].splice(o,1);else this._userHandlers[type]=[];else{if(void 0!==type)throw new TypeError("The specified event type is not supported.");this._resetInterfaceUserHandlers()}return this},WebMidi.prototype.getInputById=function(id){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.inputs.length;i++)if(this.inputs[i].id===id)return this.inputs[i];return!1},WebMidi.prototype.getOutputById=function(id){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.outputs.length;i++)if(this.outputs[i].id===id)return this.outputs[i];return!1},WebMidi.prototype.getInputByName=function(name){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.inputs.length;i++)if(~this.inputs[i].name.indexOf(name))return this.inputs[i];return!1},WebMidi.prototype.getOutputByName=function(name){if(!this.enabled)throw new Error("WebMidi is not enabled.");for(var i=0;i<this.outputs.length;i++)if(~this.outputs[i].name.indexOf(name))return this.outputs[i];return!1},WebMidi.prototype.guessNoteNumber=function(input){var output=!1;if(input&&input.toFixed&&input>=0&&127>=input?output=Math.round(input):parseInt(input)>=0&&parseInt(input)<=127?output=parseInt(input):("string"==typeof input||input instanceof String)&&(output=this.noteNameToNumber(input)),output===!1)throw new Error("Invalid note number ("+input+").");return output},WebMidi.prototype.noteNameToNumber=function(name){"string"!=typeof name&&(name="");var matches=name.match(/([CDEFGAB])(#{0,2}|b{0,2})(-?\d+)/i);if(!matches)throw new RangeError("Invalid note name.");var semitones=wm._semitones[matches[1].toUpperCase()],octave=parseInt(matches[3]),result=12*(octave+2)+semitones;if(matches[2].toLowerCase().indexOf("b")>-1?result-=matches[2].length:matches[2].toLowerCase().indexOf("#")>-1&&(result+=matches[2].length),0>semitones||-2>octave||octave>8||0>result||result>127)throw new RangeError("Invalid note name or note outside valid range.");return result},WebMidi.prototype._updateInputsAndOutputs=function(){this._updateInputs(),this._updateOutputs()},WebMidi.prototype._updateInputs=function(){for(var i=0;i<this._inputs.length;i++){for(var remove=!0,updated=this["interface"].inputs.values(),input=updated.next();input&&!input.done;input=updated.next())if(this._inputs[i]._midiInput===input.value){remove=!1;break}remove&&this._inputs.splice(i,1)}this["interface"].inputs.forEach(function(nInput){for(var add=!0,j=0;j<this._inputs.length;j++)this._inputs[j]._midiInput===nInput&&(add=!1);add&&this._inputs.push(this._createInput(nInput))}.bind(this))},WebMidi.prototype._updateOutputs=function(){for(var i=0;i<this._outputs.length;i++){for(var remove=!0,updated=this["interface"].outputs.values(),output=updated.next();output&&!output.done;output=updated.next())if(this._outputs[i]._midiOutput===output.value){remove=!1;break}remove&&this._outputs.splice(i,1)}this["interface"].outputs.forEach(function(nOutput){for(var add=!0,j=0;j<this._outputs.length;j++)this._outputs[j]._midiOutput===nOutput&&(add=!1);add&&this._outputs.push(this._createOutput(nOutput))}.bind(this))},WebMidi.prototype._createInput=function(midiInput){var input=new Input(midiInput);return input._midiInput.onmidimessage=input._onMidiMessage.bind(input),input},WebMidi.prototype._createOutput=function(midiOutput){var output=new Output(midiOutput);return output._midiOutput.onmidimessage=output._onMidiMessage.bind(output),output},WebMidi.prototype._onInterfaceStateChange=function(e){if(this._stateChangeQueue.push(e),!this._processingStateChange){for(this._processingStateChange=!0;this._stateChangeQueue.length>0;)this._processStateChange(this._stateChangeQueue.shift());this._processingStateChange=!1}},WebMidi.prototype._processStateChange=function(e){if(this._updateInputsAndOutputs(),null!==e){var event={timestamp:e.timeStamp,type:e.port.state,id:e.port.id,manufacturer:e.port.manufacturer,name:e.port.name};"connected"===e.port.state&&("output"===e.port.type?event.output=this.getOutputById(e.port.id):"input"===e.port.type&&(event.input=this.getInputById(e.port.id))),this._userHandlers[e.port.state].forEach(function(handler){handler(event)})}},WebMidi.prototype._resetInterfaceUserHandlers=function(){for(var i=0;i<this._midiInterfaceEvents.length;i++)this._userHandlers[this._midiInterfaceEvents[i]]=[]},Input.prototype.addListener=function(type,channel,listener){var that=this;if(void 0===channel&&(channel="all"),Array.isArray(channel)||(channel=[channel]),channel.forEach(function(item){if("all"!==item&&!(item>=1&&16>=item))throw new RangeError("The 'channel' parameter is invalid.")}),"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(wm.MIDI_SYSTEM_MESSAGES[type])this._userHandlers.system[type]||(this._userHandlers.system[type]=[]),this._userHandlers.system[type].push(listener);else{if(!wm.MIDI_CHANNEL_MESSAGES[type])throw new TypeError("The specified event type is not supported.");if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}this._userHandlers.channel[type]||(this._userHandlers.channel[type]=[]),channel.forEach(function(ch){that._userHandlers.channel[type][ch]||(that._userHandlers.channel[type][ch]=[]),that._userHandlers.channel[type][ch].push(listener)})}return this},Input.prototype.on=Input.prototype.addListener,Input.prototype.hasListener=function(type,channel,listener){var that=this;if("function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(void 0===channel&&(channel="all"),channel.constructor!==Array&&(channel=[channel]),wm.MIDI_SYSTEM_MESSAGES[type]){for(var o=0;o<this._userHandlers.system[type].length;o++)if(this._userHandlers.system[type][o]===listener)return!0}else if(wm.MIDI_CHANNEL_MESSAGES[type]){if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}return this._userHandlers.channel[type]?channel.every(function(chNum){var listeners=that._userHandlers.channel[type][chNum];return listeners&&listeners.indexOf(listener)>-1}):!1}return!1},Input.prototype.removeListener=function(type,channel,listener){var that=this;if(void 0!==listener&&"function"!=typeof listener)throw new TypeError("The 'listener' parameter must be a function.");if(void 0===channel&&(channel="all"),channel.constructor!==Array&&(channel=[channel]),wm.MIDI_SYSTEM_MESSAGES[type])if(void 0===listener)this._userHandlers.system[type]=[];else for(var o=0;o<this._userHandlers.system[type].length;o++)this._userHandlers.system[type][o]===listener&&this._userHandlers.system[type].splice(o,1);else if(wm.MIDI_CHANNEL_MESSAGES[type]){if(channel.indexOf("all")>-1){channel=[];for(var j=1;16>=j;j++)channel.push(j)}if(!this._userHandlers.channel[type])return this;channel.forEach(function(chNum){var listeners=that._userHandlers.channel[type][chNum];if(listeners)if(void 0===listener)that._userHandlers.channel[type][chNum]=[];else for(var l=0;l<listeners.length;l++)listeners[l]===listener&&listeners.splice(l,1)})}else{if(void 0!==type)throw new TypeError("The specified event type is not supported.");this._initializeUserHandlers()}return this},Input.prototype._initializeUserHandlers=function(){for(var prop1 in wm.MIDI_CHANNEL_MESSAGES)wm.MIDI_CHANNEL_MESSAGES.hasOwnProperty(prop1)&&(this._userHandlers.channel[prop1]={});for(var prop2 in wm.MIDI_SYSTEM_MESSAGES)wm.MIDI_SYSTEM_MESSAGES.hasOwnProperty(prop2)&&(this._userHandlers.system[prop2]=[])},Input.prototype._onMidiMessage=function(e){e.data[0]<240?this._parseChannelEvent(e):e.data[0]<=255&&this._parseSystemEvent(e)},Input.prototype._parseChannelEvent=function(e){var data1,data2,command=e.data[0]>>4,channel=(15&e.data[0])+1;e.data.length>1&&(data1=e.data[1],data2=e.data.length>2?e.data[2]:void 0);var event={target:this,data:e.data,timestamp:e.timeStamp,channel:channel};command===wm.MIDI_CHANNEL_MESSAGES.noteoff||command===wm.MIDI_CHANNEL_MESSAGES.noteon&&0===data2?(event.type="noteoff",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.velocity=data2/127,event.rawVelocity=data2):command===wm.MIDI_CHANNEL_MESSAGES.noteon?(event.type="noteon",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.velocity=data2/127,event.rawVelocity=data2):command===wm.MIDI_CHANNEL_MESSAGES.keyaftertouch?(event.type="keyaftertouch",event.note={number:data1,name:wm._notes[data1%12],octave:Math.floor(data1/12-1)-3},event.value=data2/127):command===wm.MIDI_CHANNEL_MESSAGES.controlchange&&data1>=0&&119>=data1?(event.type="controlchange",event.controller={number:data1,name:this.getCcNameByNumber(data1)},event.value=data2):command===wm.MIDI_CHANNEL_MESSAGES.channelmode&&data1>=120&&127>=data1?(event.type="channelmode",event.controller={number:data1,name:this.getChannelModeByNumber(data1)},event.value=data2):command===wm.MIDI_CHANNEL_MESSAGES.programchange?(event.type="programchange",event.value=data1):command===wm.MIDI_CHANNEL_MESSAGES.channelaftertouch?(event.type="channelaftertouch",event.value=data1/127):command===wm.MIDI_CHANNEL_MESSAGES.pitchbend?(event.type="pitchbend",event.value=((data2<<7)+data1-8192)/8192):event.type="unknownchannelmessage",this._userHandlers.channel[event.type]&&this._userHandlers.channel[event.type][channel]&&this._userHandlers.channel[event.type][channel].forEach(function(callback){callback(event)})},Input.prototype.getCcNameByNumber=function(number){if(number=parseInt(number),!(number>=0&&119>=number))throw new RangeError("The control change number must be between 0 and 119.");for(var cc in wm.MIDI_CONTROL_CHANGE_MESSAGES)if(number===wm.MIDI_CONTROL_CHANGE_MESSAGES[cc])return cc;return void 0},Input.prototype.getChannelModeByNumber=function(number){if(number=parseInt(number),!(number>=120&&status<=127))throw new RangeError("The control change number must be between 120 and 127.");for(var cm in wm.MIDI_CHANNEL_MODE_MESSAGES)if(number===wm.MIDI_CHANNEL_MODE_MESSAGES[cm])return cm},Input.prototype._parseSystemEvent=function(e){var command=e.data[0],event={target:this,data:e.data,timestamp:e.timeStamp};command===wm.MIDI_SYSTEM_MESSAGES.sysex?event.type="sysex":command===wm.MIDI_SYSTEM_MESSAGES.timecode?event.type="timecode":command===wm.MIDI_SYSTEM_MESSAGES.songposition?event.type="songposition":command===wm.MIDI_SYSTEM_MESSAGES.songselect?(event.type="songselect",event.song=e.data[1]):command===wm.MIDI_SYSTEM_MESSAGES.tuningrequest?event.type="tuningrequest":command===wm.MIDI_SYSTEM_MESSAGES.clock?event.type="clock":command===wm.MIDI_SYSTEM_MESSAGES.start?event.type="start":command===wm.MIDI_SYSTEM_MESSAGES["continue"]?event.type="continue":command===wm.MIDI_SYSTEM_MESSAGES.stop?event.type="stop":command===wm.MIDI_SYSTEM_MESSAGES.activesensing?event.type="activesensing":command===wm.MIDI_SYSTEM_MESSAGES.reset?event.type="reset":event.type="unknownsystemmessage",this._userHandlers.system[event.type]&&this._userHandlers.system[event.type].forEach(function(callback){callback(event)})},Output.prototype.send=function(status,data,timestamp){if(!(status>=128&&255>=status))throw new RangeError("The status byte must be an integer between 128 (0x80) and 255 (0xFF).");Array.isArray(data)||(data=parseInt(data)>=0&&parseInt(data)<=127?[parseInt(data)]:[]);var message=[status];return data.forEach(function(item){if(!(item>=0&&255>=item))throw new RangeError("The data bytes must be integers between 0 (0x00) and 255 (0xFF).");message.push(item)}),this._midiOutput.send(message,parseFloat(timestamp)||0),this},Output.prototype.sendSysex=function(manufacturer,data,options){if(!wm.sysexEnabled)throw new Error("SysEx message support must first be activated.");return options=options||{},manufacturer=[].concat(manufacturer),data.forEach(function(item){if(0>item||item>127)throw new RangeError("The data bytes of a SysEx message must be integers between 0 (0x00) and 127 (0x7F).")}),data=manufacturer.concat(data,wm.MIDI_SYSTEM_MESSAGES.sysexend),this.send(wm.MIDI_SYSTEM_MESSAGES.sysex,data,this._parseTimeParameter(options.time)),this},Output.prototype.sendTimecodeQuarterFrame=function(value,options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.timecode,value,this._parseTimeParameter(options.time)),this},Output.prototype.sendSongPosition=function(value,options){value=parseInt(value)||0,options=options||{};var msb=value>>7&127,lsb=127&value;return this.send(wm.MIDI_SYSTEM_MESSAGES.songposition,[msb,lsb],this._parseTimeParameter(options.time)),this},Output.prototype.sendSongSelect=function(value,options){if(value=parseInt(value),options=options||{},!(value>=0&&127>=value))throw new RangeError("The song number must be between 0 and 127.");return this.send(wm.MIDI_SYSTEM_MESSAGES.songselect,[value],this._parseTimeParameter(options.time)),this},Output.prototype.sendTuningRequest=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.tuningrequest,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendClock=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.clock,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendStart=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.start,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendContinue=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES["continue"],void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendStop=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.stop,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendActiveSensing=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.activesensing,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.sendReset=function(options){return options=options||{},this.send(wm.MIDI_SYSTEM_MESSAGES.reset,void 0,this._parseTimeParameter(options.time)),this},Output.prototype.stopNote=function(note,channel,options){if("all"===note)return this.sendChannelMode("allnotesoff",0,channel,options);var nVelocity=64;return options=options||{},options.velocity=parseFloat(options.velocity),options.rawVelocity?!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=127&&(nVelocity=options.velocity):!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=1&&(nVelocity=127*options.velocity),this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteoff<<4)+(ch-1),[item,Math.round(nVelocity)],this._parseTimeParameter(options.time))}.bind(this))}.bind(this)),this},Output.prototype.playNote=function(note,channel,options){var nVelocity=64;if(options=options||{},options.velocity=parseFloat(options.velocity),options.rawVelocity?!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=127&&(nVelocity=options.velocity):!isNaN(options.velocity)&&options.velocity>=0&&options.velocity<=1&&(nVelocity=127*options.velocity),options.time=this._parseTimeParameter(options.time),this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteon<<4)+(ch-1),[item,Math.round(nVelocity)],options.time)}.bind(this))}.bind(this)),options.duration=parseFloat(options.duration),options.duration){options.duration<=0&&(options.duration=0);var nRelease=64;options.release=parseFloat(options.release),options.rawVelocity?!isNaN(options.release)&&options.release>=0&&options.release<=127&&(nRelease=options.release):!isNaN(options.release)&&options.release>=0&&options.release<=1&&(nRelease=127*options.release),this._convertNoteToArray(note).forEach(function(item){this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.noteoff<<4)+(ch-1),[item,Math.round(nRelease)],(options.time||wm.time)+options.duration)}.bind(this))}.bind(this))}return this},Output.prototype.sendKeyAftertouch=function(note,channel,pressure,options){var that=this;if(options=options||{},1>channel||channel>16)throw new RangeError("The channel must be between 1 and 16.");pressure=parseFloat(pressure),(isNaN(pressure)||0>pressure||pressure>1)&&(pressure=.5);var nPressure=Math.round(127*pressure);return this._convertNoteToArray(note).forEach(function(item){that._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.keyaftertouch<<4)+(ch-1),[item,nPressure],that._parseTimeParameter(options.time))})}),this},Output.prototype.sendControlChange=function(controller,value,channel,options){if(options=options||{},"string"==typeof controller){if(controller=wm.MIDI_CONTROL_CHANGE_MESSAGES[controller],!controller)throw new TypeError("Invalid controller name.")}else if(controller=parseInt(controller),!(controller>=0&&119>=controller))throw new RangeError("Controller numbers must be between 0 and 119.");if(value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("Controller value must be between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){this.send((wm.MIDI_CHANNEL_MESSAGES.controlchange<<4)+(ch-1),[controller,value],this._parseTimeParameter(options.time))}.bind(this)),this},Output.prototype._selectRegisteredParameter=function(parameter,channel,time){var that=this;if(parameter[0]=parseInt(parameter[0]),!(parameter[0]>=0&&parameter[0]<=127))throw new RangeError("The control65 value must be between 0 and 127");if(parameter[1]=parseInt(parameter[1]),!(parameter[1]>=0&&parameter[1]<=127))throw new RangeError("The control64 value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(101,parameter[0],channel,{time:time}),that.sendControlChange(100,parameter[1],channel,{time:time})}),this},Output.prototype._selectNonRegisteredParameter=function(parameter,channel,time){var that=this;if(parameter[0]=parseInt(parameter[0]),!(parameter[0]>=0&&parameter[0]<=127))throw new RangeError("The control63 value must be between 0 and 127");if(parameter[1]=parseInt(parameter[1]),!(parameter[1]>=0&&parameter[1]<=127))throw new RangeError("The control62 value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(99,parameter[0],channel,{time:time}),that.sendControlChange(98,parameter[1],channel,{time:time})}),this},Output.prototype._setCurrentRegisteredParameter=function(data,channel,time){var that=this;if(data=[].concat(data),data[0]=parseInt(data[0]),!(data[0]>=0&&data[0]<=127))throw new RangeError("The msb value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(6,data[0],channel,{time:time})}),data[1]=parseInt(data[1]),data[1]>=0&&data[1]<=127&&this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(38,data[1],channel,{time:time})}),this},Output.prototype._deselectRegisteredParameter=function(channel,time){var that=this;return this._convertChannelToArray(channel).forEach(function(ch){that.sendControlChange(101,127,channel,{time:time}),that.sendControlChange(100,127,channel,{time:time})}),this},Output.prototype.setRegisteredParameter=function(parameter,data,channel,options){var that=this;if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new Error("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){that._selectRegisteredParameter(parameter,channel,options.time),that._setCurrentRegisteredParameter(data,channel,options.time),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.setNonRegisteredParameter=function(parameter,data,channel,options){var that=this;if(options=options||{},!(parameter[0]>=0&&parameter[0]<=127&&parameter[1]>=0&&parameter[1]<=127))throw new Error("Position 0 and 1 of the 2-position parameter array must both be between 0 and 127.");return data=[].concat(data),this._convertChannelToArray(channel).forEach(function(ch){that._selectNonRegisteredParameter(parameter,channel,options.time),that._setCurrentRegisteredParameter(data,channel,options.time),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.incrementRegisteredParameter=function(parameter,channel,options){var that=this;if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new Error("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){that._selectRegisteredParameter(parameter,channel,options.time),that.sendControlChange(96,0,channel,{time:options.time}),that._deselectRegisteredParameter(channel,options.time)}),this},Output.prototype.decrementRegisteredParameter=function(parameter,channel,options){if(options=options||{},!Array.isArray(parameter)){if(!wm.MIDI_REGISTERED_PARAMETER[parameter])throw new TypeError("The specified parameter is not available.");parameter=wm.MIDI_REGISTERED_PARAMETER[parameter]}return this._convertChannelToArray(channel).forEach(function(ch){this._selectRegisteredParameter(parameter,channel,options.time),this.sendControlChange(97,0,channel,{time:options.time}),this._deselectRegisteredParameter(channel,options.time)}.bind(this)),this},Output.prototype.setPitchBendRange=function(semitones,cents,channel,options){var that=this;if(options=options||{},semitones=parseInt(semitones)||0,!(semitones>=0&&127>=semitones))throw new RangeError("The semitones value must be between 0 and 127");if(cents=parseInt(cents)||0,!(cents>=0&&127>=cents))throw new RangeError("The cents value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("pitchbendrange",[semitones,cents],channel,{time:options.time})}),this},Output.prototype.setModulationRange=function(semitones,cents,channel,options){var that=this;if(options=options||{},semitones=parseInt(semitones)||0,!(semitones>=0&&127>=semitones))throw new RangeError("The semitones value must be between 0 and 127");if(cents=parseInt(cents)||0,!(cents>=0&&127>=cents))throw new RangeError("The cents value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("modulationrange",[semitones,cents],channel,{time:options.time})}),this},Output.prototype.setMasterTuning=function(value,channel,options){var that=this;if(options=options||{},value=parseFloat(value)||0,-65>=value||value>=64)throw new RangeError("The value must be a decimal number larger than -65 and smaller than 64.");var coarse=parseInt(value)+64,fine=value-parseInt(value);fine=Math.round((fine+1)/2*16383);var msb=fine>>7&127,lsb=127&fine;return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("channelcoarsetuning",coarse,channel,{time:options.time}),that.setRegisteredParameter("channelfinetuning",[msb,lsb],channel,{time:options.time})}),this},Output.prototype.setTuningProgram=function(value,channel,options){var that=this;if(options=options||{},value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("The program value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("tuningprogram",value,channel,{time:options.time})}),this},Output.prototype.setTuningBank=function(value,channel,options){var that=this;if(options=options||{},value=parseInt(value)||0,!(value>=0&&127>=value))throw new RangeError("The bank value must be between 0 and 127");return this._convertChannelToArray(channel).forEach(function(ch){that.setRegisteredParameter("tuningbank",value,channel,{time:options.time})}),this},Output.prototype.sendChannelMode=function(command,value,channel,options){var that=this;if(options=options||{},"string"==typeof command){if(command=wm.MIDI_CHANNEL_MODE_MESSAGES[command],!command)throw new TypeError("Invalid channel mode message name.")}else if(command=parseInt(command),!(command>=120&&127>=command))throw new RangeError("Channel mode numerical identifiers must be between 120 and 127.");if(value=parseInt(value),isNaN(value)||0>value||value>127)throw new RangeError("Value must be integers between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.channelmode<<4)+(ch-1),[command,value],that._parseTimeParameter(options.time))}),this},Output.prototype.sendProgramChange=function(program,channel,options){var that=this;if(options=options||{},program=parseInt(program),isNaN(program)||0>program||program>127)throw new RangeError("Program numbers must be between 0 and 127.");return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.programchange<<4)+(ch-1),[program],that._parseTimeParameter(options.time))}),this},Output.prototype.sendChannelAftertouch=function(pressure,channel,options){var that=this;options=options||{},pressure=parseFloat(pressure),(isNaN(pressure)||0>pressure||pressure>1)&&(pressure=.5);var nPressure=Math.round(127*pressure);return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.channelaftertouch<<4)+(ch-1),[nPressure],that._parseTimeParameter(options.time))}),this},Output.prototype.sendPitchBend=function(bend,channel,options){var that=this;if(options=options||{},bend=parseFloat(bend),isNaN(bend)||-1>bend||bend>1)throw new RangeError("Pitch bend value must be between -1 and 1.");
+	var nLevel=Math.round((bend+1)/2*16383),msb=nLevel>>7&127,lsb=127&nLevel;return this._convertChannelToArray(channel).forEach(function(ch){that.send((wm.MIDI_CHANNEL_MESSAGES.pitchbend<<4)+(ch-1),[lsb,msb],that._parseTimeParameter(options.time))}),this},Output.prototype._parseTimeParameter=function(time){var parsed,value;return"string"==typeof time&&"+"===time.substring(0,1)?(parsed=parseFloat(time),parsed&&parsed>0&&(value=wm.time+parsed)):(parsed=parseFloat(time),parsed>wm.time&&(value=parsed)),value},Output.prototype._convertNoteToArray=function(note){var notes=[];return Array.isArray(note)||(note=[note]),note.forEach(function(item){notes.push(wm.guessNoteNumber(item))}),notes},Output.prototype._convertChannelToArray=function(channel){if(("all"===channel||void 0===channel)&&(channel=["all"]),Array.isArray(channel)||(channel=[channel]),channel.indexOf("all")>-1){channel=[];for(var i=1;16>=i;i++)channel.push(i)}return channel.forEach(function(ch){if(!(ch>=1&&16>=ch))throw new RangeError("MIDI channels must be between 1 and 16.")}),channel},Output.prototype._onMidiMessage=function(e){}, true?!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function(){return wm}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):"undefined"!=typeof module&&module.exports?module.exports=wm:scope.WebMidi||(scope.WebMidi=wm)}(this);
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-	 * jQuery JavaScript Library v3.1.1
+	 * jQuery JavaScript Library v3.2.1
 	 * https://jquery.com/
 	 *
 	 * Includes Sizzle.js
 	 * https://sizzlejs.com/
 	 *
-	 * Copyright jQuery Foundation and other contributors
+	 * Copyright JS Foundation and other contributors
 	 * Released under the MIT license
 	 * https://jquery.org/license
 	 *
-	 * Date: 2016-09-22T22:30Z
+	 * Date: 2017-03-20T18:59Z
 	 */
 	( function( global, factory ) {
 	
@@ -1841,7 +1856,7 @@
 	
 	
 	var
-		version = "3.1.1",
+		version = "3.2.1",
 	
 		// Define a local copy of jQuery
 		jQuery = function( selector, context ) {
@@ -1989,11 +2004,11 @@
 	
 					// Recurse if we're merging plain objects or arrays
 					if ( deep && copy && ( jQuery.isPlainObject( copy ) ||
-						( copyIsArray = jQuery.isArray( copy ) ) ) ) {
+						( copyIsArray = Array.isArray( copy ) ) ) ) {
 	
 						if ( copyIsArray ) {
 							copyIsArray = false;
-							clone = src && jQuery.isArray( src ) ? src : [];
+							clone = src && Array.isArray( src ) ? src : [];
 	
 						} else {
 							clone = src && jQuery.isPlainObject( src ) ? src : {};
@@ -2031,8 +2046,6 @@
 		isFunction: function( obj ) {
 			return jQuery.type( obj ) === "function";
 		},
-	
-		isArray: Array.isArray,
 	
 		isWindow: function( obj ) {
 			return obj != null && obj === obj.window;
@@ -2106,10 +2119,6 @@
 		// Microsoft forgot to hump their vendor prefix (#9572)
 		camelCase: function( string ) {
 			return string.replace( rmsPrefix, "ms-" ).replace( rdashAlpha, fcamelCase );
-		},
-	
-		nodeName: function( elem, name ) {
-			return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
 		},
 	
 		each: function( obj, callback ) {
@@ -4596,6 +4605,13 @@
 	
 	var rneedsContext = jQuery.expr.match.needsContext;
 	
+	
+	
+	function nodeName( elem, name ) {
+	
+	  return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+	
+	};
 	var rsingleTag = ( /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i );
 	
 	
@@ -4947,7 +4963,18 @@
 			return siblings( elem.firstChild );
 		},
 		contents: function( elem ) {
-			return elem.contentDocument || jQuery.merge( [], elem.childNodes );
+	        if ( nodeName( elem, "iframe" ) ) {
+	            return elem.contentDocument;
+	        }
+	
+	        // Support: IE 9 - 11 only, iOS 7 only, Android Browser <=4.3 only
+	        // Treat the template element as a regular one in browsers that
+	        // don't support it.
+	        if ( nodeName( elem, "template" ) ) {
+	            elem = elem.content || elem;
+	        }
+	
+	        return jQuery.merge( [], elem.childNodes );
 		}
 	}, function( name, fn ) {
 		jQuery.fn[ name ] = function( until, selector ) {
@@ -5045,7 +5072,7 @@
 			fire = function() {
 	
 				// Enforce single-firing
-				locked = options.once;
+				locked = locked || options.once;
 	
 				// Execute callbacks for all pending executions,
 				// respecting firingIndex overrides and runtime changes
@@ -5214,7 +5241,7 @@
 		throw ex;
 	}
 	
-	function adoptValue( value, resolve, reject ) {
+	function adoptValue( value, resolve, reject, noValue ) {
 		var method;
 	
 		try {
@@ -5230,9 +5257,10 @@
 			// Other non-thenables
 			} else {
 	
-				// Support: Android 4.0 only
-				// Strict mode functions invoked without .call/.apply get global-object context
-				resolve.call( undefined, value );
+				// Control `resolve` arguments by letting Array#slice cast boolean `noValue` to integer:
+				// * false: [ value ].slice( 0 ) => resolve( value )
+				// * true: [ value ].slice( 1 ) => resolve()
+				resolve.apply( undefined, [ value ].slice( noValue ) );
 			}
 	
 		// For Promises/A+, convert exceptions into rejections
@@ -5242,7 +5270,7 @@
 	
 			// Support: Android 4.0 only
 			// Strict mode functions invoked without .call/.apply get global-object context
-			reject.call( undefined, value );
+			reject.apply( undefined, [ value ] );
 		}
 	}
 	
@@ -5567,7 +5595,8 @@
 	
 			// Single- and empty arguments are adopted like Promise.resolve
 			if ( remaining <= 1 ) {
-				adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject );
+				adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject,
+					!remaining );
 	
 				// Use .then() to unwrap secondary thenables (cf. gh-3000)
 				if ( master.state() === "pending" ||
@@ -5638,15 +5667,6 @@
 		// A counter to track how many items to wait for before
 		// the ready event fires. See #6781
 		readyWait: 1,
-	
-		// Hold (or release) the ready event
-		holdReady: function( hold ) {
-			if ( hold ) {
-				jQuery.readyWait++;
-			} else {
-				jQuery.ready( true );
-			}
-		},
 	
 		// Handle when the DOM is ready
 		ready: function( wait ) {
@@ -5883,7 +5903,7 @@
 			if ( key !== undefined ) {
 	
 				// Support array or space separated string of keys
-				if ( jQuery.isArray( key ) ) {
+				if ( Array.isArray( key ) ) {
 	
 					// If key is an array of keys...
 					// We always set camelCase keys, so remove that.
@@ -6109,7 +6129,7 @@
 	
 				// Speed up dequeue by getting out quickly if this is just a lookup
 				if ( data ) {
-					if ( !queue || jQuery.isArray( data ) ) {
+					if ( !queue || Array.isArray( data ) ) {
 						queue = dataPriv.access( elem, type, jQuery.makeArray( data ) );
 					} else {
 						queue.push( data );
@@ -6486,7 +6506,7 @@
 			ret = [];
 		}
 	
-		if ( tag === undefined || tag && jQuery.nodeName( context, tag ) ) {
+		if ( tag === undefined || tag && nodeName( context, tag ) ) {
 			return jQuery.merge( [ context ], ret );
 		}
 	
@@ -7093,7 +7113,7 @@
 	
 				// For checkbox, fire native event so checked state will be right
 				trigger: function() {
-					if ( this.type === "checkbox" && this.click && jQuery.nodeName( this, "input" ) ) {
+					if ( this.type === "checkbox" && this.click && nodeName( this, "input" ) ) {
 						this.click();
 						return false;
 					}
@@ -7101,7 +7121,7 @@
 	
 				// For cross-browser consistency, don't fire native .click() on links
 				_default: function( event ) {
-					return jQuery.nodeName( event.target, "a" );
+					return nodeName( event.target, "a" );
 				}
 			},
 	
@@ -7378,11 +7398,12 @@
 		rscriptTypeMasked = /^true\/(.*)/,
 		rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
 	
+	// Prefer a tbody over its parent table for containing new rows
 	function manipulationTarget( elem, content ) {
-		if ( jQuery.nodeName( elem, "table" ) &&
-			jQuery.nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
+		if ( nodeName( elem, "table" ) &&
+			nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
 	
-			return elem.getElementsByTagName( "tbody" )[ 0 ] || elem;
+			return jQuery( ">tbody", elem )[ 0 ] || elem;
 		}
 	
 		return elem;
@@ -7912,12 +7933,18 @@
 	
 	function curCSS( elem, name, computed ) {
 		var width, minWidth, maxWidth, ret,
+	
+			// Support: Firefox 51+
+			// Retrieving style before computed somehow
+			// fixes an issue with getting wrong values
+			// on detached elements
 			style = elem.style;
 	
 		computed = computed || getStyles( elem );
 	
-		// Support: IE <=9 only
-		// getPropertyValue is only needed for .css('filter') (#12537)
+		// getPropertyValue is needed for:
+		//   .css('filter') (IE 9 only, #12537)
+		//   .css('--customProperty) (#3144)
 		if ( computed ) {
 			ret = computed.getPropertyValue( name ) || computed[ name ];
 	
@@ -7983,6 +8010,7 @@
 		// except "table", "table-cell", or "table-caption"
 		// See here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
 		rdisplayswap = /^(none|table(?!-c[ea]).+)/,
+		rcustomProp = /^--/,
 		cssShow = { position: "absolute", visibility: "hidden", display: "block" },
 		cssNormalTransform = {
 			letterSpacing: "0",
@@ -8010,6 +8038,16 @@
 				return name;
 			}
 		}
+	}
+	
+	// Return a property mapped along what jQuery.cssProps suggests or to
+	// a vendor prefixed property.
+	function finalPropName( name ) {
+		var ret = jQuery.cssProps[ name ];
+		if ( !ret ) {
+			ret = jQuery.cssProps[ name ] = vendorPropName( name ) || name;
+		}
+		return ret;
 	}
 	
 	function setPositiveNumber( elem, value, subtract ) {
@@ -8072,43 +8110,30 @@
 	
 	function getWidthOrHeight( elem, name, extra ) {
 	
-		// Start with offset property, which is equivalent to the border-box value
-		var val,
-			valueIsBorderBox = true,
+		// Start with computed style
+		var valueIsBorderBox,
 			styles = getStyles( elem ),
+			val = curCSS( elem, name, styles ),
 			isBorderBox = jQuery.css( elem, "boxSizing", false, styles ) === "border-box";
 	
-		// Support: IE <=11 only
-		// Running getBoundingClientRect on a disconnected node
-		// in IE throws an error.
-		if ( elem.getClientRects().length ) {
-			val = elem.getBoundingClientRect()[ name ];
+		// Computed unit is not pixels. Stop here and return.
+		if ( rnumnonpx.test( val ) ) {
+			return val;
 		}
 	
-		// Some non-html elements return undefined for offsetWidth, so check for null/undefined
-		// svg - https://bugzilla.mozilla.org/show_bug.cgi?id=649285
-		// MathML - https://bugzilla.mozilla.org/show_bug.cgi?id=491668
-		if ( val <= 0 || val == null ) {
+		// Check for style in case a browser which returns unreliable values
+		// for getComputedStyle silently falls back to the reliable elem.style
+		valueIsBorderBox = isBorderBox &&
+			( support.boxSizingReliable() || val === elem.style[ name ] );
 	
-			// Fall back to computed then uncomputed css if necessary
-			val = curCSS( elem, name, styles );
-			if ( val < 0 || val == null ) {
-				val = elem.style[ name ];
-			}
-	
-			// Computed unit is not pixels. Stop here and return.
-			if ( rnumnonpx.test( val ) ) {
-				return val;
-			}
-	
-			// Check for style in case a browser which returns unreliable values
-			// for getComputedStyle silently falls back to the reliable elem.style
-			valueIsBorderBox = isBorderBox &&
-				( support.boxSizingReliable() || val === elem.style[ name ] );
-	
-			// Normalize "", auto, and prepare for extra
-			val = parseFloat( val ) || 0;
+		// Fall back to offsetWidth/Height when value is "auto"
+		// This happens for inline elements with no explicit setting (gh-3571)
+		if ( val === "auto" ) {
+			val = elem[ "offset" + name[ 0 ].toUpperCase() + name.slice( 1 ) ];
 		}
+	
+		// Normalize "", auto, and prepare for extra
+		val = parseFloat( val ) || 0;
 	
 		// Use the active box-sizing model to add/subtract irrelevant styles
 		return ( val +
@@ -8173,10 +8198,15 @@
 			// Make sure that we're working with the right name
 			var ret, type, hooks,
 				origName = jQuery.camelCase( name ),
+				isCustomProp = rcustomProp.test( name ),
 				style = elem.style;
 	
-			name = jQuery.cssProps[ origName ] ||
-				( jQuery.cssProps[ origName ] = vendorPropName( origName ) || origName );
+			// Make sure that we're working with the right name. We don't
+			// want to query the value if it is a CSS custom property
+			// since they are user-defined.
+			if ( !isCustomProp ) {
+				name = finalPropName( origName );
+			}
 	
 			// Gets hook for the prefixed version, then unprefixed version
 			hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
@@ -8212,7 +8242,11 @@
 				if ( !hooks || !( "set" in hooks ) ||
 					( value = hooks.set( elem, value, extra ) ) !== undefined ) {
 	
-					style[ name ] = value;
+					if ( isCustomProp ) {
+						style.setProperty( name, value );
+					} else {
+						style[ name ] = value;
+					}
 				}
 	
 			} else {
@@ -8231,11 +8265,15 @@
 	
 		css: function( elem, name, extra, styles ) {
 			var val, num, hooks,
-				origName = jQuery.camelCase( name );
+				origName = jQuery.camelCase( name ),
+				isCustomProp = rcustomProp.test( name );
 	
-			// Make sure that we're working with the right name
-			name = jQuery.cssProps[ origName ] ||
-				( jQuery.cssProps[ origName ] = vendorPropName( origName ) || origName );
+			// Make sure that we're working with the right name. We don't
+			// want to modify the value if it is a CSS custom property
+			// since they are user-defined.
+			if ( !isCustomProp ) {
+				name = finalPropName( origName );
+			}
 	
 			// Try prefixed name followed by the unprefixed name
 			hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
@@ -8260,6 +8298,7 @@
 				num = parseFloat( val );
 				return extra === true || isFinite( num ) ? num || 0 : val;
 			}
+	
 			return val;
 		}
 	} );
@@ -8359,7 +8398,7 @@
 					map = {},
 					i = 0;
 	
-				if ( jQuery.isArray( name ) ) {
+				if ( Array.isArray( name ) ) {
 					styles = getStyles( elem );
 					len = name.length;
 	
@@ -8497,13 +8536,18 @@
 	
 	
 	var
-		fxNow, timerId,
+		fxNow, inProgress,
 		rfxtypes = /^(?:toggle|show|hide)$/,
 		rrun = /queueHooks$/;
 	
-	function raf() {
-		if ( timerId ) {
-			window.requestAnimationFrame( raf );
+	function schedule() {
+		if ( inProgress ) {
+			if ( document.hidden === false && window.requestAnimationFrame ) {
+				window.requestAnimationFrame( schedule );
+			} else {
+				window.setTimeout( schedule, jQuery.fx.interval );
+			}
+	
 			jQuery.fx.tick();
 		}
 	}
@@ -8730,7 +8774,7 @@
 			name = jQuery.camelCase( index );
 			easing = specialEasing[ name ];
 			value = props[ index ];
-			if ( jQuery.isArray( value ) ) {
+			if ( Array.isArray( value ) ) {
 				easing = value[ 1 ];
 				value = props[ index ] = value[ 0 ];
 			}
@@ -8789,12 +8833,19 @@
 	
 				deferred.notifyWith( elem, [ animation, percent, remaining ] );
 	
+				// If there's more to do, yield
 				if ( percent < 1 && length ) {
 					return remaining;
-				} else {
-					deferred.resolveWith( elem, [ animation ] );
-					return false;
 				}
+	
+				// If this was an empty animation, synthesize a final progress notification
+				if ( !length ) {
+					deferred.notifyWith( elem, [ animation, 1, 0 ] );
+				}
+	
+				// Resolve the animation and report its conclusion
+				deferred.resolveWith( elem, [ animation ] );
+				return false;
 			},
 			animation = deferred.promise( {
 				elem: elem,
@@ -8859,6 +8910,13 @@
 			animation.opts.start.call( elem, animation );
 		}
 	
+		// Attach callbacks from options
+		animation
+			.progress( animation.opts.progress )
+			.done( animation.opts.done, animation.opts.complete )
+			.fail( animation.opts.fail )
+			.always( animation.opts.always );
+	
 		jQuery.fx.timer(
 			jQuery.extend( tick, {
 				elem: elem,
@@ -8867,11 +8925,7 @@
 			} )
 		);
 	
-		// attach callbacks from options
-		return animation.progress( animation.opts.progress )
-			.done( animation.opts.done, animation.opts.complete )
-			.fail( animation.opts.fail )
-			.always( animation.opts.always );
+		return animation;
 	}
 	
 	jQuery.Animation = jQuery.extend( Animation, {
@@ -8922,8 +8976,8 @@
 			easing: fn && easing || easing && !jQuery.isFunction( easing ) && easing
 		};
 	
-		// Go to the end state if fx are off or if document is hidden
-		if ( jQuery.fx.off || document.hidden ) {
+		// Go to the end state if fx are off
+		if ( jQuery.fx.off ) {
 			opt.duration = 0;
 	
 		} else {
@@ -9115,7 +9169,7 @@
 		for ( ; i < timers.length; i++ ) {
 			timer = timers[ i ];
 	
-			// Checks the timer has not already been removed
+			// Run the timer and safely remove it when done (allowing for external removal)
 			if ( !timer() && timers[ i ] === timer ) {
 				timers.splice( i--, 1 );
 			}
@@ -9129,30 +9183,21 @@
 	
 	jQuery.fx.timer = function( timer ) {
 		jQuery.timers.push( timer );
-		if ( timer() ) {
-			jQuery.fx.start();
-		} else {
-			jQuery.timers.pop();
-		}
+		jQuery.fx.start();
 	};
 	
 	jQuery.fx.interval = 13;
 	jQuery.fx.start = function() {
-		if ( !timerId ) {
-			timerId = window.requestAnimationFrame ?
-				window.requestAnimationFrame( raf ) :
-				window.setInterval( jQuery.fx.tick, jQuery.fx.interval );
+		if ( inProgress ) {
+			return;
 		}
+	
+		inProgress = true;
+		schedule();
 	};
 	
 	jQuery.fx.stop = function() {
-		if ( window.cancelAnimationFrame ) {
-			window.cancelAnimationFrame( timerId );
-		} else {
-			window.clearInterval( timerId );
-		}
-	
-		timerId = null;
+		inProgress = null;
 	};
 	
 	jQuery.fx.speeds = {
@@ -9269,7 +9314,7 @@
 			type: {
 				set: function( elem, value ) {
 					if ( !support.radioValue && value === "radio" &&
-						jQuery.nodeName( elem, "input" ) ) {
+						nodeName( elem, "input" ) ) {
 						var val = elem.value;
 						elem.setAttribute( "type", value );
 						if ( val ) {
@@ -9700,7 +9745,7 @@
 				} else if ( typeof val === "number" ) {
 					val += "";
 	
-				} else if ( jQuery.isArray( val ) ) {
+				} else if ( Array.isArray( val ) ) {
 					val = jQuery.map( val, function( value ) {
 						return value == null ? "" : value + "";
 					} );
@@ -9759,7 +9804,7 @@
 								// Don't return options that are disabled or in a disabled optgroup
 								!option.disabled &&
 								( !option.parentNode.disabled ||
-									!jQuery.nodeName( option.parentNode, "optgroup" ) ) ) {
+									!nodeName( option.parentNode, "optgroup" ) ) ) {
 	
 							// Get the specific value for the option
 							value = jQuery( option ).val();
@@ -9811,7 +9856,7 @@
 	jQuery.each( [ "radio", "checkbox" ], function() {
 		jQuery.valHooks[ this ] = {
 			set: function( elem, value ) {
-				if ( jQuery.isArray( value ) ) {
+				if ( Array.isArray( value ) ) {
 					return ( elem.checked = jQuery.inArray( jQuery( elem ).val(), value ) > -1 );
 				}
 			}
@@ -10106,7 +10151,7 @@
 	function buildParams( prefix, obj, traditional, add ) {
 		var name;
 	
-		if ( jQuery.isArray( obj ) ) {
+		if ( Array.isArray( obj ) ) {
 	
 			// Serialize array item.
 			jQuery.each( obj, function( i, v ) {
@@ -10158,7 +10203,7 @@
 			};
 	
 		// If an array was passed in, assume that it is an array of form elements.
-		if ( jQuery.isArray( a ) || ( a.jquery && !jQuery.isPlainObject( a ) ) ) {
+		if ( Array.isArray( a ) || ( a.jquery && !jQuery.isPlainObject( a ) ) ) {
 	
 			// Serialize the form elements
 			jQuery.each( a, function() {
@@ -10204,7 +10249,7 @@
 					return null;
 				}
 	
-				if ( jQuery.isArray( val ) ) {
+				if ( Array.isArray( val ) ) {
 					return jQuery.map( val, function( val ) {
 						return { name: elem.name, value: val.replace( rCRLF, "\r\n" ) };
 					} );
@@ -11629,13 +11674,6 @@
 	
 	
 	
-	/**
-	 * Gets a window from an element
-	 */
-	function getWindow( elem ) {
-		return jQuery.isWindow( elem ) ? elem : elem.nodeType === 9 && elem.defaultView;
-	}
-	
 	jQuery.offset = {
 		setOffset: function( elem, options, i ) {
 			var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
@@ -11700,13 +11738,14 @@
 					} );
 			}
 	
-			var docElem, win, rect, doc,
+			var doc, docElem, rect, win,
 				elem = this[ 0 ];
 	
 			if ( !elem ) {
 				return;
 			}
 	
+			// Return zeros for disconnected and hidden (display: none) elements (gh-2310)
 			// Support: IE <=11 only
 			// Running getBoundingClientRect on a
 			// disconnected node in IE throws an error
@@ -11716,20 +11755,14 @@
 	
 			rect = elem.getBoundingClientRect();
 	
-			// Make sure element is not hidden (display: none)
-			if ( rect.width || rect.height ) {
-				doc = elem.ownerDocument;
-				win = getWindow( doc );
-				docElem = doc.documentElement;
+			doc = elem.ownerDocument;
+			docElem = doc.documentElement;
+			win = doc.defaultView;
 	
-				return {
-					top: rect.top + win.pageYOffset - docElem.clientTop,
-					left: rect.left + win.pageXOffset - docElem.clientLeft
-				};
-			}
-	
-			// Return zeros for disconnected and hidden elements (gh-2310)
-			return rect;
+			return {
+				top: rect.top + win.pageYOffset - docElem.clientTop,
+				left: rect.left + win.pageXOffset - docElem.clientLeft
+			};
 		},
 	
 		position: function() {
@@ -11755,7 +11788,7 @@
 	
 				// Get correct offsets
 				offset = this.offset();
-				if ( !jQuery.nodeName( offsetParent[ 0 ], "html" ) ) {
+				if ( !nodeName( offsetParent[ 0 ], "html" ) ) {
 					parentOffset = offsetParent.offset();
 				}
 	
@@ -11802,7 +11835,14 @@
 	
 		jQuery.fn[ method ] = function( val ) {
 			return access( this, function( elem, method, val ) {
-				var win = getWindow( elem );
+	
+				// Coalesce documents and windows
+				var win;
+				if ( jQuery.isWindow( elem ) ) {
+					win = elem;
+				} else if ( elem.nodeType === 9 ) {
+					win = elem.defaultView;
+				}
 	
 				if ( val === undefined ) {
 					return win ? win[ prop ] : elem[ method ];
@@ -11911,7 +11951,16 @@
 		}
 	} );
 	
+	jQuery.holdReady = function( hold ) {
+		if ( hold ) {
+			jQuery.readyWait++;
+		} else {
+			jQuery.ready( true );
+		}
+	};
+	jQuery.isArray = Array.isArray;
 	jQuery.parseJSON = JSON.parse;
+	jQuery.nodeName = nodeName;
 	
 	
 	
@@ -11968,14 +12017,13 @@
 	
 	
 	
-	
 	return jQuery;
 	} );
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {"use strict"
 	// Module export pattern from
@@ -12171,9 +12219,9 @@
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -27907,24 +27955,24 @@
 		    }
 		  }, {
 		    key: 'setKeySignature',
-		    value: function setKeySignature(keySpec, cancelKeySpec, position) {
+		    value: function setKeySignature(keySpec, cancelKeySpec, alterKeySpec, position) {
 		      if (position === undefined) {
 		        position = _stavemodifier.StaveModifier.Position.BEGIN;
 		      }
 		
 		      var keySignatures = this.getModifiers(position, _keysignature.KeySignature.CATEGORY);
 		      if (keySignatures.length === 0) {
-		        this.addKeySignature(keySpec, cancelKeySpec, position);
+		        this.addKeySignature(keySpec, cancelKeySpec, alterKeySpec, position);
 		      } else {
-		        keySignatures[0].setKeySig(keySpec, cancelKeySpec);
+		        keySignatures[0].setKeySig(keySpec, cancelKeySpec, alterKeySpec);
 		      }
 		
 		      return this;
 		    }
 		  }, {
 		    key: 'setEndKeySignature',
-		    value: function setEndKeySignature(keySpec, cancelKeySpec) {
-		      this.setKeySignature(keySpec, cancelKeySpec, _stavemodifier.StaveModifier.Position.END);
+		    value: function setEndKeySignature(keySpec, cancelKeySpec, alterKeySpec) {
+		      this.setKeySignature(keySpec, cancelKeySpec, alterKeySpec, _stavemodifier.StaveModifier.Position.END);
 		      return this;
 		    }
 		  }, {
@@ -27951,8 +27999,8 @@
 		    }
 		  }, {
 		    key: 'addKeySignature',
-		    value: function addKeySignature(keySpec, cancelKeySpec, position) {
-		      this.addModifier(new _keysignature.KeySignature(keySpec, cancelKeySpec), position);
+		    value: function addKeySignature(keySpec, cancelKeySpec, alterKeySpec, position) {
+		      this.addModifier(new _keysignature.KeySignature(keySpec, cancelKeySpec, alterKeySpec), position);
 		      return this;
 		    }
 		  }, {
@@ -35921,9 +35969,9 @@
 	;
 	//# sourceMappingURL=vexflow-debug.js.map
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	/**
@@ -35955,14 +36003,15 @@
 	
 	assign(tonal, __webpack_require__(8))
 	assign(tonal, __webpack_require__(13))
+	assign(tonal, __webpack_require__(16))
 	assign(tonal, __webpack_require__(14))
 	
-	tonal.note = __webpack_require__(16)
-	tonal.ivl = __webpack_require__(19)
-	tonal.midi = __webpack_require__(17)
-	tonal.freq = __webpack_require__(18)
-	tonal.range = __webpack_require__(20)
-	tonal.key = __webpack_require__(25)
+	tonal.note = __webpack_require__(17)
+	tonal.ivl = __webpack_require__(20)
+	tonal.midi = __webpack_require__(18)
+	tonal.freq = __webpack_require__(19)
+	tonal.range = __webpack_require__(21)
+	tonal.key = __webpack_require__(26)
 	
 	tonal.scale = function (name) { return tonal.scale.notes(name) }
 	assign(tonal.scale, __webpack_require__(28))
@@ -35970,17 +36019,19 @@
 	assign(tonal.chord, __webpack_require__(31))
 	
 	tonal.pitch = __webpack_require__(9)
-	tonal.notation = __webpack_require__(26)
+	tonal.notation = __webpack_require__(27)
 	tonal.progression = __webpack_require__(33)
 	tonal.sonority = __webpack_require__(34)
+	tonal.pitchset = __webpack_require__(35)
+	tonal.pcset = __webpack_require__(22)
 	
 	if (typeof module === 'object' && module.exports) module.exports = tonal
 	if (typeof window !== 'undefined') window.Tonal = tonal
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -36263,9 +36314,9 @@
 	exports.select = select;
 	exports.permutations = permutations;
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -36540,212 +36591,17 @@
 	exports.ivlFn = ivlFn;
 	exports.pitchFn = pitchFn;
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	'use strict'
-	
-	// util
-	function fillStr (s, num) { return Array(num + 1).join(s) }
-	function isNum (x) { return typeof x === 'number' }
-	function isStr (x) { return typeof x === 'string' }
-	function isDef (x) { return typeof x !== 'undefined' }
-	function midiToFreq (midi, tuning) {
-	  return Math.pow(2, (midi - 69) / 12) * (tuning || 440)
-	}
-	
-	var REGEX = /^([a-gA-G])(#{1,}|b{1,}|x{1,}|)(-?\d*)\s*(.*)\s*$/
-	/**
-	 * A regex for matching note strings in scientific notation.
-	 *
-	 * @name regex
-	 * @function
-	 * @return {RegExp} the regexp used to parse the note name
-	 *
-	 * The note string should have the form `letter[accidentals][octave][element]`
-	 * where:
-	 *
-	 * - letter: (Required) is a letter from A to G either upper or lower case
-	 * - accidentals: (Optional) can be one or more `b` (flats), `#` (sharps) or `x` (double sharps).
-	 * They can NOT be mixed.
-	 * - octave: (Optional) a positive or negative integer
-	 * - element: (Optional) additionally anything after the duration is considered to
-	 * be the element name (for example: 'C2 dorian')
-	 *
-	 * The executed regex contains (by array index):
-	 *
-	 * - 0: the complete string
-	 * - 1: the note letter
-	 * - 2: the optional accidentals
-	 * - 3: the optional octave
-	 * - 4: the rest of the string (trimmed)
-	 *
-	 * @example
-	 * var parser = require('note-parser')
-	 * parser.regex.exec('c#4')
-	 * // => ['c#4', 'c', '#', '4', '']
-	 * parser.regex.exec('c#4 major')
-	 * // => ['c#4major', 'c', '#', '4', 'major']
-	 * parser.regex().exec('CMaj7')
-	 * // => ['CMaj7', 'C', '', '', 'Maj7']
-	 */
-	function regex () { return REGEX }
-	
-	var SEMITONES = [0, 2, 4, 5, 7, 9, 11]
-	/**
-	 * Parse a note name in scientific notation an return it's components,
-	 * and some numeric properties including midi number and frequency.
-	 *
-	 * @name parse
-	 * @function
-	 * @param {String} note - the note string to be parsed
-	 * @param {Boolean} isTonic - true the strings it's supposed to contain a note number
-	 * and some category (for example an scale: 'C# major'). It's false by default,
-	 * but when true, en extra tonicOf property is returned with the category ('major')
-	 * @param {Float} tunning - The frequency of A4 note to calculate frequencies.
-	 * By default it 440.
-	 * @return {Object} the parsed note name or null if not a valid note
-	 *
-	 * The parsed note name object will ALWAYS contains:
-	 * - letter: the uppercase letter of the note
-	 * - acc: the accidentals of the note (only sharps or flats)
-	 * - pc: the pitch class (letter + acc)
-	 * - step: s a numeric representation of the letter. It's an integer from 0 to 6
-	 * where 0 = C, 1 = D ... 6 = B
-	 * - alt: a numeric representation of the accidentals. 0 means no alteration,
-	 * positive numbers are for sharps and negative for flats
-	 * - chroma: a numeric representation of the pitch class. It's like midi for
-	 * pitch classes. 0 = C, 1 = C#, 2 = D ... 11 = B. Can be used to find enharmonics
-	 * since, for example, chroma of 'Cb' and 'B' are both 11
-	 *
-	 * If the note has octave, the parser object will contain:
-	 * - oct: the octave number (as integer)
-	 * - midi: the midi number
-	 * - freq: the frequency (using tuning parameter as base)
-	 *
-	 * If the parameter `isTonic` is set to true, the parsed object will contain:
-	 * - tonicOf: the rest of the string that follows note name (left and right trimmed)
-	 *
-	 * @example
-	 * var parse = require('note-parser').parse
-	 * parse('Cb4')
-	 * // => { letter: 'C', acc: 'b', pc: 'Cb', step: 0, alt: -1, chroma: -1,
-	 *         oct: 4, midi: 59, freq: 246.94165062806206 }
-	 * // if no octave, no midi, no freq
-	 * parse('fx')
-	 * // => { letter: 'F', acc: '##', pc: 'F##', step: 3, alt: 2, chroma: 7 })
-	 */
-	function parse (str, isTonic, tuning) {
-	  if (typeof str !== 'string') return null
-	  var m = REGEX.exec(str)
-	  if (!m || !isTonic && m[4]) return null
-	
-	  var p = { letter: m[1].toUpperCase(), acc: m[2].replace(/x/g, '##') }
-	  p.pc = p.letter + p.acc
-	  p.step = (p.letter.charCodeAt(0) + 3) % 7
-	  p.alt = p.acc[0] === 'b' ? -p.acc.length : p.acc.length
-	  var pos = SEMITONES[p.step] + p.alt
-	  p.chroma = pos < 0 ? 12 + pos : pos % 12
-	  if (m[3]) { // has octave
-	    p.oct = +m[3]
-	    p.midi = pos + 12 * (p.oct + 1)
-	    p.freq = midiToFreq(p.midi, tuning)
-	  }
-	  if (isTonic) p.tonicOf = m[4]
-	  return p
-	}
-	
-	var LETTERS = 'CDEFGAB'
-	function acc (n) { return !isNum(n) ? '' : n < 0 ? fillStr('b', -n) : fillStr('#', n) }
-	function oct (n) { return !isNum(n) ? '' : '' + n }
-	
-	/**
-	 * Create a string from a parsed object or `step, alteration, octave` parameters
-	 * @param {Object} obj - the parsed data object
-	 * @return {String} a note string or null if not valid parameters
-	 * @since 1.2
-	 * @example
-	 * parser.build(parser.parse('cb2')) // => 'Cb2'
-	 *
-	 * @example
-	 * // it accepts (step, alteration, octave) parameters:
-	 * parser.build(3) // => 'F'
-	 * parser.build(3, -1) // => 'Fb'
-	 * parser.build(3, -1, 4) // => 'Fb4'
-	 */
-	function build (s, a, o) {
-	  if (s === null || typeof s === 'undefined') return null
-	  if (s.step) return build(s.step, s.alt, s.oct)
-	  if (s < 0 || s > 6) return null
-	  return LETTERS.charAt(s) + acc(a) + oct(o)
-	}
-	
-	/**
-	 * Get midi of a note
-	 *
-	 * @name midi
-	 * @function
-	 * @param {String|Integer} note - the note name or midi number
-	 * @return {Integer} the midi number of the note or null if not a valid note
-	 * or the note does NOT contains octave
-	 * @example
-	 * var parser = require('note-parser')
-	 * parser.midi('A4') // => 69
-	 * parser.midi('A') // => null
-	 * @example
-	 * // midi numbers are bypassed (even as strings)
-	 * parser.midi(60) // => 60
-	 * parser.midi('60') // => 60
-	 */
-	function midi (note) {
-	  if ((isNum(note) || isStr(note)) && note >= 0 && note < 128) return +note
-	  var p = parse(note)
-	  return p && isDef(p.midi) ? p.midi : null
-	}
-	
-	/**
-	 * Get freq of a note in hertzs (in a well tempered 440Hz A4)
-	 *
-	 * @name freq
-	 * @function
-	 * @param {String} note - the note name or note midi number
-	 * @param {String} tuning - (Optional) the A4 frequency (440 by default)
-	 * @return {Float} the freq of the number if hertzs or null if not valid note
-	 * @example
-	 * var parser = require('note-parser')
-	 * parser.freq('A4') // => 440
-	 * parser.freq('A') // => null
-	 * @example
-	 * // can change tuning (440 by default)
-	 * parser.freq('A4', 444) // => 444
-	 * parser.freq('A3', 444) // => 222
-	 * @example
-	 * // it accepts midi numbers (as numbers and as strings)
-	 * parser.freq(69) // => 440
-	 * parser.freq('69', 442) // => 442
-	 */
-	function freq (note, tuning) {
-	  var m = midi(note)
-	  return m === null ? null : midiToFreq(m, tuning)
-	}
-	
-	var parser = { parse: parse, build: build, regex: regex, midi: midi, freq: freq }
-	// add additional functions, one for each object property
-	var FNS = ['letter', 'acc', 'pc', 'step', 'alt', 'chroma', 'oct']
-	FNS.forEach(function (name) {
-	  parser[name] = function (src) {
-	    var p = parse(src)
-	    return p && isDef(p[name]) ? p[name] : null
-	  }
-	})
-	
-	module.exports = parser
+	!function(t,n){ true?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n(t.NoteParser=t.NoteParser||{})}(this,function(t){"use strict";function n(t,n){return Array(n+1).join(t)}function r(t){return"number"==typeof t}function e(t){return"string"==typeof t}function u(t){return void 0!==t}function c(t,n){return Math.pow(2,(t-69)/12)*(n||440)}function o(){return b}function i(t,n,r){if("string"!=typeof t)return null;var e=b.exec(t);if(!e||!n&&e[4])return null;var u={letter:e[1].toUpperCase(),acc:e[2].replace(/x/g,"##")};u.pc=u.letter+u.acc,u.step=(u.letter.charCodeAt(0)+3)%7,u.alt="b"===u.acc[0]?-u.acc.length:u.acc.length;var o=A[u.step]+u.alt;return u.chroma=o<0?12+o:o%12,e[3]&&(u.oct=+e[3],u.midi=o+12*(u.oct+1),u.freq=c(u.midi,r)),n&&(u.tonicOf=e[4]),u}function f(t){return r(t)?t<0?n("b",-t):n("#",t):""}function a(t){return r(t)?""+t:""}function l(t,n,r){return null===t||void 0===t?null:t.step?l(t.step,t.alt,t.oct):t<0||t>6?null:C.charAt(t)+f(n)+a(r)}function p(t){if((r(t)||e(t))&&t>=0&&t<128)return+t;var n=i(t);return n&&u(n.midi)?n.midi:null}function s(t,n){var r=p(t);return null===r?null:c(r,n)}function d(t){return(i(t)||{}).letter}function m(t){return(i(t)||{}).acc}function h(t){return(i(t)||{}).pc}function v(t){return(i(t)||{}).step}function g(t){return(i(t)||{}).alt}function x(t){return(i(t)||{}).chroma}function y(t){return(i(t)||{}).oct}var b=/^([a-gA-G])(#{1,}|b{1,}|x{1,}|)(-?\d*)\s*(.*)\s*$/,A=[0,2,4,5,7,9,11],C="CDEFGAB";t.regex=o,t.parse=i,t.build=l,t.midi=p,t.freq=s,t.letter=d,t.acc=m,t.pc=h,t.step=v,t.alt=g,t.chroma=x,t.oct=y});
+	//# sourceMappingURL=note-parser.js.map
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict'
 	
@@ -36905,9 +36761,9 @@
 	  build: build, shorthand: shorthand }
 
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -36969,9 +36825,9 @@
 	exports.encode = encode;
 	exports.decode = decode;
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37042,9 +36898,9 @@
 	exports.transpose = transpose;
 	exports.trFifths = trFifths;
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37109,9 +36965,9 @@
 	exports.interval = interval;
 	exports.semitones = semitones;
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict'
 	
@@ -37131,9 +36987,118 @@
 	module.exports = asArr
 
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, '__esModule', { value: true });
+	
+	var tonalTranspose = __webpack_require__(13);
+	var tonalDistance = __webpack_require__(14);
+	var tonalArray = __webpack_require__(8);
+	
+	/**
+	 * Functions to transpose o calculate distances from a collection of notes.
+	 *
+	 * A useful concept is _harmonizer_: a function that _harmonizes_ notes. It can
+	 * be created by partially applying the `harmonize` function (see examples)
+	 *
+	 * @example
+	 * var harmonizer = require('tonal-harmonizer')
+	 * harmonizer.harmonize('1P 3M 5P', 'C') // => ['C', 'E', 'G']
+	 * var maj7 = harmonizer.harmonize('1P 3M 5P 7M')
+	 * maj7('D4') // =>  ['D4', 'F#4', 'A4', 'C#5']
+	 * harmonizer.harmonics('C E G') // => ['1P', '3M', '5P']
+	 *
+	 * @example
+	 * // in tonal this functions are NOT namespaced
+	 * var tonal = require('tonal')
+	 * tonal.harmonize('1P 3M 5P', 'G')
+	 *
+	 * @example
+	 * // using ES6 import syntax
+	 * import { harmonize } from 'tonal-harmonizer'
+	 * harmonize(...)
+	 *
+	 * @module harmonizer
+	 */
+	/**
+	 * Given a list of notes, return the distance from the first note to the rest.
+	 * @param {Array|String} notes - the list of notes
+	 * @return {Array} the intervals relative to the first note
+	 * @example
+	 * harmonizer.harmonics('C E G') // => ['1P', '3M', '5P']
+	 *
+	 * @example
+	 * // in tonal this functions are NOT namespaced
+	 * tonal.harmonics(tonal.scale('C major')) // => ['1P', ...]
+	 */
+	function harmonics (list) {
+	  var a = tonalArray.asArr(list);
+	  return a.length ? tonalArray.compact(a.map(tonalDistance.interval(a[0]))) : a
+	}
+	
+	/**
+	 * Given a list of notes, return the intervallic structure: the distance from
+	 * one to the next.
+	 *
+	 * Notice that the number of intervals is one less that the number of notes.
+	 *
+	 * @param {Array|String} notes - the list of notes
+	 * @return {Array} the intervals relative to the previous
+	 * @example
+	 * harmonizer.intervallic('c e g') // => ['3M', '3m']
+	 * harmonizer.intervallic('e g c') // => ['3m', '4P']
+	 * harmonizer.intervallic('c') // => []
+	 */
+	function intervallic (notes) {
+	  var dist = [];
+	  notes = tonalArray.asArr(notes);
+	  for (var i = 1; i < notes.length; i++) {
+	    dist.push(tonalDistance.interval(notes[i - 1], notes[i]));
+	  }
+	  return dist
+	}
+	
+	/**
+	 * Given a list of intervals and a tonic, return that tonic transposed
+	 * to that intervals.
+	 *
+	 * It's currified and, calling with only one parameter, returns an harmonizer,
+	 * a function that harmonizes any note (see example)
+	 *
+	 * @function
+	 * @param {String|Array} list - the list of intervals
+	 * @param {String|Pitch} note - the note to be harmonized
+	 * @return {Array} the resulting notes
+	 * @example
+	 * harmonizer.harmonize('P1 M3 P5 M7', 'C') // => ['C', 'E', 'G', 'B']
+	 * @example
+	 * // harmonizer with partial application
+	 * var maj7 = harmonize.harmonizer('P1 M3 P5 M7')
+	 * maj7('C') // => ['C', 'E', 'G', 'B']
+	 * @example
+	 * // in tonal this function is NOT namespaced
+	 * var C = tonal.harmonizer('C D E')
+	 * C('M3') // => ['E', 'G#', 'B']
+	 */
+	function harmonize (list, pitch) {
+	  if (arguments.length > 1) return harmonize(list)(pitch)
+	  return function (tonic) {
+	    return tonalArray.compact(tonalArray.map(tonalTranspose.transpose(tonic || 'P1'), list))
+	  }
+	}
+	
+	exports.harmonics = harmonics;
+	exports.intervallic = intervallic;
+	exports.harmonize = harmonize;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37142,9 +37107,25 @@
 	var noteParser = __webpack_require__(10);
 	var tonalPitch = __webpack_require__(9);
 	var tonalTranspose = __webpack_require__(13);
-	var tonalMidi = __webpack_require__(17);
-	var tonalFreq = __webpack_require__(18);
+	var tonalMidi = __webpack_require__(18);
+	var tonalFreq = __webpack_require__(19);
 	
+	/**
+	 * `tonal-note` is a collection of functions to get properties from musical notes.
+	 *
+	 * @module note
+	 * @example
+	 * var note = require('tonal-note')
+	 * note.name('bb2') // => 'Bb2'
+	 * note.chroma('bb2') // => 10
+	 * note.enharmonics('C#6') // => [ 'B##5', 'C#6', 'Db6' ]
+	 * note.simplify('B#3') // => 'C4'
+	 *
+	 * @example
+	 * // using ES6 import syntax
+	 * import { name } from 'tonal-note'
+	 * ['c', 'db3', '2', 'g+', 'gx4'].map(name) // => ['C', 'Db3', null, null, 'G##4']
+	 */
 	/**
 	 * Get the note midi number
 	 * (an alias of tonal-midi `toMidi` function)
@@ -37156,7 +37137,7 @@
 	 * note.midi('C4') // => 60
 	 * @see midi.toMidi
 	 */
-	var midi = tonalMidi.toMidi
+	var midi = tonalMidi.toMidi;
 	
 	/**
 	 * Get the note name of a given midi note number
@@ -37170,7 +37151,7 @@
 	 * note.fromMidi(60) // => 'C4'
 	 * @see midi.note
 	 */
-	var fromMidi = tonalMidi.note
+	var fromMidi = tonalMidi.note;
 	
 	/**
 	 * Get the frequency of a note
@@ -37183,7 +37164,7 @@
 	 * note.freq('A4') // => 440
 	 * @see freq.toFreq
 	 */
-	var freq = tonalFreq.toFreq
+	var freq = tonalFreq.toFreq;
 	
 	/**
 	 * Return the chroma of a note. The chroma is the numeric equivalent to the
@@ -37197,7 +37178,7 @@
 	 * ['C', 'D', 'E', 'F'].map(note.chroma) // => [0, 2, 4, 5]
 	 */
 	function chroma (n) {
-	  var p = tonalPitch.asNotePitch(n)
+	  var p = tonalPitch.asNotePitch(n);
 	  return p ? tonalPitch.chr(p) : null
 	}
 	
@@ -37216,9 +37197,17 @@
 	 * ['c', 'db3', '2', 'g+', 'gx4'].map(note.name) // => ['C', 'Db3', null, null, 'G##4']
 	 */
 	function note$1 (n) {
-	  var p = tonalPitch.asNotePitch(n)
+	  var p = tonalPitch.asNotePitch(n);
 	  return p ? tonalPitch.strNote(p) : null
 	}
+	
+	/**
+	 * An alias for note. Get the name of a note in scientific notation
+	 * @example
+	 * note.name('fx') // => 'F##'
+	 * note.name('bbb3') // => 'Bbb3'
+	 */
+	const name = note$1;
 	
 	/**
 	 * Get note properties. It returns an object with the following properties:
@@ -37234,9 +37223,9 @@
 	 * note.props('C#') // => { step: 0, alt: 1, oct: undefined }
 	 */
 	function props (n) {
-	  var p = tonalPitch.asNotePitch(n)
+	  var p = tonalPitch.asNotePitch(n);
 	  if (!p) return null
-	  var d = tonalPitch.decode(p)
+	  var d = tonalPitch.decode(p);
 	  return { step: d[0], alt: d[1], oct: d[2] }
 	}
 	
@@ -37275,7 +37264,7 @@
 	 * note.oct('C') // => undefined
 	 * note.oct('blah') // => undefined
 	 */
-	var oct = getProp('oct')
+	var oct = getProp('oct');
 	
 	/**
 	 * Get the note step: a number equivalent of the note letter. 0 means C and
@@ -37290,7 +37279,7 @@
 	 * // usually what you need is chroma
 	 * note.chroma('Cb') // => 6
 	 */
-	var step = getProp('step')
+	var step = getProp('step');
 	
 	/**
 	 * Get the note step in fifths from 'C'. One property of the perfect fifht
@@ -37299,8 +37288,8 @@
 	 * @param {String|Pitch} note - the note (can be a pitch class)
 	 * @return {Integer} the number of fifths to reach that pitch class from 'C'
 	 */
-	function pcFifths (note) {
-	  var p = tonalPitch.asNotePitch(note)
+	function pcFifths (note$$1) {
+	  var p = tonalPitch.asNotePitch(note$$1);
 	  return p ? tonalPitch.fifths(p) : null
 	}
 	
@@ -37316,7 +37305,7 @@
 	 * note.alt('C#') // => 1
 	 * note.alt('Cb') // => -1
 	 */
-	var alt = getProp('alt')
+	var alt = getProp('alt');
 	
 	/**
 	 * Get pitch class of a note. The note can be a string or a pitch array.
@@ -37329,12 +37318,12 @@
 	 * tonal.map(tonal.pc, 'db3 bb6 fx2') // => [ 'Db', 'Bb', 'F##']
 	 */
 	function pc (n) {
-	  var p = tonalPitch.asNotePitch(n)
+	  var p = tonalPitch.asNotePitch(n);
 	  return p ? tonalPitch.strNote([ p[0], [ tonalPitch.fifths(p) ] ]) : null
 	}
 	
-	var ASC = tonalPitch.parseIvl('2d')
-	var DESC = tonalPitch.parseIvl('-2d')
+	var ASC = tonalPitch.parseIvl('2d');
+	var DESC = tonalPitch.parseIvl('-2d');
 	
 	/**
 	 * Get the enharmonics of a note. It returns an array of three elements: the
@@ -37351,11 +37340,11 @@
 	 * note.enharmonics('Db') // => ['C#', 'Db', 'Ebbb'])
 	 */
 	function enharmonics (pitch) {
-	  var notes = []
-	  notes.push(tonalTranspose.transpose(DESC, pitch))
+	  var notes = [];
+	  notes.push(tonalTranspose.transpose(DESC, pitch));
 	  if (notes[0] === null) return null
-	  notes.push(pitch)
-	  notes.push(tonalTranspose.transpose(ASC, pitch))
+	  notes.push(pitch);
+	  notes.push(tonalTranspose.transpose(ASC, pitch));
 	  return notes
 	}
 	
@@ -37381,6 +37370,7 @@
 	exports.freq = freq;
 	exports.chroma = chroma;
 	exports.note = note$1;
+	exports.name = name;
 	exports.props = props;
 	exports.fromProps = fromProps;
 	exports.oct = oct;
@@ -37391,9 +37381,10 @@
 	exports.enharmonics = enharmonics;
 	exports.simplify = simplify;
 
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37402,6 +37393,23 @@
 	function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 	
 	var parser = _interopDefault(__webpack_require__(10));
+	
+	/**
+	 * A midi note number is a number representation of a note pitch. It can be
+	 * integers so it's equal tempered tuned, or float to indicate it's not
+	 * tuned into equal temepered scale.
+	 *
+	 * This module contains functions to convert to and from midi notes.
+	 *
+	 * @example
+	 * var midi = require('tonal-midi')
+	 * midi.toMidi('A4') // => 69
+	 * midi.note(69) // => 'A4'
+	 * midi.note(61) // => 'Db4'
+	 * midi.note(61, true) // => 'C#4'
+	 *
+	 * @module midi
+	 */
 	
 	/**
 	 * Convert the given note to a midi note number. If you pass a midi number it
@@ -37419,8 +37427,8 @@
 	  return parser.midi(val)
 	}
 	
-	var FLATS = 'C Db D Eb E F Gb G Ab A Bb B'.split(' ')
-	var SHARPS = 'C C# D D# E F F# G G# A A# B'.split(' ')
+	var FLATS = 'C Db D Eb E F Gb G Ab A Bb B'.split(' ');
+	var SHARPS = 'C C# D D# E F F# G G# A A# B'.split(' ');
 	
 	/**
 	 * Given a midi number, returns a note name. The altered notes will have
@@ -37439,31 +37447,42 @@
 	 */
 	function note (num, sharps) {
 	  if (num === true || num === false) return function (m) { return note(m, num) }
-	  num = Math.round(num)
-	  var pcs = sharps === true ? SHARPS : FLATS
-	  var pc = pcs[num % 12]
-	  var o = Math.floor(num / 12) - 1
+	  num = Math.round(num);
+	  var pcs = sharps === true ? SHARPS : FLATS;
+	  var pc = pcs[num % 12];
+	  var o = Math.floor(num / 12) - 1;
 	  return pc + o
 	}
 	
 	exports.toMidi = toMidi;
 	exports.note = note;
 
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(17);
+	var tonalMidi = __webpack_require__(18);
 	
+	/**
+	 * A collection of modules to work with note frequencies
+	 *
+	 * @example
+	 * var freq = require('tonal-freq')
+	 * freq.toFreq('A4') // => 440
+	 * freq.note(440) // => 'A4'
+	 * freq.noteAndDetune(320) // => ['C4', 200]
+	 * @module freq
+	 */
 	// decorate a function to round the numeric result to a max
 	function round (m, fn) {
-	  m = m || m === 0 ? Math.pow(10, m) : false
+	  m = m || m === 0 ? Math.pow(10, m) : false;
 	  return function (v) {
-	    v = fn(v)
+	    v = fn(v);
 	    return v === null ? null : m ? Math.round(v * m) / m : v
 	  }
 	}
@@ -37482,10 +37501,10 @@
 	 * const toFreq = eqTempFreq(444, 2)
 	 * toFreq('A3') // => 222
 	 */
-	function eqTempFreq (ref, max, note) {
-	  if (arguments.length > 2) return eqTempFreq(ref, max)(note)
+	function eqTempFreq (ref, max, note$$1) {
+	  if (arguments.length > 2) return eqTempFreq(ref, max)(note$$1)
 	  return round(max, function (p) {
-	    var m = tonalMidi.toMidi(p)
+	    var m = tonalMidi.toMidi(p);
 	    return m ? Math.pow(2, (m - 69) / 12) * ref : null
 	  })
 	}
@@ -37502,7 +37521,7 @@
 	 * freq.toFreq('A4') // => 440
 	 * freq.toFreq('C4') // => 261.63
 	 */
-	var toFreq = eqTempFreq(440, 2)
+	var toFreq = eqTempFreq(440, 2);
 	
 	/**
 	 * Get the midi note from a frequency in equal temperament scale. You can
@@ -37530,7 +37549,7 @@
 	 * @example
 	 * freq.toMidi(361) // => 59.96
 	 */
-	var toMidi$1 = eqTempFreqToMidi(440, 2)
+	var toMidi$1 = eqTempFreqToMidi(440, 2);
 	
 	/**
 	 * Get note name from frequency using an equal temperament scale with 440Hz
@@ -37557,8 +37576,8 @@
 	 * cents('C4', 261) // => -4
 	 */
 	function cents (base, freq) {
-	  var b = toFreq(base) || base
-	  var f = toFreq(freq) || freq
+	  var b = toFreq(base) || base;
+	  var f = toFreq(freq) || freq;
 	  return Math.round(1200 * (Math.log(f / b) / Math.log(2)))
 	}
 	
@@ -37569,9 +37588,10 @@
 	exports.note = note$1;
 	exports.cents = cents;
 
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37580,6 +37600,34 @@
 	var intervalNotation = __webpack_require__(11);
 	var tonalPitch = __webpack_require__(9);
 	
+	/**
+	 * A collection of functions to obtain music interval properties.
+	 *
+	 * The intervals are strings in shorthand notation. Two variations are supported:
+	 *
+	 * - standard shorthand notation: type and number, for example: 'M3', 'd-4'
+	 * - inverse shorthand notation: number and then type, for example: '3M', '-4d'
+	 *
+	 * The problem with the standard shorthand notation is that some strings can be
+	 * parsed as notes or intervals, for example: 'A4' can be note A in 4th octave
+	 * or an augmented four. To remove ambiguity, the prefered notation in tonal is the
+	 * inverse shortand notation.
+	 *
+	 * NOTE: this module is exported in tonal as ivl
+	 *
+	 * @example
+	 * var interval = require('tonal-interval')
+	 * interval.semitones('4P') // => 5
+	 * interval.invert('3m') // => '6M'
+	 * interval.simplify('9m') // => '2m'
+	 *
+	 * @example
+	 * // from tonal
+	 * var tonal = require('tonal')
+	 * tonal.ivl.invert('4P') // => '5P'
+	 *
+	 * @module interval
+	 */
 	/**
 	 * Get interval name. Can be used to test if it's an interval. It accepts intervals
 	 * as pitch or string in shorthand notation or tonal notation. It returns always
@@ -37592,7 +37640,7 @@
 	 * interval.toInterval('3') // => null
 	 */
 	function toInterval (ivl) {
-	  var i = tonalPitch.asIvlPitch(ivl)
+	  var i = tonalPitch.asIvlPitch(ivl);
 	  return i ? tonalPitch.strIvl(i) : null
 	}
 	
@@ -37607,7 +37655,7 @@
 	 * interval.num('P-4') // => 4
 	 */
 	function num (ivl) {
-	  var p = props(ivl)
+	  var p = props(ivl);
 	  return p ? p.num : null
 	}
 	
@@ -37624,7 +37672,7 @@
 	 * interval.num('m-9') // => -9
 	 */
 	function value (ivl) {
-	  var p = props(ivl)
+	  var p = props(ivl);
 	  return p ? p.num * p.dir : null
 	}
 	
@@ -37644,9 +37692,9 @@
 	 * interval.parse('m-9') // => { num: 9, alt: -1, dir: -1 }
 	 */
 	function props (ivl) {
-	  var i = tonalPitch.asIvlPitch(ivl)
+	  var i = tonalPitch.asIvlPitch(ivl);
 	  if (!i) return null
-	  var d = tonalPitch.decode(i)
+	  var d = tonalPitch.decode(i);
 	  return { num: d[0] + 1 + d[2] * 7, alt: d[1], dir: i[2] }
 	}
 	
@@ -37662,9 +37710,9 @@
 	 */
 	function fromProps (props) {
 	  if (!props || props.num < 1) return null
-	  var octs = Math.floor((props.num) / 7)
-	  var simple = props.num - 7 * octs
-	  return intervalNotation.build(simple, props.alt, octs, props.dir)
+	  var octs = Math.floor((props.num) / 8);
+	  var simple = props.num - 7 * octs;
+	  return intervalNotation.build(simple, props.alt || 0, octs, props.dir)
 	}
 	
 	/**
@@ -37678,14 +37726,14 @@
 	 * tonal.semitones('P5') // => 7
 	 */
 	function semitones (ivl) {
-	  var i = tonalPitch.asIvlPitch(ivl)
+	  var i = tonalPitch.asIvlPitch(ivl);
 	  return i ? tonalPitch.height(i) : null
 	}
 	
 	// interval numbers
-	var IN = [1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7]
+	var IN = [1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7];
 	// interval qualities
-	var IQ = 'P m M m M P d P m M m M'.split(' ')
+	var IQ = 'P m M m M P d P m M m M'.split(' ');
 	
 	/**
 	 * Get interval name from semitones number. Since there are several interval
@@ -37699,14 +37747,14 @@
 	 * tonal.fromSemitones(-7) // => '-5P'
 	 */
 	function fromSemitones (num) {
-	  var d = num < 0 ? -1 : 1
-	  var n = Math.abs(num)
-	  var c = n % 12
-	  var o = Math.floor(n / 12)
+	  var d = num < 0 ? -1 : 1;
+	  var n = Math.abs(num);
+	  var c = n % 12;
+	  var o = Math.floor(n / 12);
 	  return d * (IN[c] + 7 * o) + IQ[c]
 	}
 	
-	var CLASSES = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1]
+	var CLASSES = [0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1];
 	/**
 	 * Get the [interval class](https://en.wikipedia.org/wiki/Interval_class)
 	 * number of a given interval.
@@ -37726,12 +37774,12 @@
 	 * ['P1', 'M2', 'M3', 'P4', 'P5', 'M6', 'M7'].map(ic) // => [0, 2, 4, 5, 5, 3, 1]
 	 */
 	function ic (ivl) {
-	  var i = tonalPitch.asIvlPitch(ivl)
-	  var s = i ? tonalPitch.chr(i) : Math.round(ivl)
+	  var i = tonalPitch.asIvlPitch(ivl);
+	  var s = i ? tonalPitch.chr(i) : Math.round(ivl);
 	  return isNaN(s) ? null : CLASSES[Math.abs(s) % 12]
 	}
 	
-	var TYPES = 'PMMPPMM'
+	var TYPES = 'PMMPPMM';
 	/**
 	 * Get interval type. Can be perfectable (1, 4, 5) or majorable (2, 3, 6, 7)
 	 * It does NOT return the actual quality.
@@ -37743,7 +37791,7 @@
 	 * interval.type('5A') // => 'P'
 	 */
 	function type (ivl) {
-	  var i = tonalPitch.asIvlPitch(ivl)
+	  var i = tonalPitch.asIvlPitch(ivl);
 	  return i ? TYPES[tonalPitch.decode(i)[0]] : null
 	}
 	
@@ -37761,12 +37809,12 @@
 	 * interval.invert('2M') // => '7m'
 	 */
 	var invert = tonalPitch.ivlFn(function (i) {
-	  var d = tonalPitch.decode(i)
+	  var d = tonalPitch.decode(i);
 	  // d = [step, alt, oct]
-	  var step = (7 - d[0]) % 7
-	  var alt = TYPES[d[0]] === 'P' ? -d[1] : -(d[1] + 1)
+	  var step = (7 - d[0]) % 7;
+	  var alt = TYPES[d[0]] === 'P' ? -d[1] : -(d[1] + 1);
 	  return tonalPitch.encode(step, alt, d[2], tonalPitch.dir(i))
-	})
+	});
 	
 	/**
 	 * Get the simplified version of an interval.
@@ -37784,12 +37832,12 @@
 	 */
 	var simplify = tonalPitch.ivlFn(function (i) {
 	  // decode to [step, alt, octave]
-	  var dec = tonalPitch.decode(i)
+	  var dec = tonalPitch.decode(i);
 	  // if it's not 8 reduce the octaves to 0
-	  if (dec[0] !== 0 || dec[2] !== 1) dec[2] = 0
+	  if (dec[0] !== 0 || dec[2] !== 1) dec[2] = 0;
 	  // encode back
 	  return tonalPitch.encode(dec[0], dec[1], dec[2], tonalPitch.dir(i))
-	})
+	});
 	
 	exports.toInterval = toInterval;
 	exports.num = num;
@@ -37803,9 +37851,10 @@
 	exports.invert = invert;
 	exports.simplify = simplify;
 
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -37813,9 +37862,29 @@
 	
 	var tonalArray = __webpack_require__(8);
 	var tonalTranspose = __webpack_require__(13);
-	var tonalMidi = __webpack_require__(17);
-	var tonalPitchset = __webpack_require__(21);
+	var tonalMidi = __webpack_require__(18);
+	var tonalPcset = __webpack_require__(22);
 	
+	/**
+	 * A collection of functions to create note ranges.
+	 *
+	 * @example
+	 * var range = require('tonal-range')
+	 * // ascending chromatic range
+	 * range.chromatic(['C4', 'E4']) // => ['C4', 'Db4', 'D4', 'Eb4', 'E4']
+	 * // descending chromatic range
+	 * range.chromatic(['E4', 'C4']) // => ['E4', 'Eb4', 'D4', 'Db4', 'C4']
+	 * // combining ascending and descending in complex ranges
+	 * range.chromatic(['C2', 'E2', 'D2']) // => ['C2', 'Db2', 'D2', 'Eb2', 'E2', 'Eb2', 'D2']
+	 * // numeric (midi note numbers) range
+	 * range.numeric('C4 E4 Bb3') // => [60, 61, 62, 63, 64]
+	 * // complex numeric range
+	 * range.numeric('C4 E4 Bb3') // => [60, 61, 62, 63, 64, 63, 62, 61, 60, 59, 58]
+	 * // create a scale range
+	 * range.pitchSet('c e g a', 'c2 c3 c2') // => [ 'C2', 'E2', 'G2', 'A2', 'C3', 'A2', 'G2', 'E2', 'C2' ] *
+	 g
+	 * @module range
+	 */
 	function isNum (n) { return typeof n === 'number' }
 	// convert notes to midi if needed
 	function asNum (n) { return isNum(n) ? n : tonalMidi.toMidi(n) }
@@ -37848,7 +37917,7 @@
 	function numeric (list) {
 	  return tonalArray.asArr(list).map(asNum).reduce(function (r, n, i) {
 	    if (i === 1) return ran(r, n)
-	    var last = r[r.length - 1]
+	    var last = r[r.length - 1];
 	    return r.concat(ran(last, n).slice(1))
 	  })
 	}
@@ -37897,7 +37966,7 @@
 	function pitchSet (set, range) {
 	  if (arguments.length === 1) return function (l) { return pitchSet(set, l) }
 	
-	  return tonalPitchset.filter(set, chromatic(range))
+	  return tonalPcset.filter(set, chromatic(range))
 	}
 	
 	exports.numeric = numeric;
@@ -37905,37 +37974,70 @@
 	exports.fifths = fifths;
 	exports.pitchSet = pitchSet;
 
-/***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
 	var tonalPitch = __webpack_require__(9);
-	var tonalNote = __webpack_require__(22);
+	var tonalNote = __webpack_require__(23);
 	var tonalArray = __webpack_require__(8);
 	var tonalTranspose = __webpack_require__(13);
 	
-	function toInt (set) { return parseInt(chroma(set), 2) }
+	/**
+	 * Functions to create and manipulate pitch class sets
+	 *
+	 * @example
+	 * var pcset = require('tonal-pcset')
+	 * pcset.equal('c2 d5 e6', 'c6 e3 d1') // => true
+	 *
+	 * @module pcset
+	 */
+	function chrToInt (set) { return parseInt(chroma(set), 2) }
 	function pitchChr (p) { p = tonalPitch.asPitch(p); return p ? tonalPitch.chr(p) : null }
 	
 	/**
-	 * Given a list of notes, return the notes of the pitchset
+	 * Get chroma of a pitch class set. A chroma identifies each set uniquely.
+	 * It's a 12-digit binary each presenting one semitone of the octave.
+	 *
+	 * Note that this function accepts a chroma as parameter and return it
+	 * without modification.
+	 *
+	 * @param {Array|String} set - the pitch class set
+	 * @return {String} a binary representation of the pitch class set
+	 * @example
+	 * pcset.chroma('C D E') // => '1010100000000'
+	 */
+	function chroma (set) {
+	  if (isChroma(set)) return set
+	  var b = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	  tonalArray.map(pitchChr, set).forEach(function (i) {
+	    b[i] = 1;
+	  });
+	  return b.join('')
+	}
+	
+	/**
+	 * Given a list of notes, return the pitch class names of the set
 	 * starting with the first note of the list
+	 * @param {String|Array} notes - the pitch class set notes
+	 * @return {Array} an array of pitch class sets
 	 */
 	function notes (notes) {
-	  var pcs = tonalArray.map(tonalNote.pc, notes)
+	  var pcs = tonalArray.map(tonalNote.pc, notes);
 	  if (!pcs.length) return pcs
-	  var tonic = pcs[0]
+	  var tonic = pcs[0];
 	  // since the first note of the chroma is always C, we have to rotate it
-	  var rotated = tonalArray.rotate(pitchChr(tonic), chroma(pcs).split('')).join('')
+	  var rotated = tonalArray.rotate(pitchChr(tonic), chroma(pcs).split('')).join('');
 	  return fromChroma(rotated, tonic)
 	}
 	
 	/**
-	 * Given a pitch set (a list of notes or a pitch set chroma), produce the 12 rotations
+	 * Given a pitch class set (a list of notes or a pitch class set chroma), produce the 12 rotations
 	 * of the chroma (and discard the ones that starts with '0')
 	 *
 	 * This can be used, for example, to get all the modes of a scale.
@@ -37946,79 +38048,59 @@
 	 * @return {Array<String>} an array with all the modes of the chroma
 	 *
 	 * @example
+	 * pcset.chromaModes('C E G')
 	 */
 	function chromaModes (set, normalize) {
-	  normalize = normalize !== false
-	  var binary = chroma(set).split('')
+	  normalize = normalize !== false;
+	  var binary = chroma(set).split('');
 	  return tonalArray.compact(binary.map(function (_, i) {
-	    var r = tonalArray.rotate(i, binary)
+	    var r = tonalArray.rotate(i, binary);
 	    return normalize && r[0] === '0' ? null : r.join('')
 	  }))
 	}
 	
-	var REGEX = /^[01]{12}$/
+	var REGEX = /^[01]{12}$/;
 	
 	/**
-	 * Test if the given string is a pitch set chroma.
-	 * @param {String} chroma - the pitch set chroma
-	 * @return {Boolean} true if its a valid pitchset chroma
+	 * Test if the given string is a pitch class set chroma.
+	 * @param {String} chroma - the pitch class set chroma
+	 * @return {Boolean} true if its a valid pcset chroma
 	 * @example
-	 * pitchset.isChroma('101010101010') // => true
-	 * pitchset.isChroma('101001') // => false
+	 * pcset.isChroma('101010101010') // => true
+	 * pcset.isChroma('101001') // => false
 	 */
 	function isChroma (set) {
 	  return REGEX.test(set)
 	}
 	
+	var IVLS = '1P 2m 2M 3m 3M 4P 5d 5P 6m 6M 7m 7M'.split(' ');
 	/**
-	 * Get chroma of a pitch set. A chroma identifies each pitch set uniquely.
-	 * It's a 12-digit binary each presenting one semitone of the octave.
-	 *
-	 * Note that this function accepts a chroma as parameter and return it
-	 * without modification.
-	 *
-	 * @param {Array|String} set - the pitch set
-	 * @return {String} a binary representation of the pitch set
-	 * @example
-	 * pitchset.chroma('C D E') // => '1010100000000'
-	 */
-	function chroma (set) {
-	  if (isChroma(set)) return set
-	  var b = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-	  tonalArray.map(pitchChr, set).forEach(function (i) {
-	    b[i] = 1
-	  })
-	  return b.join('')
-	}
-	
-	var IVLS = '1P 2m 2M 3m 3M 4P 5d 5P 6m 6M 7m 7M'.split(' ')
-	/**
-	 * Given a pitch set in binary notation it returns the intervals or notes
+	 * Given a pitch class set in binary notation it returns the intervals or notes
 	 * (depending on the tonic)
-	 * @param {String} binary - the pitch set in binary representation
-	 * @param {String|Pitch} tonic - the pitch set tonic
+	 * @param {String} binary - the pitch class set in binary representation
+	 * @param {String|Pitch} tonic - the pitch class set tonic
 	 * @return {Array} a list of notes or intervals
 	 * @example
-	 * pitchset.fromChroma('101010101010', 'C') // => ['C', 'D', 'E', 'Gb', 'Ab', 'Bb']
+	 * pcset.fromChroma('101010101010', 'C') // => ['C', 'D', 'E', 'Gb', 'Ab', 'Bb']
 	 */
 	function fromChroma (binary, tonic) {
 	  if (arguments.length === 1) return function (t) { return fromChroma(binary, t) }
 	  if (!isChroma(binary)) return null
 	
-	  tonic = tonic || 'P1'
+	  tonic = tonic || 'P1';
 	  return tonalArray.compact(binary.split('').map(function (d, i) {
 	    return d === '1' ? tonalTranspose.transpose(IVLS[i], tonic) : null
 	  }))
 	}
 	
 	/**
-	 * Test if two pitch sets are identical
+	 * Test if two pitch class sets are identical
 	 *
-	 * @param {Array|String} set1 - one of the pitch sets
-	 * @param {Array|String} set2 - the other pitch set
+	 * @param {Array|String} set1 - one of the pitch class sets
+	 * @param {Array|String} set2 - the other pitch class set
 	 * @return {Boolean} true if they are equal
 	 * @example
-	 * pitchset.equal('c2 d3', 'c5 d2') // => true
+	 * pcset.equal('c2 d3', 'c5 d2') // => true
 	 */
 	function equal (s1, s2) {
 	  if (arguments.length === 1) return function (s) { return equal(s1, s) }
@@ -38026,68 +38108,70 @@
 	}
 	
 	/**
-	 * Test if a pitch set is a subset of another
+	 * Test if a pitch class set is a subset of another
 	 *
 	 * @param {Array|String} set - the base set to test against
 	 * @param {Array|String} test - the set to test
 	 * @return {Boolean} true if the test set is a subset of the set
 	 * @example
-	 * pitchset.subset('c d e', 'C2 D4 D5 C6') // => true
+	 * pcset.subset('c d e', 'C2 D4 D5 C6') // => true
 	 */
 	function subset (set, test) {
 	  if (arguments.length === 1) return function (t) { return subset(set, t) }
-	  test = toInt(test)
-	  return (test & toInt(set)) === test
+	  test = chrToInt(test);
+	  return (test & chrToInt(set)) === test
 	}
 	
 	/**
-	 * Test if a pitch set is a superset
+	 * Test if a pitch class set is a superset
+	 *
 	 * @param {Array|String} set - the base set to test against
 	 * @param {Array|String} test - the set to test
 	 * @return {Boolean} true if the test set is a superset of the set
 	 * @example
-	 * pitchset.subset('c d e', 'C2 D4 F4 D5 E5 C6') // => true
+	 * pcset.subset('c d e', 'C2 D4 F4 D5 E5 C6') // => true
 	 */
 	function superset (set, test) {
 	  if (arguments.length === 1) return function (t) { return superset(set, t) }
-	  test = toInt(test)
-	  return (test | toInt(set)) === test
+	  test = chrToInt(test);
+	  return (test | chrToInt(set)) === test
 	}
 	
 	/**
-	 * Test if a given pitch set includes a note
+	 * Test if a given pitch class set includes a note
 	 * @param {Array|String} set - the base set to test against
 	 * @param {String|Pitch} note - the note to test
-	 * @return {Boolean} true if the note is included in the pitchset
+	 * @return {Boolean} true if the note is included in the pcset
 	 * @example
-	 * pitchset.includes('c d e', 'C4') // =A true
-	 * pitchset.includes('c d e', 'C#4') // =A false
+	 * pcset.includes('c d e', 'C4') // =A true
+	 * pcset.includes('c d e', 'C#4') // =A false
 	 */
 	function includes (set, note) {
 	  if (arguments.length > 1) return includes(set)(note)
-	  set = chroma(set)
+	  set = chroma(set);
 	  return function (note) { return set[pitchChr(note)] === '1' }
 	}
 	
 	/**
-	 * Filter a list with a pitch set
+	 * Filter a list with a pitch class set
 	 *
-	 * @param {Array|String} set - the pitch set
+	 * @param {Array|String} set - the pitch class set notes
 	 * @param {Array|String} notes - the note list to be filtered
 	 * @return {Array} the filtered notes
 	 *
 	 * @example
-	 * pitchset.filter('c d e', 'c2 c#2 d2 c3 c#3 d3') // => [ 'c2', 'd2', 'c3', 'd3' ])
+	 * pcset.filter('c d e', 'c2 c#2 d2 c3 c#3 d3') // => [ 'c2', 'd2', 'c3', 'd3' ])
+	 * pcset.filter('c2', 'c2 c#2 d2 c3 c#3 d3') // => [ 'c2', 'c3' ])
 	 */
 	function filter (set, notes) {
 	  if (arguments.length === 1) return function (n) { return filter(set, n) }
 	  return tonalArray.asArr(notes).filter(includes(set))
 	}
 	
+	exports.chroma = chroma;
 	exports.notes = notes;
 	exports.chromaModes = chromaModes;
 	exports.isChroma = isChroma;
-	exports.chroma = chroma;
 	exports.fromChroma = fromChroma;
 	exports.equal = equal;
 	exports.subset = subset;
@@ -38095,9 +38179,10 @@
 	exports.includes = includes;
 	exports.filter = filter;
 
-/***/ },
-/* 22 */
-/***/ function(module, exports, __webpack_require__) {
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -38106,8 +38191,8 @@
 	var noteParser = __webpack_require__(10);
 	var tonalPitch = __webpack_require__(9);
 	var tonalTranspose = __webpack_require__(13);
-	var tonalMidi = __webpack_require__(23);
-	var tonalFreq = __webpack_require__(24);
+	var tonalMidi = __webpack_require__(24);
+	var tonalFreq = __webpack_require__(25);
 	
 	/**
 	 * Get the note midi number
@@ -38355,9 +38440,9 @@
 	exports.enharmonics = enharmonics;
 	exports.simplify = simplify;
 
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -38426,15 +38511,15 @@
 	exports.fromNote = fromNote;
 	exports.toNote = toNote;
 
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalMidi = __webpack_require__(23);
+	var tonalMidi = __webpack_require__(24);
 	
 	/**
 	 * Return a function that converts midi or notes names to frequency using
@@ -38524,47 +38609,124 @@
 	exports.fromFreq = fromFreq;
 	exports.cents = cents;
 
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNotation = __webpack_require__(26);
+	var tonalNotation = __webpack_require__(27);
 	var tonalTranspose = __webpack_require__(13);
-	var tonalNote = __webpack_require__(16);
-	var tonalRange = __webpack_require__(20);
+	var tonalNote = __webpack_require__(17);
+	var tonalRange = __webpack_require__(21);
 	var tonalArray = __webpack_require__(8);
-	var tonalHarmonizer = __webpack_require__(27);
-	
-	var isArr = Array.isArray
-	// Order matters: use an array
-	var MODES = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian',
-	  'aeolian', 'locrian', 'major', 'minor']
-	// { C: 0, D: 2, E: 4, F: -1, G: 1, A: 3, B: 5 }
-	var FIFTHS = [0, 2, 4, -1, 1, 3, 5, 0, 3]
-	var SCALES = [0, 1, 2, 3, 4, 5, 6, 0, 5].map(function (n) {
-	  return tonalHarmonizer.harmonics(tonalArray.rotate(n, ['C', 'D', 'E', 'F', 'G', 'A', 'B']))
-	})
+	var tonalHarmonizer = __webpack_require__(16);
 	
 	/**
-	 * Get scale of a key (with optionally a mode)
+	 * _Key_ refers to the tonal system based on the major and minor scales. This is
+	 * is the most common tonal system, but tonality can be present in music
+	 * based in other scales or concepts.
 	 *
-	 * @param {String|Object} key
-	 * @return {Array} the key scale
+	 * This is a collection of functions related to keys.
+	 *
 	 * @example
 	 * var key = require('tonal-key')
-	 * key.scale('A major') // => [ 'A', 'B', 'C#', 'D', 'E', 'F#', 'G#' ]
-	 * key.scale('Bb minor') // => [ 'Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab' ]
-	 * key.scale('C dorian') // => [ 'C', 'D', 'Eb', 'F', 'G', 'A', 'Bb' ]
 	 * key.scale('E mixolydian') // => [ 'E', 'F#', 'G#', 'A', 'B', 'C#', 'D' ]
+	 * key.relative('minor', 'C major') // => 'A minor'
+	 *
+	 * @module key
 	 */
-	function scale (key) {
-	  var k = asKey(key)
-	  if (!k || !hasTonic(k)) return null
-	  return tonalHarmonizer.harmonize(SCALES[MODES.indexOf(k[0])], k[1])
+	
+	// Order matters: use an array
+	var MODES = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian',
+	  'aeolian', 'locrian', 'major', 'minor'];
+	// { C: 0, D: 2, E: 4, F: -1, G: 1, A: 3, B: 5 }
+	var FIFTHS = [0, 2, 4, -1, 1, 3, 5, 0, 3];
+	var SCALES = [0, 1, 2, 3, 4, 5, 6, 0, 5].map(function (n) {
+	  return tonalHarmonizer.harmonics(tonalArray.rotate(n, ['C', 'D', 'E', 'F', 'G', 'A', 'B']))
+	});
+	
+	// PRIVATE
+	// Given a tonic, mode pair, return the key string
+	function toKey (t, m) { return !t ? m : t + ' ' + m }
+	// Given the alterations, return the major key
+	function majorKey (n) { return toKey(tonalTranspose.trFifths('C', n), 'major') }
+	// given the mode name, return the alterations
+	function modeNum (mode) { return FIFTHS[MODES.indexOf(mode)] }
+	// given a string, return the valid mode it represents or null
+	function validMode (m) {
+	  m = m.trim().toLowerCase();
+	  return MODES.indexOf(m) === -1 ? null : m
+	}
+	
+	/**
+	 * Return the key properties, an object with { tonic, mode }
+	 *
+	 * @param {String} name - the key name
+	 * @return {Key} the key properties object or null if not a valid key
+	 * @example
+	 * var key = require('tonal-key')
+	 * key.props('C3 dorian') // => { tonic: 'C', mode: 'dorian' }
+	 * key.props('dorian') // => { tonic: false, mode: 'dorian' }
+	 * key.props('Ab bebop') // => null
+	 * key.props('blah') // => null
+	 */
+	function props (str) {
+	  if (typeof str !== 'string') return null
+	  var ndx = str.indexOf(' ');
+	  var key;
+	  if (ndx === -1) {
+	    var p = tonalNote.pc(str);
+	    key = p ? { tonic: p, mode: 'major' }
+	      : { tonic: false, mode: validMode(str) };
+	  } else {
+	    key = { tonic: tonalNote.pc(str.slice(0, ndx)), mode: validMode(str.slice(ndx + 1)) };
+	  }
+	  return key.mode ? key : null
+	}
+	
+	/**
+	 * Test if a given name is a valid key name
+	 *
+	 * @param {String} name
+	 * @param {Boolean}
+	 * @example
+	 * key.isKeyName('C major') // => true
+	 * key.isKeyName('major') // => true
+	 * key.isKeyName('Bb bebop') // => false
+	 */
+	function isKeyName (name) {
+	  return props(name) !== null
+	}
+	
+	/**
+	 * Get the tonic of a key
+	 *
+	 * @param {String} key - the key
+	 * @return {String} the tonic or false is no tonic, or null if its not a valid key
+	 * @example
+	 * key.tonic('c3 major') // => 'C'
+	 * key.tonic('minor') // => false
+	 * key.tonic('bebop') // null
+	 */
+	function tonic (key) {
+	  return (props(key) || key || {}).tonic || null
+	}
+	
+	/**
+	 * Get the mode of a key. It can be used to test if its a valid key mode.
+	 *
+	 * @param {String}
+	 * @return {Boolean}
+	 * @example
+	 * key.mode('A dorian') // => 'dorian'
+	 * key.mode('DORIAN') // => 'dorian'
+	 * key.mode('mixophrygian') // => null
+	 */
+	function mode (key) {
+	  return (props(key) || key || {}).mode || null
 	}
 	
 	/**
@@ -38576,19 +38738,20 @@
 	 * @param {String} mode - the relative destination
 	 * @param {String} key - the key source
 	 * @example
-	 * key.relative('dorian', 'C major') // => ['dorian', 'D']
-	 * // partially application
+	 * key.relative('dorian', 'B major') // => 'C# dorian'
+	 * // partial application
 	 * var minor = key.relative('minor')
-	 * minor('C major') // => ['minor', 'A']
+	 * minor('C major') // => 'A minor'
+	 * minor('E major') // => 'C# minor'
 	 */
 	function relative (rel, key) {
 	  if (arguments.length === 1) return function (k) { return relative(rel, k) }
-	  var r = asKey(rel)
-	  if (!r || hasTonic(r)) return null
-	  var k = asKey(key)
-	  if (!k || !hasTonic(k)) return null
-	  var tonic = tonalTranspose.trFifths(k[1], modeNum(r) - modeNum(k))
-	  return build(tonic, rel)
+	  rel = props(rel);
+	  if (!rel || rel.tonic) return null
+	  key = props(key);
+	  if (!key || !key.tonic) return null
+	  var tonic = tonalTranspose.trFifths(key.tonic, modeNum(rel.mode) - modeNum(key.mode));
+	  return toKey(tonic, rel.mode)
 	}
 	
 	/**
@@ -38601,7 +38764,7 @@
 	 * key.alteredNotes('Eb major') // => [ 'Bb', 'Eb', 'Ab' ]
 	 */
 	function alteredNotes (key) {
-	  var alt = alteration(key)
+	  var alt = alteration(key);
 	  return alt === null ? null
 	    : alt < 0 ? tonalRange.numeric([-1, alt]).map(tonalTranspose.trFifths('F'))
 	    : tonalRange.numeric([1, alt]).map(tonalTranspose.trFifths('B'))
@@ -38613,45 +38776,15 @@
 	 *
 	 * @param {Boolean} alias - true to get aliases names
 	 * @return {Array} an array of strings
+	 * @example
+	 * key.modes() // => [ 'ionian', 'dorian', 'phrygian', 'lydian',
+	 * // 'mixolydian', 'aeolian', 'locrian' ]
+	 * key.modes(true) // => [ 'ionian', 'dorian', 'phrygian', 'lydian',
+	 * // 'mixolydian', 'aeolian', 'locrian', 'major', 'minor' ]
 	 */
-	function names (alias) {
+	function modes (alias) {
 	  return alias ? MODES.slice() : MODES.slice(0, -2)
 	}
-	
-	/**
-	 * Check if the given string is a valid mode name
-	 * @param {String}
-	 * @return {Boolean}
-	 */
-	function isKeyMode (m) { return MODES.indexOf(m) !== -1 }
-	
-	/**
-	 * Build a key object from tonic a mode.
-	 *
-	 * A key object is an array with the mode name and the tonic (or false if
-	 * no tonic specified)
-	 *
-	 * @param {String} tonic - the key tonic (or null or false to no tonic)
-	 * @param {String} mode - the keymode
-	 * @return {Key} a key data object
-	 * @example
-	 * var key = require('tonal-key')
-	 * key.build('g3', 'minor') // => ['minor', 'G']
-	 * key.build(false, 'locrian') // => ['locrian', false]
-	 */
-	function build (tonic, mode) {
-	  if (typeof mode !== 'string') return null
-	  var m = mode.trim().toLowerCase()
-	  if (!isKeyMode(m)) return null
-	  if (tonic === false || tonic === null) return [m, false]
-	  var t = tonalNote.pc(tonic)
-	  return t ? [m, t] : null
-	}
-	
-	function isKey (o) { return isArr(o) && isKeyMode(o[0]) }
-	function hasTonic (o) { return isKey(o) && o[1] }
-	
-	function majorKey (n) { return build(tonalTranspose.trFifths('C', n), 'major') }
 	
 	/**
 	 * Create a major key from alterations
@@ -38660,19 +38793,21 @@
 	 * @return {Key} the key object
 	 * @example
 	 * var key = require('tonal-key')
-	 * key.fromAlter(2) // => ['major', 'D']
+	 * key.fromAlter(2) // => 'D major'
 	 */
 	function fromAlter (n) {
 	  return typeof n === 'number' ? majorKey(n) : null
 	}
 	
 	/**
-	 * Create a major key from accidentals
+	 * Get key name from accidentals
+	 *
 	 * @param {String} acc - the accidentals string
 	 * @return {Key} the key object
 	 * @example
 	 * var key = require('tonal-key')
-	 * key.fromAlter('bb') // => ['major', 'Bb']
+	 * key.fromAcc('b') // => 'F major'
+	 * key.fromAcc('##') // => 'D major'
 	 */
 	function fromAcc (s) {
 	  return tonalNotation.areSharps(s) ? majorKey(s.length)
@@ -38681,36 +38816,21 @@
 	}
 	
 	/**
-	 * Create a key from key name
-	 * @param {String} name - the key name
-	 * @return {Key} the key object or null if not valid key
+	 * Get scale of a key
+	 *
+	 * @param {String|Object} key
+	 * @return {Array} the key scale
 	 * @example
-	 * var key = require('tonal-key')
-	 * key.fromName('C3 dorian') // => ['dorian', 'C']
-	 * key.fromName('blah') // => null
+	 * key.scale('A major') // => [ 'A', 'B', 'C#', 'D', 'E', 'F#', 'G#' ]
+	 * key.scale('Bb minor') // => [ 'Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab' ]
+	 * key.scale('C dorian') // => [ 'C', 'D', 'Eb', 'F', 'G', 'A', 'Bb' ]
+	 * key.scale('E mixolydian') // => [ 'E', 'F#', 'G#', 'A', 'B', 'C#', 'D' ]
 	 */
-	function fromName (str) {
-	  if (typeof str !== 'string') return null
-	  var p = str.split(/\s+/)
-	  switch (p.length) {
-	    case 1: return tonalNote.pc(p[0]) ? build(p[0], 'major') : build(false, p[0])
-	    case 2: return build(p[0], p[1])
-	    default: return null
-	  }
+	function scale (key) {
+	  var p = props(key);
+	  if (!p || !p.tonic) return null
+	  return tonalHarmonizer.harmonize(SCALES[MODES.indexOf(p.mode)], p.tonic)
 	}
-	
-	/**
-	 * Try to interpret the given object as a key. Given an object it will try to
-	 * parse as if it were a name, accidentals or alterations.
-	 * @function
-	 * @param {Object} obj
-	 * @return {Key} the key object or null
-	 */
-	function asKey (obj) {
-	  return isKey(obj) ? obj : fromName(obj) || fromAcc(obj) || fromAlter(obj)
-	}
-	
-	function modeNum (k) { return FIFTHS[MODES.indexOf(k[0])] }
 	
 	/**
 	 * Get key alteration. The alteration is a number indicating the number of
@@ -38722,10 +38842,10 @@
 	 * key.alteration('A major') // => 3
 	 */
 	function alteration (key) {
-	  var k = asKey(key)
-	  if (!k || !hasTonic(k)) return null
-	  var toMajor = modeNum(k)
-	  var toC = tonalNote.pcFifths(k[1])
+	  var k = props(key);
+	  if (!k || !k.tonic) return null
+	  var toMajor = modeNum(k.mode);
+	  var toC = tonalNote.pcFifths(k.tonic);
 	  return toC - toMajor
 	}
 	
@@ -38743,25 +38863,26 @@
 	 * An alias for `signature()`
 	 * @function
 	 */
-	var accidentals = signature
+	var accidentals = signature;
 	
-	exports.scale = scale;
+	exports.props = props;
+	exports.isKeyName = isKeyName;
+	exports.tonic = tonic;
+	exports.mode = mode;
 	exports.relative = relative;
 	exports.alteredNotes = alteredNotes;
-	exports.names = names;
-	exports.isKeyMode = isKeyMode;
-	exports.build = build;
+	exports.modes = modes;
 	exports.fromAlter = fromAlter;
 	exports.fromAcc = fromAcc;
-	exports.fromName = fromName;
-	exports.asKey = asKey;
+	exports.scale = scale;
 	exports.alteration = alteration;
 	exports.signature = signature;
 	exports.accidentals = accidentals;
 
-/***/ },
-/* 26 */
-/***/ function(module, exports) {
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
 
 	'use strict';
 	
@@ -38867,92 +38988,9 @@
 	exports.toAlt = toAlt;
 	exports.toAcc = toAcc;
 
-/***/ },
-/* 27 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, '__esModule', { value: true });
-	
-	var tonalTranspose = __webpack_require__(13);
-	var tonalDistance = __webpack_require__(14);
-	var tonalArray = __webpack_require__(8);
-	
-	/**
-	 * Given a list of notes, return the distance from the first note to the rest.
-	 * @param {Array|String} notes - the list of notes
-	 * @return {Array} the intervals relative to the first note
-	 * @example
-	 * harmonizer.harmonics('C E G') // => ['1P', '3M', '5P']
-	 *
-	 * @example
-	 * // in tonal this functions are NOT namespaced
-	 * tonal.harmonics(tonal.scale('C major')) // => ['1P', ...]
-	 */
-	function harmonics (list) {
-	  var a = tonalArray.asArr(list)
-	  return a.length ? tonalArray.compact(a.map(tonalDistance.interval(a[0]))) : a
-	}
-	
-	/**
-	 * Given a list of notes, return the intervallic structure: the distance from
-	 * one to the next.
-	 *
-	 * Notice that the number of intervals is one less that the number of notes.
-	 *
-	 * @param {Array|String} notes - the list of notes
-	 * @return {Array} the intervals relative to the previous
-	 * @example
-	 * harmonizer.intervallic('c e g') // => ['3M', '3m']
-	 * harmonizer.intervallic('e g c') // => ['3m', '4P']
-	 * harmonizer.intervallic('c') // => []
-	 */
-	function intervallic (notes) {
-	  var dist = []
-	  notes = tonalArray.asArr(notes)
-	  for (var i = 1; i < notes.length; i++) {
-	    dist.push(tonalDistance.interval(notes[i - 1], notes[i]))
-	  }
-	  return dist
-	}
-	
-	/**
-	 * Given a list of intervals and a tonic, return that tonic transposed
-	 * to that intervals.
-	 *
-	 * It's currified and, calling with only one parameter, returns an harmonizer,
-	 * a function that harmonizes any note (see example)
-	 *
-	 * @function
-	 * @param {String|Array} list - the list of intervals
-	 * @param {String|Pitch} note - the note to be harmonized
-	 * @return {Array} the resulting notes
-	 * @example
-	 * harmonizer.harmonize('P1 M3 P5 M7', 'C') // => ['C', 'E', 'G', 'B']
-	 * @example
-	 * // harmonizer with partial application
-	 * var maj7 = harmonize.harmonizer('P1 M3 P5 M7')
-	 * maj7('C') // => ['C', 'E', 'G', 'B']
-	 * @example
-	 * // in tonal this function is NOT namespaced
-	 * var C = tonal.harmonizer('C D E')
-	 * C('M3') // => ['E', 'G#', 'B']
-	 */
-	function harmonize (list, pitch) {
-	  if (arguments.length > 1) return harmonize(list)(pitch)
-	  return function (tonic) {
-	    return tonalArray.compact(tonalArray.map(tonalTranspose.transpose(tonic || 'P1'), list))
-	  }
-	}
-	
-	exports.harmonics = harmonics;
-	exports.intervallic = intervallic;
-	exports.harmonize = harmonize;
-
-/***/ },
+/***/ }),
 /* 28 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -38960,13 +38998,26 @@
 	
 	var tonalDictionary = __webpack_require__(29);
 	var tonalArray = __webpack_require__(8);
-	var tonalNote = __webpack_require__(16);
-	var tonalPitch = __webpack_require__(9);
-	var tonalHarmonizer = __webpack_require__(27);
+	var tonalNote = __webpack_require__(17);
+	var tonalHarmonizer = __webpack_require__(16);
 	
-	var DATA = __webpack_require__(30)
+	/**
+	 * A scale is a collection of pitches in ascending or descending order.
+	 *
+	 * This module provides functions to get and manipulate scales.
+	 *
+	 * @example
+	 * scale.notes('Ab bebop') // => [ 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'G' ]
+	 * scale.get('hungarian major', 'B3') // => [ 'B3', 'C##4', 'D#4', 'E#4', 'F#4', 'G#4', 'A4'
+	 * scale.get('C E F G', 'F') // => [ 'F', 'A', 'Bb', 'C' ]
+	 * scale.get('1P 2M 3M 5P 6M', 'D4') // => [ 'D4', 'E4', 'F#4', 'A4', 'B4' ]
+	 * scale.names() => ['major', 'minor', ...]
+	 * scale.detect('f5 d2 c5 b5 a2 e4 g') // => [ 'C major', 'D dorian', 'E phrygian', 'F lydian', 'G mixolydian', 'A aeolian', 'B locrian'])
+	 * @module scale
+	 */
+	var DATA = __webpack_require__(30);
 	
-	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
+	var dict = tonalDictionary.dictionary(DATA, function (str) { return str.split(' ') });
 	
 	/**
 	 * Transpose the given scale notes, intervals or name to a given tonic.
@@ -38984,9 +39035,9 @@
 	 * var major = scale.get('major')
 	 * major('Db3') // => [ 'Db3', 'Eb3', 'F3', 'Gb3', 'Ab3', 'Bb3', 'C4' ]
 	 */
-	function get$1 (type, tonic) {
-	  if (arguments.length === 1) return function (t) { return get$1(type, t) }
-	  var ivls = dict(type)
+	function get (type, tonic) {
+	  if (arguments.length === 1) return function (t) { return get(type, t) }
+	  var ivls = dict.get(type);
 	  return ivls ? tonalHarmonizer.harmonize(ivls, tonic) : null
 	}
 	
@@ -39001,30 +39052,81 @@
 	 * var scale = require('tonal-scale')
 	 * scale.names() // => ['maj7', ...]
 	 */
-	var names = tonalDictionary.keys(DATA)
+	var names = dict.keys;
 	
 	/**
-	 * Get scale notes from scale name
+	 * Get the notes (pitch classes) of a scale. It accepts either a scale name
+	 * (tonic and type) or a collection of notes.
 	 *
-	 * @param {String} name - the scale name (it must include the scale type and
-	 * optionally a tonic. The tonic can be a note or a pitch class)
-	 * @return {Array} the scale notes (or intervals if not tonic specified)
+	 * Note that it always returns an array, and the values are only pitch classes.
+	 *
+	 * @param {String|Array} src - the scale name (it must include the scale type and
+	 * a tonic. The tonic can be a note or a pitch class) or the list of notes
+	 * @return {Array} the scale pitch classes
 	 *
 	 * @example
 	 * scale.notes('C major') // => [ 'C', 'D', 'E', 'F', 'G', 'A', 'B' ]
-	 * scale.notes('C4 major') // => [ 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4' ]
+	 * scale.notes('C4 major') // => [ 'C', 'D', 'E', 'F', 'G', 'A', 'B' ]
 	 * scale.notes('Ab bebop') // => [ 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'G' ]
+	 * scale.notes('C4 D6 E2 c7 a2 b5 g2 g4 f') // => ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 	 */
 	function notes (name) {
-	  var i = name.indexOf(' ')
-	  var tonic = name.substring(0, i)
-	  var notes = get$1(name.substring(i + 1), tonic)
-	  if (notes) return notes
-	  notes = tonalArray.compact(tonalArray.map(tonalNote.pc, name).map(function (n, i, arr) {
+	  var scale = parse(name);
+	  var notes = scale.tonic ? get(scale.type, tonalNote.pc(scale.tonic)) : null;
+	  return notes || tonalArray.compact(tonalArray.map(tonalNote.pc, name).map(function (n, i, arr) {
 	    // check for duplicates
+	    // TODO: sort but preserving the root
 	    return arr.indexOf(n) < i ? null : n
 	  }))
-	  return notes
+	}
+	
+	/**
+	 * Given a scale name, return its intervals. The name can be the type and
+	 * optionally the tonic (which is ignored)
+	 *
+	 * @param {String} name - the scale name (tonic and type, tonic is optional)
+	 * @return {Array<String>} the scale intervals if is a known scale, null otherwise
+	 * @example
+	 * scale.intervals('C major')
+	 */
+	function intervals (name) {
+	  var scale = parse(name);
+	  return get(scale.type, false)
+	}
+	
+	/**
+	 * Check if the given name (and optional tonic and type) is a know scale
+	 * @param {String} name - the scale name
+	 * @return {Boolean}
+	 * @example
+	 * scale.intervals('C major') // => [ '1P', '2M', '3M', '4P', '5P', '6M', '7M' ])
+	 * scale.intervals('major') // => [ '1P', '2M', '3M', '4P', '5P', '6M', '7M' ])
+	 * scale.intervals('mixophrygian') // => null
+	 */
+	function isKnowScale (name) {
+	  return intervals(name) !== null
+	}
+	
+	/**
+	 * Given a string try to parse as scale name. It retuns an object with the
+	 * form { tonic, type } where tonic is the note or false if no tonic specified
+	 * and type is the rest of the string minus the tonic
+	 *
+	 * Note that this function doesn't check that the scale type is a valid scale
+	 * type or if is present in any scale dictionary.
+	 *
+	 * @param {String} name - the scale name
+	 * @return {Object} an object { tonic, type }
+	 * @example
+	 * scale.parse('C mixoblydean') // => { tonic: 'C', type: 'mixoblydean' }
+	 * scale.parse('anything is valid') // => { tonic: false, type: 'anything is valid'}
+	 */
+	function parse (str) {
+	  if (typeof str !== 'string') return null
+	  var i = str.indexOf(' ');
+	  var tonic = tonalNote.note(str.substring(0, i)) || false;
+	  var type = tonic ? str.substring(i + 1) : str;
+	  return { tonic: tonic, type: type }
 	}
 	
 	/**
@@ -39038,24 +39140,28 @@
 	 * scale.detect('b g f# d') // => [ 'GMaj7' ]
 	 * scale.detect('e c a g') // => [ 'CM6', 'Am7' ]
 	 */
-	var detect = tonalDictionary.detector(' ', DATA)
+	var detect = tonalDictionary.detector(dict, ' ');
 	
-	exports.get = get$1;
+	exports.get = get;
 	exports.names = names;
 	exports.notes = notes;
+	exports.intervals = intervals;
+	exports.isKnowScale = isKnowScale;
+	exports.parse = parse;
 	exports.detect = detect;
 
-/***/ },
+
+/***/ }),
 /* 29 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
 	var tonalArray = __webpack_require__(8);
-	var tonalNote = __webpack_require__(16);
-	var tonalPitchset = __webpack_require__(21);
+	var tonalNote = __webpack_require__(17);
+	var tonalPcset = __webpack_require__(22);
 	
 	/**
 	 * This module contains functions to query tonal dictionaries.
@@ -39074,72 +39180,69 @@
 	function id (x) { return x }
 	
 	/**
-	 * Query a tonal dictionary by key.
+	 * Create a tonal dictionary. A dictionary is an object with two functions: get and
+	 * keys.
 	 *
-	 * If you pass two parameters you get a currified version: a dictionary getter.
-	 * (see example)
+	 * The data given to this constructor it's a HashMap in the form:
+	 * `{ key: [intervals, [aliases]] }`
 	 *
-	 * @param {Function} parser - (Optional) the function to parse the intervals
-	 * @param {Hash<String, Array>} dictionary - the dictionary data
-	 * @param {String} key - the key to query
-	 * @return {Array} the list of intervals of that name or null if not present
-	 * in the dictionary
+	 * @param {HashMap} data - the dictionary data
+	 * @return {Object} the dictionary object
+	 *
 	 * @example
-	 * var dict = require('tonal-dictionary')
+	 * var dictionary = require('tonal-dictionary').dictionary
 	 * var DATA = {
 	 * 'maj7': ['1 3 5 7', ['Maj7']],
 	 *   'm7': ['1 b3 5 7']
 	 * }
-	 * var chord = dict.get(null, DATA)
-	 * chord('maj7') // => [ '1', '3', '5', '7' ]
-	 * chord('Maj7') // => [ '1', '3', '5', '7' ]
-	 * chord('m7') // => ['1', 'b3', '5', '7']
-	 * chord('m7b5') // => null
+	 * var chords = dictionary(DATA, function (str) { return str.split(' ') })
+	 * chords.get('maj7') // => [ '1', '3', '5', '7' ]
+	 * chords.get('Maj7') // => [ '1', '3', '5', '7' ]
+	 * chords.get('m7') // => ['1', 'b3', '5', '7']
+	 * chords.get('m7b5') // => null
+	 * chords.keys() // => ['maj7', 'm7']
+	 * chords.keys(true) // => ['maj7', 'm7', 'Maj7']
 	 */
-	function get (parse, raw, name) {
-	  if (arguments.length > 2) return get(parse, raw)(name)
-	  var data = Object.keys(raw).reduce(function (d, k) {
-	    // add intervals
-	    d[k] = raw[k][0].split(' ').map(parse || id)
-	    // add alias
-	    if (raw[k][1]) raw[k][1].forEach(function (a) { d[a] = d[k] })
-	    return d
-	  }, {})
-	  return function (n) {
-	    return data[n]
-	  }
-	}
-	
-	/**
-	 * Query a tonal dictionary to get all the defined keys
-	 *
-	 * If you pass only one parameter you get a partially applied version: a
-	 * function that returns all keys of the given dictionary.
-	 *
-	 * @param {Hash<String, Array>} dictionary - the dictionary data
-	 * @param {Boolean} aliases - (Optional) true to include the name aliases
-	 * @return {Array<String>} a list of defined keys
-	 * @example
-	 * var dict = require('tonal-dictionary')
-	 * var DATA = {
-	 * 'maj7': ['1 3 5 7', ['Maj7']],
-	 *   'm7': ['1 b3 5 7']
-	 * }
-	 * dict.keys(DATA, false) // => ['maj7', 'm7']
-	 * dict.keys(DATA, true) // => ['maj7', 'm7', 'Maj7']
-	 * // partially applied
-	 * var chordNames = dict.keys(DATA)
-	 * chordNames() // => ['maj7', 'm7']
-	 */
-	function keys (raw, alias) {
-	  if (arguments.length > 1) return keys(raw)(alias)
-	  var main = Object.keys(raw)
-	  var aliases = main.reduce(function (a, k) {
-	    if (raw[k][1]) raw[k][1].forEach(function (n) { a.push(n) })
-	    return a
-	  }, [])
-	  return function (alias) {
-	    return alias ? main.concat(aliases) : main.slice()
+	function dictionary (raw, parse) {
+	  parse = parse || id;
+	  var byKey = {};
+	  var names = Object.keys(raw);
+	  var aliases = [];
+	  names.forEach(function (k) {
+	    var value = parse(raw[k][0]);
+	    byKey[k] = value;
+	    if (raw[k][1]) {
+	      raw[k][1].forEach(function (alias) {
+	        byKey[alias] = value;
+	        aliases.push(alias);
+	      });
+	    }
+	  });
+	  return {
+	    /**
+	     * Get a value by key
+	     * @name get
+	     * @function
+	     * @param {String} key
+	     * @return {Object} the value (normally an array of intervals or notes)
+	     * @memberof dictionary
+	     */
+	    get: function (n) { return byKey[n] },
+	    /**
+	     * Get the valid keys of dictionary
+	     * @name keys
+	     * @function
+	     * @param {Boolean} aliases - (Optional) include aliases names (false by default)
+	     * @param {Function} filter - a function to filter the names. It receives the
+	     * name and the value as parameters
+	     * @return {Array<String>} the keys
+	     * @memberof dictionary
+	     */
+	    keys: function (all, filter) {
+	      var keys = all ? names.concat(aliases) : names.slice();
+	      return typeof filter !== 'function' ? keys
+	        : keys.filter(function (k) { return filter(k, byKey[k]) })
+	    }
 	  }
 	}
 	
@@ -39147,27 +39250,31 @@
 	 * Create a pitch set detector. Given a dictionary data, it returns a
 	 * function that tries to detect a given pitch set inside the dictionary
 	 *
-	 * @param {Function} builder - a function that given a name and a tonic,
-	 * returns the object
-	 * @param {Object} data - the dictionary data
+	 * @param {Dictionary} dictionary - the dictionary object
+	 * @param {Function|String} builder - (Optional) a function that given a name and a tonic,
+	 * returns the object or a string to join both
 	 * @return {Function} the detector function
 	 * @see chord.detect
+	 * @see scale.detect
+	 * @example
+	 * var detect = detector(dictionary(DATA), '')
+	 * detect('c d e b') // => 'Cmaj/'
 	 */
-	function detector (build, data) {
-	  var isSep = typeof build === 'string'
-	  var isFn = typeof build === 'function'
-	  var dict = Object.keys(data).reduce(function (dict, key) {
-	    dict[tonalPitchset.chroma(data[key][0])] = key
-	    return dict
-	  }, {})
+	function detector (dict, build) {
+	  var isSep = typeof build === 'string';
+	  var isFn = typeof build === 'function';
+	  var nameByChroma = dict.keys(false).reduce(function (map$$1, key) {
+	    map$$1[tonalPcset.chroma(dict.get(key))] = key;
+	    return map$$1
+	  }, {});
 	
 	  return function (notes) {
-	    notes = tonalArray.sort(tonalArray.map(tonalNote.pc, notes))
-	    var sets = tonalPitchset.chromaModes(notes)
+	    notes = tonalArray.sort(tonalArray.map(tonalNote.pc, notes));
+	    var sets = tonalPcset.chromaModes(notes);
 	    return tonalArray.compact(sets.map(function (set, i) {
-	      var type = dict[set]
+	      var type = nameByChroma[set];
 	      if (!type) return null
-	      var tonic = notes[i]
+	      var tonic = notes[i];
 	      return isSep ? tonic + build + type
 	        : isFn ? build(type, tonic)
 	        : [type, tonic]
@@ -39175,13 +39282,13 @@
 	  }
 	}
 	
-	exports.get = get;
-	exports.keys = keys;
+	exports.dictionary = dictionary;
 	exports.detector = detector;
 
-/***/ },
+
+/***/ }),
 /* 30 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = {
 		"lydian": [
@@ -39504,9 +39611,9 @@
 		]
 	};
 
-/***/ },
+/***/ }),
 /* 31 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -39514,14 +39621,26 @@
 	
 	var tonalDictionary = __webpack_require__(29);
 	var tonalArray = __webpack_require__(8);
-	var tonalPitch = __webpack_require__(9);
-	var tonalNote = __webpack_require__(16);
+	var tonalNote = __webpack_require__(17);
 	var noteParser = __webpack_require__(10);
-	var tonalHarmonizer = __webpack_require__(27);
+	var tonalHarmonizer = __webpack_require__(16);
 	
-	var DATA = __webpack_require__(32)
+	/**
+	 * A chord is a harmonic unit with at least three different tones sounding simultaneously.
+	 *
+	 * This module have functions to create and manipulate chords. It includes a
+	 * chord dictionary and a simple chord detection algorithm.
+	 *
+	 * @example
+	 * var chord = require('tonal-chord')
+	 * chord.detect('c b g e') // => 'CMaj7'
+	 * chord.get('CMaj7') // => ['C', 'E', 'G', 'B']
+	 *
+	 * @module chord
+	 */
+	var DATA = __webpack_require__(32);
 	
-	var dict = tonalDictionary.get(tonalPitch.parseIvl, DATA)
+	var dict = tonalDictionary.dictionary(DATA, function (str) { return str.split(' ') });
 	
 	/**
 	 * Return the available chord names
@@ -39534,7 +39653,7 @@
 	 * var chord = require('tonal-chord')
 	 * chord.names() // => ['maj7', ...]
 	 */
-	var names = tonalDictionary.keys(DATA)
+	var names = dict.keys;
 	
 	/**
 	 * Get chord notes or intervals from chord type
@@ -39550,9 +39669,9 @@
 	 * maj7 = chords.get('Maj7')
 	 * maj7('C') // => ['C', 'E', 'G', 'B']
 	 */
-	function get$1 (type, tonic) {
-	  if (arguments.length === 1) return function (t) { return get$1(type, t) }
-	  var ivls = dict(type)
+	function get (type, tonic) {
+	  if (arguments.length === 1) return function (t) { return get(type, t) }
+	  var ivls = dict.get(type);
 	  return ivls ? tonalHarmonizer.harmonize(ivls, tonic) : null
 	}
 	
@@ -39569,9 +39688,33 @@
 	 * chord.notes('Cmaj7') // => ['C', 'E', 'G', 'B']
 	 */
 	function notes (chord) {
-	  var p = parse(chord)
-	  var ivls = dict(p.type)
+	  var p = parse(chord);
+	  var ivls = dict.get(p.type);
 	  return ivls ? tonalHarmonizer.harmonize(ivls, p.tonic) : tonalArray.compact(tonalArray.map(tonalNote.note, chord))
+	}
+	
+	/**
+	 * Get chord intervals
+	 *
+	 * @param {String} name - the chord name (optionally a tonic and type)
+	 * @return {Array<String>} a list of intervals or null if the type is not known
+	 */
+	function intervals (name) {
+	  var p = parse(name);
+	  return dict.get(p.type)
+	}
+	
+	/**
+	 * Check if a given name correspond to a chord in the dictionary
+	 * @param {String} name
+	 * @return {Boolean}
+	 * @example
+	 * chord.isKnownChord('CMaj7') // => true
+	 * chord.isKnownChord('Maj7') // => true
+	 * chord.isKnownChord('Ablah') // => false
+	 */
+	function isKnownChord (name) {
+	  return intervals(name) !== null
 	}
 	
 	/**
@@ -39585,7 +39728,7 @@
 	 * chord.detect('b g f# d') // => [ 'GMaj7' ]
 	 * chord.detect('e c a g') // => [ 'CM6', 'Am7' ]
 	 */
-	var detect = tonalDictionary.detector('', DATA)
+	var detect = tonalDictionary.detector(dict, '');
 	
 	/**
 	 * Get the position (inversion number) of a chord (0 is root position, 1 is first
@@ -39600,19 +39743,37 @@
 	 * chord.position('g3 e2 c5') // => 1 (e is the lowest note)
 	 */
 	function position (chord) {
+	  var pcs = tonalArray.map(tonalNote.pc, chord);
+	  var sorted = sortTriads(pcs);
+	  return sorted ? sorted.indexOf(pcs[0]) : null
 	}
 	
 	/**
-	 * Given a chord in any inverstion, set to the given inversion
+	 * Given a chord in any inverstion, set to the given inversion. It accepts
+	 * chord names
+	 *
+	 * @param {Integer} num - the inversion number (0 root position, 1 first
+	 * inversion, ...)
+	 * @param {String|Array} chord - the chord name or notes
+	 * @return {Array} the chord pitch classes in the desired inversion
+	 *
+	 * @example
+	 * chord.inversion(1, 'Cmaj7') // => [ 'E', 'G', 'B', 'C' ]
+	 * chord.inversion(0, 'e g c') // => [ 'C', 'E', 'G' ]
 	 */
 	function inversion (num, chord) {
 	  if (arguments.length === 1) return function (c) { return inversion(num, c) }
-	  var all = tonalArray.permutations(notes(chord).map(tonalNote.pc))
+	  var sorted = sortTriads(chord);
+	  return sorted ? tonalArray.rotate(num, sorted) : []
+	}
+	
+	function sortTriads (chord) {
+	  var all = tonalArray.permutations(notes(chord).map(tonalNote.pc));
 	  for (var i = 0; i < all.length; i++) {
-	    var ivls = tonalHarmonizer.intervallic(all[i])
-	    if (areTriads(ivls)) return tonalArray.rotate(num, all[i])
+	    var ivls = tonalHarmonizer.intervallic(all[i]);
+	    if (areTriads(ivls)) return all[i]
 	  }
-	  return []
+	  return null
 	}
 	
 	function areTriads (list) {
@@ -39639,7 +39800,7 @@
 	 * chord.parse('Cnonsense') // => { tonic: 'C', type: 'nonsense' }
 	 */
 	function parse (name) {
-	  var p = noteParser.regex().exec(name)
+	  var p = noteParser.regex().exec(name);
 	  if (!p) return { type: name, tonic: false }
 	  // it can have a chord name: Cmaj7 is ['maj7', 'C']
 	  // or if not, the octave is treated as chord name: C7 is ['7', 'C']
@@ -39648,16 +39809,19 @@
 	}
 	
 	exports.names = names;
-	exports.get = get$1;
+	exports.get = get;
 	exports.notes = notes;
+	exports.intervals = intervals;
+	exports.isKnownChord = isKnownChord;
 	exports.detect = detect;
 	exports.position = position;
 	exports.inversion = inversion;
 	exports.parse = parse;
 
-/***/ },
+
+/***/ }),
 /* 32 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = {
 		"4": [
@@ -40222,22 +40386,31 @@
 		]
 	};
 
-/***/ },
+/***/ }),
 /* 33 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalNote = __webpack_require__(16);
-	var tonalInterval = __webpack_require__(19);
+	var tonalNote = __webpack_require__(17);
+	var tonalInterval = __webpack_require__(20);
 	var tonalArray = __webpack_require__(8);
 	var tonalTranspose = __webpack_require__(13);
 	var tonalDistance = __webpack_require__(14);
 	var tonalChord = __webpack_require__(31);
-	var tonalNotation = __webpack_require__(26);
+	var tonalNotation = __webpack_require__(27);
 	
+	/**
+	 * Work with chord progressions.
+	 *
+	 * @example
+	 * var progression = require('tonal-progression')
+	 * progression.abstract('Cmaj7 Dm7 G7', 'C')
+	 *
+	 * @module progression
+	 */
 	/**
 	 * Given a chord progression and a tonic, return the chord progression
 	 * with roman numeral chords.
@@ -40249,19 +40422,19 @@
 	 * progression.abstract('Cmaj7 Dm7 G7', 'C') // => [ 'Imaj7', 'IIm7', 'V7' ]
 	 */
 	function abstract (chords, tonic) {
-	  tonic = tonalNote.pc(tonic)
-	  chords = tonalArray.map(tonalChord.parse, chords)
-	  var tonics = tonalArray.compact(chords.map(function (x) { return x.tonic }))
+	  tonic = tonalNote.pc(tonic);
+	  chords = tonalArray.map(tonalChord.parse, chords);
+	  var tonics = tonalArray.compact(chords.map(function (x) { return x.tonic }));
 	  // if some tonic missing, can't do the analysis
 	  if (tonics.length !== chords.length) return null
 	
 	  return tonics.map(function (t, i) {
-	    var p = tonalInterval.props(tonalDistance.interval(tonic, t))
+	    var p = tonalInterval.props(tonalDistance.interval(tonic, t));
 	    return buildRoman(p.num - 1, p.alt, chords[i].type)
 	  })
 	}
 	
-	var NUMS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+	var NUMS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 	/**
 	 * Build an abstract chord name using roman numerals
 	 */
@@ -40282,12 +40455,12 @@
 	 */
 	function concrete (chords, tonic) {
 	  return tonalArray.map(function (e) {
-	    var r = parseRomanChord(e)
+	    var r = parseRomanChord(e);
 	    return r ? tonalTranspose.transpose(r.root, tonic) + r.type : null
 	  }, chords)
 	}
 	
-	var ROMAN = /^\s*(b|bb|#|##|)(IV|III|II|I|VII|VI|V|iv|iii|ii|i|vii|vi|v)\s*(.*)\s*$/
+	var ROMAN = /^\s*(b|bb|#|##|)(IV|III|II|I|VII|VI|V|iv|iii|ii|i|vii|vi|v)\s*(.*)\s*$/;
 	/**
 	 * Returns a regex to match roman numbers literals with the from:
 	 * `[accidentals]roman[element]`.
@@ -40308,7 +40481,7 @@
 	 */
 	function romanRegex () { return ROMAN }
 	
-	var NUM = {i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5, vii: 6}
+	var NUM = {i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5, vii: 6};
 	
 	/**
 	 * Parse a chord expressed with roman numerals. It returns an interval representing
@@ -40326,11 +40499,11 @@
 	 * parse('bIIalt') // => { root: '2m', type: 'alt' }
 	 */
 	function parseRomanChord (str) {
-	  var m = ROMAN.exec(str)
+	  var m = ROMAN.exec(str);
 	  if (!m) return null
-	  var num = NUM[m[2].toLowerCase()] + 1
-	  var alt = m[1].length
-	  if (m[1][0] === 'b') alt = -alt
+	  var num = NUM[m[2].toLowerCase()] + 1;
+	  var alt = m[1].length;
+	  if (m[1][0] === 'b') alt = -alt;
 	  return { root: tonalInterval.fromProps({ num: num, alt: alt, dir: 1 }), type: m[3] }
 	}
 	
@@ -40340,18 +40513,23 @@
 	exports.romanRegex = romanRegex;
 	exports.parseRomanChord = parseRomanChord;
 
-/***/ },
+
+/***/ }),
 /* 34 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', { value: true });
 	
-	var tonalInterval = __webpack_require__(19);
+	var tonalInterval = __webpack_require__(20);
 	var tonalPitch = __webpack_require__(9);
 	var tonalArray = __webpack_require__(8);
 	
+	/**
+	 *
+	 * @module sonority
+	 */
 	/**
 	 * Get the intervals analysis of a collection of notes
 	 *
@@ -40379,15 +40557,15 @@
 	 * @return {Array} the _pmnsdt_ array
 	 */
 	function density (list) {
-	  var a, b, i
-	  var notes = tonalArray.compact(tonalArray.map(tonalPitch.asNotePitch, list))
-	  var len = notes.length
-	  var result = [0, 0, 0, 0, 0, 0]
+	  var a, b, i;
+	  var notes = tonalArray.compact(tonalArray.map(tonalPitch.asNotePitch, list));
+	  var len = notes.length;
+	  var result = [0, 0, 0, 0, 0, 0];
 	  for (a = 0; a < len; a++) {
 	    for (b = a; b < len; b++) {
-	      i = tonalInterval.ic(tonalPitch.chr(notes[b]) - tonalPitch.chr(notes[a]))
-	      if (i === 6) result[5] = result[5] + 1
-	      else if (i > 0) result[5 - i] = result[5 - i] + 1
+	      i = tonalInterval.ic(tonalPitch.chr(notes[b]) - tonalPitch.chr(notes[a]));
+	      if (i === 6) result[5] = result[5] + 1;
+	      else if (i > 0) result[5 - i] = result[5 - i] + 1;
 	    }
 	  }
 	  return result
@@ -40395,14 +40573,54 @@
 	
 	exports.density = density;
 
-/***/ },
+
+/***/ }),
 /* 35 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, '__esModule', { value: true });
+	
+	var tonalArray = __webpack_require__(8);
+	
+	/**
+	 * Functions to create and manipulate pitch sets
+	 *
+	 * @example
+	 * var pitchset = require('tonal-pitchset')
+	 *
+	 * @module pitchset
+	 */
+	/**
+	 * Get the notes of a pitch set. The notes in the set are sorted in asceding
+	 * pitch order, and no repetitions are allowed.
+	 *
+	 * Note that it creates pitch sets and NOT picth class sets. This functionallity
+	 * resides inside `tonal-pcset` module.
+	 *
+	 * @param {String|Array} notes - the notes to create the pitch set from
+	 * @return {Array<String>} the ordered pitch set notes
+	 * @example
+	 * pitchset.notes('C4 c3 C5 c4') // => ['C3', 'C4', 'C5']
+	 */
+	function notes (notes) {
+	  return tonalArray.sort(notes).filter(function (n, i, arr) {
+	    return i === 0 || n !== arr[i - 1]
+	  })
+	}
+	
+	exports.notes = notes;
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var load = __webpack_require__(36)
-	var player = __webpack_require__(39)
+	var load = __webpack_require__(37)
+	var player = __webpack_require__(40)
 	
 	/**
 	 * Load a soundfont instrument. It returns a promise that resolves to a
@@ -40478,7 +40696,7 @@
 	
 	// In the 1.0.0 release it will be:
 	// var Soundfont = {}
-	var Soundfont = __webpack_require__(48)
+	var Soundfont = __webpack_require__(49)
 	Soundfont.instrument = instrument
 	Soundfont.nameToUrl = nameToUrl
 	
@@ -40486,14 +40704,14 @@
 	if (typeof window !== 'undefined') window.Soundfont = Soundfont
 
 
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var base64 = __webpack_require__(37)
-	var fetch = __webpack_require__(38)
+	var base64 = __webpack_require__(38)
+	var fetch = __webpack_require__(39)
 	
 	// Given a regex, return a function that test if against a string
 	function fromRegex (r) {
@@ -40639,9 +40857,9 @@
 	if (typeof window !== 'undefined') window.loadAudio = load
 
 
-/***/ },
-/* 37 */
-/***/ function(module, exports) {
+/***/ }),
+/* 38 */
+/***/ (function(module, exports) {
 
 	'use strict'
 	
@@ -40681,9 +40899,9 @@
 	module.exports = { decode: decode }
 
 
-/***/ },
-/* 38 */
-/***/ function(module, exports) {
+/***/ }),
+/* 39 */
+/***/ (function(module, exports) {
 
 	/* global XMLHttpRequest */
 	'use strict'
@@ -40711,17 +40929,17 @@
 	}
 
 
-/***/ },
-/* 39 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var player = __webpack_require__(40)
-	var events = __webpack_require__(42)
-	var notes = __webpack_require__(43)
-	var scheduler = __webpack_require__(45)
-	var midi = __webpack_require__(46)
+	var player = __webpack_require__(41)
+	var events = __webpack_require__(43)
+	var notes = __webpack_require__(44)
+	var scheduler = __webpack_require__(46)
+	var midi = __webpack_require__(47)
 	
 	function SamplePlayer (ac, source, options) {
 	  return midi(scheduler(notes(events(player(ac, source, options)))))
@@ -40731,14 +40949,14 @@
 	if (typeof window !== 'undefined') window.SamplePlayer = SamplePlayer
 
 
-/***/ },
-/* 40 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* global AudioBuffer */
 	'use strict'
 	
-	var ADSR = __webpack_require__(41)
+	var ADSR = __webpack_require__(42)
 	
 	var EMPTY = {}
 	var DEFAULTS = {
@@ -40949,9 +41167,9 @@
 	module.exports = SamplePlayer
 
 
-/***/ },
-/* 41 */
-/***/ function(module, exports) {
+/***/ }),
+/* 42 */
+/***/ (function(module, exports) {
 
 	module.exports = ADSR
 	
@@ -41115,9 +41333,9 @@
 	}
 
 
-/***/ },
-/* 42 */
-/***/ function(module, exports) {
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
 
 	
 	module.exports = function (player) {
@@ -41147,13 +41365,13 @@
 	}
 
 
-/***/ },
-/* 43 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
-	var note = __webpack_require__(44)
+	var note = __webpack_require__(45)
 	var isMidi = function (n) { return n !== null && n !== [] && n >= 0 && n < 129 }
 	var toMidi = function (n) { return isMidi(n) ? +n : note.midi(n) }
 	
@@ -41189,9 +41407,9 @@
 	}
 
 
-/***/ },
-/* 44 */
-/***/ function(module, exports) {
+/***/ }),
+/* 45 */
+/***/ (function(module, exports) {
 
 	'use strict'
 	
@@ -41344,9 +41562,9 @@
 	 */
 
 
-/***/ },
-/* 45 */
-/***/ function(module, exports) {
+/***/ }),
+/* 46 */
+/***/ (function(module, exports) {
 
 	'use strict'
 	
@@ -41412,11 +41630,11 @@
 	}
 
 
-/***/ },
-/* 46 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
 
-	var midimessage = __webpack_require__(47)
+	var midimessage = __webpack_require__(48)
 	
 	module.exports = function (player) {
 	  /**
@@ -41467,16 +41685,16 @@
 	}
 
 
-/***/ },
-/* 47 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	var require;var require;(function(e){if(true){module.exports=e()}else if(typeof define==="function"&&define.amd){define([],e)}else{var t;if(typeof window!=="undefined"){t=window}else if(typeof global!=="undefined"){t=global}else if(typeof self!=="undefined"){t=self}else{t=this}t.midimessage=e()}})(function(){var e,t,s;return function o(e,t,s){function a(n,i){if(!t[n]){if(!e[n]){var l=typeof require=="function"&&require;if(!i&&l)return require(n,!0);if(r)return r(n,!0);var h=new Error("Cannot find module '"+n+"'");throw h.code="MODULE_NOT_FOUND",h}var c=t[n]={exports:{}};e[n][0].call(c.exports,function(t){var s=e[n][1][t];return a(s?s:t)},c,c.exports,o,e,t,s)}return t[n].exports}var r=typeof require=="function"&&require;for(var n=0;n<s.length;n++)a(s[n]);return a}({1:[function(e,t,s){"use strict";Object.defineProperty(s,"__esModule",{value:true});s["default"]=function(e){function t(e){this._event=e;this._data=e.data;this.receivedTime=e.receivedTime;if(this._data&&this._data.length<2){console.warn("Illegal MIDI message of length",this._data.length);return}this._messageCode=e.data[0]&240;this.channel=e.data[0]&15;switch(this._messageCode){case 128:this.messageType="noteoff";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 144:this.messageType="noteon";this.key=e.data[1]&127;this.velocity=e.data[2]&127;break;case 160:this.messageType="keypressure";this.key=e.data[1]&127;this.pressure=e.data[2]&127;break;case 176:this.messageType="controlchange";this.controllerNumber=e.data[1]&127;this.controllerValue=e.data[2]&127;if(this.controllerNumber===120&&this.controllerValue===0){this.channelModeMessage="allsoundoff"}else if(this.controllerNumber===121){this.channelModeMessage="resetallcontrollers"}else if(this.controllerNumber===122){if(this.controllerValue===0){this.channelModeMessage="localcontroloff"}else{this.channelModeMessage="localcontrolon"}}else if(this.controllerNumber===123&&this.controllerValue===0){this.channelModeMessage="allnotesoff"}else if(this.controllerNumber===124&&this.controllerValue===0){this.channelModeMessage="omnimodeoff"}else if(this.controllerNumber===125&&this.controllerValue===0){this.channelModeMessage="omnimodeon"}else if(this.controllerNumber===126){this.channelModeMessage="monomodeon"}else if(this.controllerNumber===127){this.channelModeMessage="polymodeon"}break;case 192:this.messageType="programchange";this.program=e.data[1];break;case 208:this.messageType="channelpressure";this.pressure=e.data[1]&127;break;case 224:this.messageType="pitchbendchange";var t=e.data[2]&127;var s=e.data[1]&127;this.pitchBend=(t<<8)+s;break}}return new t(e)};t.exports=s["default"]},{}]},{},[1])(1)});
 	//# sourceMappingURL=dist/index.js.map
 
-/***/ },
-/* 48 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'
 	
@@ -41620,9 +41838,9 @@
 	module.exports = Soundfont
 
 
-/***/ },
-/* 49 */
-/***/ function(module, exports) {
+/***/ }),
+/* 50 */
+/***/ (function(module, exports) {
 
 	module.exports = {
 		"type": "sheets",
@@ -41669,9 +41887,9 @@
 		]
 	};
 
-/***/ },
-/* 50 */
-/***/ function(module, exports) {
+/***/ }),
+/* 51 */
+/***/ (function(module, exports) {
 
 	module.exports = {
 		"type": "soundfonts",
@@ -41695,6 +41913,6 @@
 		}
 	};
 
-/***/ }
+/***/ })
 /******/ ]);
 //# sourceMappingURL=bundle.js.map
