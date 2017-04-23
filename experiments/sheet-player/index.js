@@ -9,8 +9,123 @@ import NoteParser from 'note-parser';
 import sheets from './sheets.json';
 import soundfonts from './soundfonts.json';
 
+// Reach in deep structures without fear of TypeError exceptions.
+// e.g. x = ORNULL(a.b.c.d['e'].f.g);
+DEFINE_MACRO(ORNULL, (expr) => {
+  try {
+    return expr;
+  }
+  catch (e) {
+    return null;
+  }
+});
+
+function concat(a, b) { return a.concat(b); }
+
 const MIDI_PB_QUARTER_TONE = 0.25;
 const MIDI_PB_THIRD_TONE = 1/3;
+
+//
+// TUNING SYSTEM
+//
+// Given a reference note and a target note, a tuning returns the ratio between them.
+// The fundamental ratio is 2 between the base tone and its octave.
+// Other tones subdivide the octave interval. A finite number of tones N make up the tuning.
+// Tones are indexed according to their rank in the ordered sequence of ratios
+// index 0 => ratio 1 (unison)
+// index 1 => ratio 1.xx (first interval)
+// index 2 => ratio 1.yy (second interval)
+// ...
+// index N-1 => ratio 2 (octave)
+//
+//
+// Indexes can be named: these are the "note names" such as C, D, E, etc.
+// Also, index increments can be named: these are the accidentals such as ♯, ♭, ♮, etc.
+//
+//
+
+//
+// Tuning by equal divisions of the octave (EDO)
+//
+class TuningEDO {
+
+  // CONSTRUCTOR
+  //
+  // `steps`: how many equal divisions of the octave
+  // `nomenclature`: maps of note names and accidentals
+  // ```
+  // nomenclature: {
+  //   notes: {
+  //     'C': 0,
+  //     'D': 2,
+  //     'E': 4,
+  //     'F': 5,
+  //     ...
+  //   },
+  //   accidentals: {
+  //     '#': +1,
+  //     'b': -1,
+  //     'n':  0,
+  //     ...
+  //   }
+  // }
+  // ```
+  // `reference`: reference note in scientific pitch notation
+  //
+  constructor(steps, nomenclature, reference) {
+    this.steps = steps;
+    this.nomenclature = nomenclature;
+    this.reference = reference;
+    this.r = this.parse(reference);
+  }
+
+  // TUNE A NOTE
+  // get a note's ratio to the reference
+  //
+  // `note`: target note in scientific pitch notation
+  // return: ratio of note wrt reference
+  //         or undefined if `note` is not recognized
+  //
+  tune(note) {
+    const n = this.parse(note);
+    if (n) {
+      return Math.pow(2, (n.index - this.r.index + this.steps * ( n.octave - this.r.octave ) ) / this.steps);
+    }
+  }
+
+  // PARSE A NOTE
+  // get a note's index, octave, accidental given its scientific pitch notation
+  //
+  // `note`: target note in scientific pitch notation
+  // return: note information `{ index, octave }` or undefined if not recognized
+  //
+  parse(note) {
+    const re = new RegExp(
+      '^(' + Object.keys(this.nomenclature.notes).join('|') + ')' +
+      '(' + Object.keys(this.nomenclature.accidentals).sort((a,b) => b.length - a.length).join('|') + ')?' +
+      '(\\d)$',
+      'gi'
+    );
+    const match = re.exec(note);
+    if (match) {
+      return {
+        index: this.nomenclature.notes[ match[1] ] + (match[2] ? this.nomenclature.accidentals[ match[2] ] : 0),
+        octave: match[3]
+      }
+    }
+  }
+}
+
+const edo12 = new TuningEDO(12, {
+  notes: {
+    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+  },
+  accidentals: {
+    '#': 1, 'b': -1, '##': 2, 'bb': -2, 'n': 0
+  }
+}, 'A4');
+
+console.log(440 * edo12.tune('C4'));
 
 // For now, a tuning is a mapping from accidentals to MIDI pitch bends
 // https://github.com/0xfe/vexflow/wiki/Microtonal-Support
@@ -59,19 +174,6 @@ const tunings = [
     }),
   }
 ];
-
-// Reach in deep structures without fear of TypeError exceptions.
-// e.g. x = ORNULL(a.b.c.d['e'].f.g);
-DEFINE_MACRO(ORNULL, (expr) => {
-  try {
-    return expr;
-  }
-  catch (e) {
-    return null;
-  }
-});
-
-function concat(a, b) { return a.concat(b); }
 
 const MIDI_START_TIME = 1;
 
@@ -393,6 +495,15 @@ function play() {
                 ctx.setLineWidth(1);
                 ctx.attributes.opacity = 0.2;
                 ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
+
+                // Show return markers on first and end bars of section.
+                if (
+                  section.repeat > 1 &&
+                  i < section.repeat
+                ) {
+                  // TODO
+                }
+
                 G.midi.marker = ctx.svg.lastChild;
               }, G.midi.time + tickable.midi.start + G.midi.config.sync));
             }
