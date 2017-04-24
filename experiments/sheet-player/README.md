@@ -56,11 +56,15 @@ Since VexFlow contains a full specification of the performance, it can be parsed
 etc.
 
 ## Tuning and microtonal support
-The app supports multiple tunings, allowing to play music from different cultures. For example, contemporary Arabic music uses a quarter-tone system based on equal temperament of 24 microtones (12 of which align precisely with the standard Western equal temperament). A "tuning" is simply a mapping of notes names and accidentals to their equivalent MIDI note number and microtone value.
+The app supports multiple tunings, allowing to play music from different cultures. For example, contemporary Arabic music uses a quarter-tone system based on equal temperament of 24 microtones (12 of which align precisely with the standard Western equal temperament).
+
+A "tuning" defines a sequence of tones and calculates the ratio of each tone with respect to a given reference tone. Note names are supplied to index specific tones in the sequence, and accidentals refer to index increments in the sequence of tones. In the Arabic 24-tet example, note C is defined as the first tone, note D as the 4th tone, note E as the 8th, etc. This is different from a 12-tet tuning where D is defined as the 2nd tone, E as the 4th, etc. This definition allows songs to be played in different tunings, provided the note names and accidentals supplied to each tuning correspond to the original song notation. In most cases, English note names (C, D, E, F, G, A, B) and standard accidentals are used.
+
+The ratio returned by a tuning for a given note is then multiplied by the reference frequency (e.g. A440) to obtain an absolute frequency to be played. This frequency is then converted to a MIDI key, including a "detuning" factor when the tuning deviates from MIDI's internal 12-tet tuning.
 
 To support microtonal music during MIDI playback, two approaches can be used:
 
-- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can hear sound fluctuations at note boundaries. This approach is currently implemented.
+- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can sometimes hear sound fluctuations at note boundaries. This is the approach that is currently implemented.
 
 - Using [MIDI Tuning system message](http://www.microtonal-synthesis.com/MIDItuning.html). It should be possible to send a tuning specification for each MIDI note ahead of time, but not all MIDI synths support this feature. Still, it should be implemented here because it's more robust than pitch bends.
 
