@@ -1,6 +1,6 @@
 # Sheet Player
 
-## Wat is this?
+## What is this?
 
 A demo of music localization in action. The sheet player supports the following features:
 - MIDI output or local sounds synthesis
