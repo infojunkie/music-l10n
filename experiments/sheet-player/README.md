@@ -90,21 +90,35 @@ options snd-seq-dummy ports=4
 - MacOS X users can [also create virtual MIDI ports](https://www.skratchdot.com/2016/01/creating-virtual-midi-ports-on-osx/)
 
 ## TODO
-- Unit tests!!
+
+### Model
+- Support Scala specification
+- Library of scales in any key
+- Add metronome track
+- Add percussion track
+- Support playback with auto-generated accompaniment
+
+### MIDI
 - Add options to output to Web MIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
 - Pre-create full MIDI stream before playback. Take into account looping, grace notes, etc.
-- Allow mouse selection of tickable. Playback should resume from selection.
-- Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
-- Read and write MusicXML files
-- Read and write MIDI files
-- Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection")
-- Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
-- Percussion track
-- Playback with auto-generated accompaniment
-- Refactor code, use React
-- Add "Sync" widget to synchronize player marker with MIDI output (to take latency into account, kind of like [syncing audio in VLC Media Player](https://www.vlchelp.com/syncing-audio-vlc-media-player/))
-- Add "Tempo" widget
-- Keyboard controls, "Play/Pause" button
-- Add metronome
-- Add "loading..." spinner while loading soundfonts and other assets
 - Support MIDI Tuning system messages
+
+### I/O
+- Import MusicXML file
+- Import MIDI file
+- Export MIDI file
+
+### UI
+- Visualize and compare tunings
+- Allow mouse selection of tickables. Playback should resume from selection.
+- Create flexible selection mechanism for notes, measures, etc. Study MuseScore for inspiration.
+- Add "scribbles" area to attach study notes/comments to current sheet. Scribbles can be hand-input or generated (e.g. using functions such as "C Major Scale", "Add 6th to current selection")
+- Keyboard controls, "Play/Pause" button
+- Add "loading..." spinner while loading soundfonts and other assets
+- When looping, show looping marker on start and end bars of the section being looped
+
+### Software engineering
+- Add unit tests
+- Refactor code
+- Use React
+- Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js

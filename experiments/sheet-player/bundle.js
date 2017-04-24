@@ -551,10 +551,6 @@
 	
 	var _soundfontPlayer2 = _interopRequireDefault(_soundfontPlayer);
 	
-	var _noteParser = __webpack_require__(10);
-	
-	var _noteParser2 = _interopRequireDefault(_noteParser);
-	
 	var _sheets = __webpack_require__(50);
 	
 	var _sheets2 = _interopRequireDefault(_sheets);
@@ -565,16 +561,20 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	// https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
+	
 	
 	// Reach in deep structures without fear of TypeError exceptions.
 	// e.g. x = ORNULL(a.b.c.d['e'].f.g);
-	function concat(a, b) {
-	  return a.concat(b);
+	function escapeRegExp(string) {
+	  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 	}
-	
-	var MIDI_PB_QUARTER_TONE = 0.25;
-	var MIDI_PB_THIRD_TONE = 1 / 3;
 	
 	//
 	// TUNING SYSTEM
@@ -596,14 +596,13 @@
 	//
 	
 	//
-	// Tuning by equal divisions of the octave (EDO)
+	// Tuning base class
 	//
 	
-	var TuningEDO = function () {
+	var Tuning = function () {
 	
 	  // CONSTRUCTOR
 	  //
-	  // `steps`: how many equal divisions of the octave
 	  // `nomenclature`: maps of note names and accidentals
 	  // ```
 	  // nomenclature: {
@@ -624,25 +623,78 @@
 	  // ```
 	  // `reference`: reference note in scientific pitch notation
 	  //
-	  function TuningEDO(steps, nomenclature, reference) {
-	    _classCallCheck(this, TuningEDO);
+	  function Tuning(nomenclature, reference) {
+	    _classCallCheck(this, Tuning);
 	
-	    this.steps = steps;
 	    this.nomenclature = nomenclature;
 	    this.reference = reference;
+	
+	    // Precalculated values
+	    // `regex` is the regular expression that is dynamically built to
+	    // recognize notes in scientific pitch notation, given the nomenclature supplied by the caller.
+	    this.regex = new RegExp('^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' + '(' + Object.keys(nomenclature.accidentals).map(escapeRegExp).sort(function (a, b) {
+	      return b.length - a.length;
+	    }).join('|') + ')?' + '(\\d)$', 'i');
+	    // `r` is the reference note information (index, octave)
 	    this.r = this.parse(reference);
+	  }
+	
+	  // PARSE A NOTE
+	  // get a note's index and octave given its scientific pitch notation
+	  //
+	  // `note`: target note in scientific pitch notation
+	  // return: note information `{ index, octave }` or undefined if not recognized
+	  //
+	
+	
+	  _createClass(Tuning, [{
+	    key: 'parse',
+	    value: function parse(note) {
+	      var match = this.regex.exec(note);
+	      if (match) {
+	        return {
+	          index: this.nomenclature.notes[match[1]] + (match[2] ? this.nomenclature.accidentals[match[2]] : 0),
+	          octave: match[3]
+	        };
+	      } else {
+	        console.log('Could not parse note ' + note + '.');
+	      }
+	    }
+	  }]);
+	
+	  return Tuning;
+	}();
+	
+	//
+	// Tuning by equal divisions of the octave (EDO)
+	//
+	
+	
+	var TuningEdo = function (_Tuning) {
+	  _inherits(TuningEdo, _Tuning);
+	
+	  // CONSTRUCTOR
+	  //
+	  // `steps`: how many equal divisions of the octave
+	  //
+	  function TuningEdo(steps, nomenclature, reference) {
+	    _classCallCheck(this, TuningEdo);
+	
+	    var _this = _possibleConstructorReturn(this, (TuningEdo.__proto__ || Object.getPrototypeOf(TuningEdo)).call(this, nomenclature, reference));
+	
+	    _this.steps = steps;
+	    return _this;
 	  }
 	
 	  // TUNE A NOTE
 	  // get a note's ratio to the reference
 	  //
 	  // `note`: target note in scientific pitch notation
-	  // return: ratio of note wrt reference
-	  //         or undefined if `note` is not recognized
+	  // return: ratio of note wrt reference or undefined if not recognized
 	  //
 	
 	
-	  _createClass(TuningEDO, [{
+	  _createClass(TuningEdo, [{
 	    key: 'tune',
 	    value: function tune(note) {
 	      var n = this.parse(note);
@@ -650,85 +702,10 @@
 	        return Math.pow(2, (n.index - this.r.index + this.steps * (n.octave - this.r.octave)) / this.steps);
 	      }
 	    }
-	
-	    // PARSE A NOTE
-	    // get a note's index, octave, accidental given its scientific pitch notation
-	    //
-	    // `note`: target note in scientific pitch notation
-	    // return: note information `{ index, octave }` or undefined if not recognized
-	    //
-	
-	  }, {
-	    key: 'parse',
-	    value: function parse(note) {
-	      var re = new RegExp('^(' + Object.keys(this.nomenclature.notes).join('|') + ')' + '(' + Object.keys(this.nomenclature.accidentals).sort(function (a, b) {
-	        return b.length - a.length;
-	      }).join('|') + ')?' + '(\\d)$', 'gi');
-	      var match = re.exec(note);
-	      if (match) {
-	        return {
-	          index: this.nomenclature.notes[match[1]] + (match[2] ? this.nomenclature.accidentals[match[2]] : 0),
-	          octave: match[3]
-	        };
-	      }
-	    }
 	  }]);
 	
-	  return TuningEDO;
-	}();
-	
-	var edo12 = new TuningEDO(12, {
-	  notes: {
-	    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
-	  },
-	  accidentals: {
-	    '#': 1, 'b': -1, '##': 2, 'bb': -2, 'n': 0
-	  }
-	}, 'A4');
-	
-	console.log(440 * edo12.tune('C4'));
-	
-	// For now, a tuning is a mapping from accidentals to MIDI pitch bends
-	// https://github.com/0xfe/vexflow/wiki/Microtonal-Support
-	
-	var Tuning = function () {
-	  function Tuning(accidentalsMap) {
-	    _classCallCheck(this, Tuning);
-	
-	    this.accidentalsMap = accidentalsMap;
-	  }
-	
-	  _createClass(Tuning, [{
-	    key: 'noteToMidi',
-	    value: function noteToMidi(key, accidental, octave) {
-	      var _ornull = void 0;
-	
-	      _ORNULL: {
-	        try {
-	          _ornull = this.accidentalsMap[accidental];
-	          break _ORNULL;
-	        } catch (e) {
-	          _ornull = null;
-	          break _ORNULL;
-	        }
-	      }
-	
-	      var pb = _ornull;
-	      if (pb) {
-	        accidental = null;
-	      };
-	      var keyAccidentalOctave = key + (accidental || '') + octave;
-	      var midi = _noteParser2.default.midi(keyAccidentalOctave);
-	      if (!midi) {
-	        console.log('Could not parse note ' + keyAccidentalOctave + '. Trying without accidental.');
-	        midi = _noteParser2.default.midi(key + octave);
-	      }
-	      return [midi, pb];
-	    }
-	  }]);
-	
-	  return Tuning;
-	}();
+	  return TuningEdo;
+	}(Tuning);
 	
 	// Initialize known tunings.
 	
@@ -736,25 +713,38 @@
 	var tunings = [{
 	  key: '12tet',
 	  name: 'Western standard tuning (12-tet)',
-	  tuning: new Tuning()
+	  tuning: new TuningEdo(12, {
+	    notes: {
+	      'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+	    },
+	    accidentals: {
+	      'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
+	    }
+	  }, 'A4')
 	}, {
 	  key: '24tet',
 	  name: 'Arabic quarter-tone tuning (24-tet)',
-	  tuning: new Tuning({
-	    '+': MIDI_PB_QUARTER_TONE,
-	    '++': MIDI_PB_QUARTER_TONE * 3,
-	    'bs': -MIDI_PB_QUARTER_TONE,
-	    'bss': -MIDI_PB_QUARTER_TONE * 3
-	  })
+	  tuning: new TuningEdo(24, {
+	    notes: {
+	      'C': 0, 'D': 4, 'E': 8, 'F': 10, 'G': 14, 'A': 18, 'B': 22
+	    },
+	    accidentals: {
+	      'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
+	      '+': 1, '++': 3, 'bs': -1, 'bss': -3
+	    }
+	  }, 'A4')
 	}, {
 	  key: 'villoteau',
-	  name: 'Arabic Villoteau third-tone tuning',
-	  tuning: new Tuning({
-	    '+': MIDI_PB_THIRD_TONE,
-	    '++': MIDI_PB_THIRD_TONE * 2,
-	    'bs': -MIDI_PB_THIRD_TONE,
-	    'bss': -MIDI_PB_THIRD_TONE * 2
-	  })
+	  name: 'Arabic Villoteau third-tone tuning (36-tet)',
+	  tuning: new TuningEdo(36, {
+	    notes: {
+	      'C': 0, 'D': 6, 'E': 12, 'F': 15, 'G': 21, 'A': 27, 'B': 33
+	    },
+	    accidentals: {
+	      'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
+	      '+': 2, '++': 4, 'bs': -2, 'bss': -4
+	    }
+	  }, 'A4')
 	}];
 	
 	var MIDI_START_TIME = 1;
@@ -781,7 +771,8 @@
 	      soundfont: 'musyngkite',
 	      instrument: 'acoustic_grand_piano',
 	      drum: 'doumbek',
-	      tuning: '12tet'
+	      tuning: '12tet',
+	      reference_freq: 440.0
 	    }
 	  },
 	  sheets: _sheets2.default.data
@@ -854,22 +845,22 @@
 	// Additional method on Vex.Flow.Factory that draws the score without resetting
 	// the info at the end - because we need to keep that info.
 	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
-	  var _this = this;
+	  var _this2 = this;
 	
 	  this.systems.forEach(function (i) {
-	    return i.setContext(_this.context).format();
+	    return i.setContext(_this2.context).format();
 	  });
 	  this.staves.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	  this.voices.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	  this.renderQ.forEach(function (i) {
-	    if (!i.isRendered()) i.setContext(_this.context).draw();
+	    if (!i.isRendered()) i.setContext(_this2.context).draw();
 	  });
 	  this.systems.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	};
 	
@@ -892,19 +883,19 @@
 	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
 	  };
 	
-	  var _ornull2 = void 0;
+	  var _ornull = void 0;
 	
-	  _ORNULL2: {
+	  _ORNULL: {
 	    try {
-	      _ornull2 = accidentalsMap[keySignature.keySpec];
-	      break _ORNULL2;
+	      _ornull = accidentalsMap[keySignature.keySpec];
+	      break _ORNULL;
 	    } catch (e) {
-	      _ornull2 = null;
-	      break _ORNULL2;
+	      _ornull = null;
+	      break _ORNULL;
 	    }
 	  }
 	
-	  var map = _ornull2;
+	  var map = _ornull;
 	  var keys = Object.keys(map);
 	  keySignature.accList.forEach(function (acc, index) {
 	    map[keys[index]] = acc.type;
@@ -912,15 +903,26 @@
 	  return map;
 	}
 	
+	// Convert MIDI note number to a frequency.
+	function midiToFreq(m) {
+	  return Math.pow(2, (midi - 69) / 12) * 440;
+	}
+	
+	// Convert frequency to closest MIDI note number and pitch bend value [-1,1].
+	function freqToMidi(f) {
+	  var m = 12 * Math.log2(f / 440) + 69;
+	  var r = Math.round(m);
+	  return [r, (m - r) / 2];
+	}
+	
 	// Convert a note to a MIDI message.
 	// Convert microtones into MIDI pitch bends.
 	function playNote(note, time, duration) {
-	  var _G$midi$tuning$tuning = G.midi.tuning.tuning.noteToMidi(note.key, note.accidental, note.octave),
-	      _G$midi$tuning$tuning2 = _slicedToArray(_G$midi$tuning$tuning, 2),
-	      midi = _G$midi$tuning$tuning2[0],
-	      pb = _G$midi$tuning$tuning2[1];
+	  var _freqToMidi = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune('' + note.key + (note.accidental || '') + note.octave)),
+	      _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
+	      midi = _freqToMidi2[0],
+	      pb = _freqToMidi2[1];
 	
-	  if (!midi) return;
 	  if (pb) {
 	    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + time });
 	  }
@@ -1047,11 +1049,23 @@
 	          };
 	          if (tickable.noteType === 'n') {
 	            tickable.keyProps.forEach(function (note) {
+	              var _ornull2 = void 0;
+	
+	              _ORNULL2: {
+	                try {
+	                  _ornull2 = measureAccidentals[note.key];
+	                  break _ORNULL2;
+	                } catch (e) {
+	                  _ornull2 = null;
+	                  break _ORNULL2;
+	                }
+	              }
+	
 	              var _ornull3 = void 0;
 	
 	              _ORNULL3: {
 	                try {
-	                  _ornull3 = measureAccidentals[note.key];
+	                  _ornull3 = keyAccidentals[note.key];
 	                  break _ORNULL3;
 	                } catch (e) {
 	                  _ornull3 = null;
@@ -1059,19 +1073,7 @@
 	                }
 	              }
 	
-	              var _ornull4 = void 0;
-	
-	              _ORNULL4: {
-	                try {
-	                  _ornull4 = keyAccidentals[note.key];
-	                  break _ORNULL4;
-	                } catch (e) {
-	                  _ornull4 = null;
-	                  break _ORNULL4;
-	                }
-	              }
-	
-	              note.accidental = note.accidental || _ornull3 || _ornull4;
+	              note.accidental = note.accidental || _ornull2 || _ornull3;
 	            });
 	          }
 	        }
@@ -1328,19 +1330,19 @@
 	
 	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
-	    var _ornull5 = void 0;
+	    var _ornull4 = void 0;
 	
-	    _ORNULL5: {
+	    _ORNULL4: {
 	      try {
-	        _ornull5 = G.midi.output.stop;
-	        break _ORNULL5;
+	        _ornull4 = G.midi.output.stop;
+	        break _ORNULL4;
 	      } catch (e) {
-	        _ornull5 = null;
-	        break _ORNULL5;
+	        _ornull4 = null;
+	        break _ORNULL4;
 	      }
 	    }
 	
-	    if (_ornull5) {
+	    if (_ornull4) {
 	      G.midi.output.stop();
 	    } else {}
 	    // FIXME
@@ -1473,7 +1475,7 @@
 	  var system = makeSystem(220);
 	  system.addStave({
 	    voices: [voice(notes('b4/r, f4', { stem: "up" }).concat(beam(notes('f4, f4', { stem: "up" }))))]
-	  }).addKeySignature('G', undefined, ['+']).addClef('treble').addTimeSignature('2/4').setTempo({ name: "Moderato", duration: "q", bpm: 108 }, -30);
+	  }).addKeySignature('D', undefined, ['+', '+']).addClef('treble').addTimeSignature('2/4').setTempo({ name: "Moderato", duration: "q", bpm: 108 }, -30);
 	  system.addConnector('singleLeft');
 	
 	  /*  Measure 2 */
@@ -1549,6 +1551,9 @@
 	
 	  function id(id) {
 	    return registry.getElementById(id);
+	  }
+	  function concat(a, b) {
+	    return a.concat(b);
 	  }
 	
 	  score.set({ time: '3/4' });

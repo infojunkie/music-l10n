@@ -5,7 +5,6 @@ import store from 'store';
 import Vex from 'vexflow';
 import tonal from 'tonal';
 import Soundfont from 'soundfont-player';
-import NoteParser from 'note-parser';
 import sheets from './sheets.json';
 import soundfonts from './soundfonts.json';
 
@@ -20,10 +19,10 @@ DEFINE_MACRO(ORNULL, (expr) => {
   }
 });
 
-function concat(a, b) { return a.concat(b); }
-
-const MIDI_PB_QUARTER_TONE = 0.25;
-const MIDI_PB_THIRD_TONE = 1/3;
+// https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
 
 //
 // TUNING SYSTEM
@@ -45,13 +44,12 @@ const MIDI_PB_THIRD_TONE = 1/3;
 //
 
 //
-// Tuning by equal divisions of the octave (EDO)
+// Tuning base class
 //
-class TuningEDO {
+class Tuning {
 
   // CONSTRUCTOR
   //
-  // `steps`: how many equal divisions of the octave
   // `nomenclature`: maps of note names and accidentals
   // ```
   // nomenclature: {
@@ -72,77 +70,68 @@ class TuningEDO {
   // ```
   // `reference`: reference note in scientific pitch notation
   //
-  constructor(steps, nomenclature, reference) {
-    this.steps = steps;
+  constructor(nomenclature, reference) {
     this.nomenclature = nomenclature;
     this.reference = reference;
+
+    // Precalculated values
+    // `regex` is the regular expression that is dynamically built to
+    // recognize notes in scientific pitch notation, given the nomenclature supplied by the caller.
+    this.regex = new RegExp(
+      '^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' +
+      '(' + Object.keys(nomenclature.accidentals).map(escapeRegExp).sort((a,b) => b.length - a.length).join('|') + ')?' +
+      '(\\d)$',
+      'i'
+    );
+    // `r` is the reference note information (index, octave)
     this.r = this.parse(reference);
   }
 
-  // TUNE A NOTE
-  // get a note's ratio to the reference
-  //
-  // `note`: target note in scientific pitch notation
-  // return: ratio of note wrt reference
-  //         or undefined if `note` is not recognized
-  //
-  tune(note) {
-    const n = this.parse(note);
-    if (n) {
-      return Math.pow(2, (n.index - this.r.index + this.steps * ( n.octave - this.r.octave ) ) / this.steps);
-    }
-  }
-
   // PARSE A NOTE
-  // get a note's index, octave, accidental given its scientific pitch notation
+  // get a note's index and octave given its scientific pitch notation
   //
   // `note`: target note in scientific pitch notation
   // return: note information `{ index, octave }` or undefined if not recognized
   //
   parse(note) {
-    const re = new RegExp(
-      '^(' + Object.keys(this.nomenclature.notes).join('|') + ')' +
-      '(' + Object.keys(this.nomenclature.accidentals).sort((a,b) => b.length - a.length).join('|') + ')?' +
-      '(\\d)$',
-      'gi'
-    );
-    const match = re.exec(note);
+    const match = this.regex.exec(note);
     if (match) {
       return {
         index: this.nomenclature.notes[ match[1] ] + (match[2] ? this.nomenclature.accidentals[ match[2] ] : 0),
         octave: match[3]
       }
     }
+    else {
+      console.log(`Could not parse note ${note}.`);
+    }
   }
 }
 
-const edo12 = new TuningEDO(12, {
-  notes: {
-    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
-  },
-  accidentals: {
-    '#': 1, 'b': -1, '##': 2, 'bb': -2, 'n': 0
-  }
-}, 'A4');
+//
+// Tuning by equal divisions of the octave (EDO)
+//
+class TuningEdo extends Tuning {
 
-console.log(440 * edo12.tune('C4'));
-
-// For now, a tuning is a mapping from accidentals to MIDI pitch bends
-// https://github.com/0xfe/vexflow/wiki/Microtonal-Support
-class Tuning {
-  constructor(accidentalsMap) {
-    this.accidentalsMap = accidentalsMap;
+  // CONSTRUCTOR
+  //
+  // `steps`: how many equal divisions of the octave
+  //
+  constructor(steps, nomenclature, reference) {
+    super(nomenclature, reference);
+    this.steps = steps;
   }
-  noteToMidi(key, accidental, octave) {
-    const pb = ORNULL(this.accidentalsMap[accidental]);
-    if (pb) { accidental = null };
-    const keyAccidentalOctave = key + (accidental || '') + octave;
-    let midi = NoteParser.midi(keyAccidentalOctave);
-    if (!midi) {
-      console.log(`Could not parse note ${keyAccidentalOctave}. Trying without accidental.`);
-      midi = NoteParser.midi(key+octave);
+
+  // TUNE A NOTE
+  // get a note's ratio to the reference
+  //
+  // `note`: target note in scientific pitch notation
+  // return: ratio of note wrt reference or undefined if not recognized
+  //
+  tune(note) {
+    const n = this.parse(note);
+    if (n) {
+      return Math.pow(2, (n.index - this.r.index + this.steps * ( n.octave - this.r.octave ) ) / this.steps);
     }
-    return [ midi, pb ];
   }
 }
 
@@ -151,27 +140,40 @@ const tunings = [
   {
     key: '12tet',
     name: 'Western standard tuning (12-tet)',
-    tuning: new Tuning(),
+    tuning: new TuningEdo(12, {
+                  notes: {
+                    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+                  },
+                  accidentals: {
+                    'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
+                  }
+                }, 'A4')
   },
   {
     key: '24tet',
     name: 'Arabic quarter-tone tuning (24-tet)',
-    tuning: new Tuning({
-      '+': MIDI_PB_QUARTER_TONE,
-      '++': MIDI_PB_QUARTER_TONE * 3,
-      'bs': -MIDI_PB_QUARTER_TONE,
-      'bss': -MIDI_PB_QUARTER_TONE * 3,
-    }),
+    tuning: new TuningEdo(24, {
+                  notes: {
+                    'C': 0, 'D': 4, 'E': 8, 'F': 10, 'G': 14, 'A': 18, 'B': 22
+                  },
+                  accidentals: {
+                    'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
+                    '+': 1, '++': 3, 'bs': -1, 'bss': -3
+                  }
+                }, 'A4')
   },
   {
     key: 'villoteau',
-    name: 'Arabic Villoteau third-tone tuning',
-    tuning: new Tuning({
-      '+': MIDI_PB_THIRD_TONE,
-      '++': MIDI_PB_THIRD_TONE * 2,
-      'bs': -MIDI_PB_THIRD_TONE,
-      'bss': -MIDI_PB_THIRD_TONE * 2,
-    }),
+    name: 'Arabic Villoteau third-tone tuning (36-tet)',
+    tuning: new TuningEdo(36, {
+                  notes: {
+                    'C': 0, 'D': 6, 'E': 12, 'F': 15, 'G': 21, 'A': 27, 'B': 33
+                  },
+                  accidentals: {
+                    'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
+                    '+': 2, '++': 4, 'bs': -2, 'bss': -4
+                  }
+                }, 'A4')
   }
 ];
 
@@ -200,6 +202,7 @@ window.G = {
       instrument: 'acoustic_grand_piano',
       drum: 'doumbek',
       tuning: '12tet',
+      reference_freq: 440.0,
     }
   },
   sheets: sheets.data
@@ -291,11 +294,22 @@ function getKeyAccidentals(keySignature) {
   return map;
 }
 
+// Convert MIDI note number to a frequency.
+function midiToFreq(m) {
+  return Math.pow(2, (midi - 69) / 12) * 440;
+}
+
+// Convert frequency to closest MIDI note number and pitch bend value [-1,1].
+function freqToMidi(f) {
+  const m = 12 * Math.log2(f / 440) + 69;
+  const r = Math.round(m);
+  return [ r, (m - r) / 2 ];
+}
+
 // Convert a note to a MIDI message.
 // Convert microtones into MIDI pitch bends.
 function playNote(note, time, duration) {
-  const [ midi, pb ] = G.midi.tuning.tuning.noteToMidi(note.key, note.accidental, note.octave);
-  if (!midi) return;
+  const [ midi, pb ] = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune(`${note.key}${note.accidental||''}${note.octave}`));
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
   }
@@ -818,7 +832,7 @@ function labesyn() {
   system.addStave({
     voices: [voice(notes('b4/r, f4', {stem: "up"}).concat(beam(notes('f4, f4', {stem: "up"}))))]
   })
-  .addKeySignature('G', undefined, ['+'])
+  .addKeySignature('D', undefined, ['+', '+'])
   .addClef('treble')
   .addTimeSignature('2/4')
   .setTempo({ name: "Moderato", duration: "q", bpm: 108}, -30);
@@ -896,6 +910,7 @@ function bach() {
   }
 
   function id(id) { return registry.getElementById(id); }
+  function concat(a,b) { return a.concat(b); }
 
   score.set({time: '3/4'});
 
