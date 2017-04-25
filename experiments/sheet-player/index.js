@@ -7,6 +7,7 @@ import tonal from 'tonal';
 import Soundfont from 'soundfont-player';
 import sheets from './sheets.json';
 import soundfonts from './soundfonts.json';
+import math from 'mathjs';
 
 // Reach in deep structures without fear of TypeError exceptions.
 // e.g. x = ORNULL(a.b.c.d['e'].f.g);
@@ -22,6 +23,22 @@ DEFINE_MACRO(ORNULL, (expr) => {
 // https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+Number.isInteger = Number.isInteger || function(value) {
+  return typeof value === 'number' &&
+    isFinite(value) &&
+    Math.floor(value) === value;
+};
+
+Array.prototype.last = Array.prototype.last || function() {
+  return this[this.length - 1];
+};
+
+Array.prototype.insert = Array.prototype.insert || function() {
+  this.unshift(...arguments);
+  return this;
 }
 
 //
@@ -83,6 +100,15 @@ class Tuning {
       '(\\d)$',
       'i'
     );
+
+    // `regexOnlyNames` is a regular for note names only, to be used when an accidental is not found during parsing.
+    this.regexOnlyNames = new RegExp(
+      '^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' +
+      '\\D*' +
+      '(\\d)$',
+      'i'
+    );
+
     // `r` is the reference note information (index, octave)
     this.r = this.parse(reference);
   }
@@ -102,7 +128,14 @@ class Tuning {
       }
     }
     else {
-      console.log(`Could not parse note ${note}.`);
+      console.log(`Could not parse note ${note}. Trying without accidentals...`);
+      const match2 = this.regexOnlyNames.exec(note);
+      if (match2) {
+        return {
+          index: this.nomenclature.notes[ match2[1] ],
+          octave: match2[2]
+        }
+      }
     }
   }
 }
@@ -135,45 +168,118 @@ class TuningEdo extends Tuning {
   }
 }
 
+function ratioToCents(ratio) {
+  return 1200 * Math.log2(ratio);
+}
+
+function centsToRatio(cents) {
+  return Math.pow(2, cents / 1200);
+}
+
+//
+// Tuning with explicit intervals expressed in ratios or cents
+// TODO This should be the base class, and TuningEdo pre-creates the ratios according to the current formula in TuningEdo.tune.
+//
+class TuningIntervals extends Tuning {
+
+  // CONSTRUCTOR
+  //
+  // `intervals` an array of ratios expressed as strings or cents expressed as numbers.
+  //  This array should NOT include the unison (1/1) interval.
+  //  The last element of this array will be considered to be the repeater (e.g. 2/1 the octave).
+  //
+  constructor(intervals, nomenclature, reference) {
+    super(nomenclature, reference);
+
+    // Pre-calculate the interval multipliers in both ratios and cents.
+    this.steps = intervals.length;
+    this.intervals = intervals.insert('1/1').map(i => {
+      return typeof i === 'string' ? {
+        ratio: math.number(math.fraction(i)),
+        cents: ratioToCents(math.number(math.fraction(i)))
+      } : {
+        ratio: centsToRatio(i),
+        cents: i
+      }
+    });
+  }
+
+  tune(note) {
+    const n = this.parse(note);
+    if (n) {
+      // TODO This should move to Tuning.parse when TuningIntervals becomes the base class.
+      let {index, octave} = n;
+      if (index < 0) {
+        index += this.steps;
+        octave -= 1;
+      }
+      else if (index >= this.steps) {
+        index -= this.steps;
+        octave += 1;
+      }
+
+      // Get the ratio difference between the target note and the reference note, raised to the difference in octave.
+      // The octave is always the last tone as per the definition of the `intervals` array.
+      return Math.pow(this.intervals.last().ratio, octave - this.r.octave) * this.intervals[ index ].ratio / this.intervals[ this.r.index ].ratio;
+    }
+  }
+}
+
 // Initialize known tunings.
 const tunings = [
   {
     key: '12tet',
     name: 'Western standard tuning (12-tet)',
     tuning: new TuningEdo(12, {
-                  notes: {
-                    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
-                  },
-                  accidentals: {
-                    'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
-                  }
-                }, 'A4')
+      notes: {
+        'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+      },
+      accidentals: {
+        'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
+      }
+    }, 'A4')
   },
   {
     key: '24tet',
     name: 'Arabic quarter-tone tuning (24-tet)',
     tuning: new TuningEdo(24, {
-                  notes: {
-                    'C': 0, 'D': 4, 'E': 8, 'F': 10, 'G': 14, 'A': 18, 'B': 22
-                  },
-                  accidentals: {
-                    'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
-                    '+': 1, '++': 3, 'bs': -1, 'bss': -3
-                  }
-                }, 'A4')
+      notes: {
+        'C': 0, 'D': 4, 'E': 8, 'F': 10, 'G': 14, 'A': 18, 'B': 22
+      },
+      accidentals: {
+        'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
+        '+': 1, '++': 3, 'bs': -1, 'bss': -3
+      }
+    }, 'A4')
   },
   {
     key: 'villoteau',
     name: 'Arabic Villoteau third-tone tuning (36-tet)',
     tuning: new TuningEdo(36, {
-                  notes: {
-                    'C': 0, 'D': 6, 'E': 12, 'F': 15, 'G': 21, 'A': 27, 'B': 33
-                  },
-                  accidentals: {
-                    'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
-                    '+': 2, '++': 4, 'bs': -2, 'bss': -4
-                  }
-                }, 'A4')
+      notes: {
+        'C': 0, 'D': 6, 'E': 12, 'F': 15, 'G': 21, 'A': 27, 'B': 33
+      },
+      accidentals: {
+        'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
+        '+': 2, '++': 4, 'bs': -2, 'bss': -4
+      }
+    }, 'A4')
+  },
+  {
+    key: 'meanquar',
+    name: '1/4-comma meantone scale. Pietro Aaron\'s temperament (1523)',
+    tuning: new TuningIntervals(
+      [76.04900, 193.15686, 310.26471, '5/4', 503.42157, 579.47057, 696.57843, '25/16', 889.73529, 1006.84314, 1082.89214, '2/1'],
+      {
+        notes: {
+          'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+        },
+        accidentals: {
+          'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
+        }
+      },
+      'A4'
+    )
   }
 ];
 
@@ -309,14 +415,18 @@ function freqToMidi(f) {
 // Convert a note to a MIDI message.
 // Convert microtones into MIDI pitch bends.
 function playNote(note, time, duration) {
-  const [ midi, pb ] = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune(`${note.key}${note.accidental||''}${note.octave}`));
+  const noteName = `${note.key}${note.accidental||''}${note.octave}`;
+  const [ midi, pb ] = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune(noteName));
+  console.log({ noteName, midi, pb });
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
   }
-  G.midi.output.playNote(midi, G.midi.config.channel, {
-    time: `+${time}`,
-    duration: duration
-  });
+  if (midi) {
+    G.midi.output.playNote(midi, G.midi.config.channel, {
+      time: `+${time}`,
+      duration: duration
+    });
+  }
   if (pb) {
     const endTime = time + duration;
     G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
