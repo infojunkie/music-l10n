@@ -60,6 +60,14 @@ Array.prototype.insert = Array.prototype.insert || function() {
 //
 //
 
+function ratioToCents(ratio) {
+  return 1200 * Math.log2(ratio);
+}
+
+function centsToRatio(cents) {
+  return Math.pow(2, cents / 1200);
+}
+
 //
 // Tuning base class
 //
@@ -67,7 +75,11 @@ class Tuning {
 
   // CONSTRUCTOR
   //
-  // `nomenclature`: maps of note names and accidentals
+  // `intervals`: an array of ratios expressed as strings or cents expressed as numbers.
+  //  This array should NOT include the unison (1/1) interval.
+  //  The last element of this array will be considered to be the repeater (e.g. 2/1 the octave).
+  //
+  // `nomenclature`: maps of note names and accidentals to index within the intervals sequence
   // ```
   // nomenclature: {
   //   notes: {
@@ -85,9 +97,10 @@ class Tuning {
   //   }
   // }
   // ```
+  //
   // `reference`: reference note in scientific pitch notation
   //
-  constructor(nomenclature, reference) {
+  constructor(intervals, nomenclature, reference) {
     this.nomenclature = nomenclature;
     this.reference = reference;
 
@@ -111,89 +124,10 @@ class Tuning {
 
     // `r` is the reference note information (index, octave)
     this.r = this.parse(reference);
-  }
 
-  // PARSE A NOTE
-  // get a note's index and octave given its scientific pitch notation
-  //
-  // `note`: target note in scientific pitch notation
-  // return: note information `{ index, octave }` or undefined if not recognized
-  //
-  parse(note) {
-    const match = this.regex.exec(note);
-    if (match) {
-      return {
-        index: this.nomenclature.notes[ match[1] ] + (match[2] ? this.nomenclature.accidentals[ match[2] ] : 0),
-        octave: match[3]
-      }
-    }
-    else {
-      console.log(`Could not parse note ${note}. Trying without accidentals...`);
-      const match2 = this.regexOnlyNames.exec(note);
-      if (match2) {
-        return {
-          index: this.nomenclature.notes[ match2[1] ],
-          octave: match2[2]
-        }
-      }
-    }
-  }
-}
-
-//
-// Tuning by equal divisions of the octave (EDO)
-//
-class TuningEdo extends Tuning {
-
-  // CONSTRUCTOR
-  //
-  // `steps`: how many equal divisions of the octave
-  //
-  constructor(steps, nomenclature, reference) {
-    super(nomenclature, reference);
-    this.steps = steps;
-  }
-
-  // TUNE A NOTE
-  // get a note's ratio to the reference
-  //
-  // `note`: target note in scientific pitch notation
-  // return: ratio of note wrt reference or undefined if not recognized
-  //
-  tune(note) {
-    const n = this.parse(note);
-    if (n) {
-      return Math.pow(2, (n.index - this.r.index + this.steps * ( n.octave - this.r.octave ) ) / this.steps);
-    }
-  }
-}
-
-function ratioToCents(ratio) {
-  return 1200 * Math.log2(ratio);
-}
-
-function centsToRatio(cents) {
-  return Math.pow(2, cents / 1200);
-}
-
-//
-// Tuning with explicit intervals expressed in ratios or cents
-// TODO This should be the base class, and TuningEdo pre-creates the ratios according to the current formula in TuningEdo.tune.
-//
-class TuningIntervals extends Tuning {
-
-  // CONSTRUCTOR
-  //
-  // `intervals` an array of ratios expressed as strings or cents expressed as numbers.
-  //  This array should NOT include the unison (1/1) interval.
-  //  The last element of this array will be considered to be the repeater (e.g. 2/1 the octave).
-  //
-  constructor(intervals, nomenclature, reference) {
-    super(nomenclature, reference);
-
-    // Pre-calculate the interval multipliers in both ratios and cents.
+    // `intervals` holds the interval multipliers in both ratios and cents.
     this.steps = intervals.length;
-    this.intervals = intervals.insert('1/1').map(i => {
+    this.intervals = intervals.insert(0).map(i => {
       return typeof i === 'string' ? {
         ratio: math.number(math.fraction(i)),
         cents: ratioToCents(math.number(math.fraction(i)))
@@ -204,25 +138,69 @@ class TuningIntervals extends Tuning {
     });
   }
 
+  // TUNE A NOTE
+  // get a note's ratio to the reference
+  //
+  // `note`: target note in scientific pitch notation
+  // return: ratio of note wrt reference or undefined if not recognized
+  //
   tune(note) {
     const n = this.parse(note);
-    if (n) {
-      // TODO This should move to Tuning.parse when TuningIntervals becomes the base class.
-      let {index, octave} = n;
-      if (index < 0) {
-        index += this.steps;
-        octave -= 1;
-      }
-      else if (index >= this.steps) {
-        index -= this.steps;
-        octave += 1;
-      }
+    if (!n) return;
 
-      // Get the ratio difference between the target note and the reference note, raised to the difference in octave.
-      // The octave is always the last tone as per the definition of the `intervals` array.
-      return Math.pow(this.intervals.last().ratio, octave - this.r.octave) * this.intervals[ index ].ratio / this.intervals[ this.r.index ].ratio;
-    }
+    // Get the ratio difference between the target note and the reference note, raised to the difference in octave.
+    // The octave is always the last tone as per the definition of the `intervals` array.
+    return Math.pow(this.intervals.last().ratio, n.octave - this.r.octave) * this.intervals[ n.index ].ratio / this.intervals[ this.r.index ].ratio;
   }
+
+  // PARSE A NOTE
+  // get a note's index and octave given its scientific pitch notation
+  //
+  // `note`: target note in scientific pitch notation
+  // return: note information `{ index, octave }` or undefined if not recognized
+  //
+  parse(note) {
+    let result;
+    const match = this.regex.exec(note);
+    if (match) {
+      result = {
+        index: this.nomenclature.notes[ match[1] ] + (match[2] ? this.nomenclature.accidentals[ match[2] ] : 0),
+        octave: match[3]
+      };
+    }
+    else {
+      console.log(`Could not parse note ${note}. Trying without accidentals...`);
+      const match2 = this.regexOnlyNames.exec(note);
+      if (match2) {
+        result = {
+          index: this.nomenclature.notes[ match2[1] ],
+          octave: match2[2]
+        };
+      }
+    }
+
+    // Handle accidentals that push index across boundaries.
+    if (result) {
+      if (result.index < 0) {
+        result.index += this.steps;
+        result.octave -= 1;
+      }
+      else if (result.index >= this.steps) {
+        result.index -= this.steps;
+        result.octave += 1;
+      }
+    }
+    return result;
+  }
+}
+
+// Generate a tuning intervals array based on equal divisions of the octave.
+// The intervals is calculated in cents, because it will be converted to ratios
+// inside the Tuning constructor.
+function tuningIntervalsEdo(divisions) {
+  return Array.from(Array(divisions)).map((_e, i) => {
+    return 1200 / divisions * (i+1);
+  });
 }
 
 // Initialize known tunings.
@@ -230,7 +208,7 @@ const tunings = [
   {
     key: '12tet',
     name: 'Western standard tuning (12-tet)',
-    tuning: new TuningEdo(12, {
+    tuning: new Tuning(tuningIntervalsEdo(12), {
       notes: {
         'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
       },
@@ -242,7 +220,7 @@ const tunings = [
   {
     key: '24tet',
     name: 'Arabic quarter-tone tuning (24-tet)',
-    tuning: new TuningEdo(24, {
+    tuning: new Tuning(tuningIntervalsEdo(24), {
       notes: {
         'C': 0, 'D': 4, 'E': 8, 'F': 10, 'G': 14, 'A': 18, 'B': 22
       },
@@ -255,7 +233,7 @@ const tunings = [
   {
     key: 'villoteau',
     name: 'Arabic Villoteau third-tone tuning (36-tet)',
-    tuning: new TuningEdo(36, {
+    tuning: new Tuning(tuningIntervalsEdo(36), {
       notes: {
         'C': 0, 'D': 6, 'E': 12, 'F': 15, 'G': 21, 'A': 27, 'B': 33
       },
@@ -268,7 +246,7 @@ const tunings = [
   {
     key: 'meanquar',
     name: '1/4-comma meantone scale. Pietro Aaron\'s temperament (1523)',
-    tuning: new TuningIntervals(
+    tuning: new Tuning(
       [76.04900, 193.15686, 310.26471, '5/4', 503.42157, 579.47057, 696.57843, '25/16', 889.73529, 1006.84314, 1082.89214, '2/1'],
       {
         notes: {
