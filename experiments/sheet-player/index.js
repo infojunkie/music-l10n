@@ -45,7 +45,7 @@ Array.prototype.insert = Array.prototype.insert || function() {
 // TUNING SYSTEM
 //
 // Given a reference note and a target note, a tuning returns the ratio between them.
-// The fundamental ratio is 2 between the base tone and its octave.
+// The fundamental interval is 2/1 between the base tone and its octave.
 // Other tones subdivide the octave interval. A finite number of tones N make up the tuning.
 // Tones are indexed according to their rank in the ordered sequence of ratios
 // index 0 => ratio 1 (unison)
@@ -102,7 +102,6 @@ class Tuning {
   //
   constructor(intervals, nomenclature, reference) {
     this.nomenclature = nomenclature;
-    this.reference = reference;
 
     // Precalculated values
     // `regex` is the regular expression that is dynamically built to
@@ -114,27 +113,22 @@ class Tuning {
       'i'
     );
 
-    // `regexOnlyNames` is a regular for note names only, to be used when an accidental is not found during parsing.
-    this.regexOnlyNames = new RegExp(
+    // `regexNoAccidentals` is a regex for note names only, to be used when an accidental is not found during parsing.
+    this.regexNoAccidentals = new RegExp(
       '^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' +
       '\\D*' +
       '(\\d)$',
       'i'
     );
 
-    // `r` is the reference note information (index, octave)
-    this.r = this.parse(reference);
+    // `reference` is the reference note information (index, octave)
+    this.reference = this.parse(reference);
 
-    // `intervals` holds the interval multipliers in both ratios and cents.
+    // the internal `intervals` holds the interval multipliers in ratio form
+    // with the unison added to simplify the code.
     this.steps = intervals.length;
     this.intervals = intervals.insert(0).map(i => {
-      return typeof i === 'string' ? {
-        ratio: math.number(math.fraction(i)),
-        cents: ratioToCents(math.number(math.fraction(i)))
-      } : {
-        ratio: centsToRatio(i),
-        cents: i
-      }
+      return typeof i === 'string' ? math.number(math.fraction(i)) : centsToRatio(i);
     });
   }
 
@@ -150,7 +144,7 @@ class Tuning {
 
     // Get the ratio difference between the target note and the reference note, raised to the difference in octave.
     // The octave is always the last tone as per the definition of the `intervals` array.
-    return Math.pow(this.intervals.last().ratio, n.octave - this.r.octave) * this.intervals[ n.index ].ratio / this.intervals[ this.r.index ].ratio;
+    return Math.pow(this.intervals.last(), n.octave - this.reference.octave) * this.intervals[ n.index ] / this.intervals[ this.reference.index ];
   }
 
   // PARSE A NOTE
@@ -170,7 +164,7 @@ class Tuning {
     }
     else {
       console.log(`Could not parse note ${note}. Trying without accidentals...`);
-      const match2 = this.regexOnlyNames.exec(note);
+      const match2 = this.regexNoAccidentals.exec(note);
       if (match2) {
         result = {
           index: this.nomenclature.notes[ match2[1] ],
@@ -195,7 +189,7 @@ class Tuning {
 }
 
 // Generate a tuning intervals array based on equal divisions of the octave.
-// The intervals is calculated in cents, because it will be converted to ratios
+// The intervals are calculated in cents, because they will be converted to ratios
 // inside the Tuning constructor.
 function tuningIntervalsEdo(divisions) {
   return Array.from(Array(divisions)).map((_e, i) => {
