@@ -1393,11 +1393,12 @@
 	  (0, _jquery2.default)('#sheet #reference').val(G.midi.config.reference.frequency);
 	  (0, _jquery2.default)('#sheet #reference').on('keyup', function (e) {
 	    if (e.keyCode == 13) {
-	      G.midi.config.reference.frequency = (0, _jquery2.default)('#sheet #reference').val();
-	      _store2.default.set('G.midi.config', G.midi.config);
-	
 	      document.activeElement.blur();
 	    }
+	  });
+	  (0, _jquery2.default)('#sheet #reference').on('blur', function (e) {
+	    G.midi.config.reference.frequency = (0, _jquery2.default)('#sheet #reference').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
 	  });
 	
 	  // Handle "Play" button.

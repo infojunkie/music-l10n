@@ -781,11 +781,12 @@ WebMidi.enable(function (err) {
   $('#sheet #reference').val(G.midi.config.reference.frequency);
   $('#sheet #reference').on('keyup', e => {
     if (e.keyCode == 13) {
-      G.midi.config.reference.frequency = $('#sheet #reference').val();
-      store.set('G.midi.config', G.midi.config);
-
       document.activeElement.blur();
     }
+  });
+  $('#sheet #reference').on('blur', e => {
+    G.midi.config.reference.frequency = $('#sheet #reference').val();
+    store.set('G.midi.config', G.midi.config);
   });
 
   // Handle "Play" button.
