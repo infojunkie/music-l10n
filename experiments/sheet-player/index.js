@@ -25,13 +25,6 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
-Number.isInteger = Number.isInteger || function(value) {
-  return typeof value === 'number' &&
-    isFinite(value) &&
-    Math.floor(value) === value;
-};
-
 Array.prototype.last = Array.prototype.last || function() {
   return this[this.length - 1];
 };
@@ -41,6 +34,51 @@ Array.prototype.insert = Array.prototype.insert || function() {
   return this;
 }
 
+// Global state
+const MIDI_START_TIME = 1;
+
+window.G = {
+  midi: {
+    ac: null,
+    output: null,
+    time: MIDI_START_TIME,
+    marker: null,
+    bpm: 100,
+    performance: {
+      sections: []
+    },
+    tuning: null,
+    timers: [],
+    config: {
+      output: null,
+      channel: 0,
+      sheet: 0,
+      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
+      marker_mode: 'measure',
+      soundfont: 'musyngkite',
+      instrument: 'acoustic_grand_piano',
+      drum: 'doumbek',
+      tuning: '12tet',
+      reference: {
+        frequency: 432.0,
+        note: 'A4'
+      }
+    }
+  },
+  sheets: sheets.data
+};
+// G is a global variable that is a proxy to window.G
+// this allows to debug G in the JS console.
+function SimpleProxy(target) {
+  return new Proxy(target, {
+    get: function(target, name) {
+      return target[name];
+    }
+  });
+}
+var G = SimpleProxy(window.G);
+
+// Local MIDI output class that conforms to WedMidi.Output interface.
 //
 // TUNING SYSTEM
 //
@@ -209,7 +247,7 @@ const tunings = [
       accidentals: {
         'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
       }
-    }, 'A4')
+    }, G.midi.config.reference.note)
   },
   {
     key: '24tet',
@@ -222,7 +260,7 @@ const tunings = [
         'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
         '+': 1, '++': 3, 'bs': -1, 'bss': -3
       }
-    }, 'A4')
+    }, G.midi.config.reference.note)
   },
   {
     key: 'villoteau',
@@ -235,7 +273,7 @@ const tunings = [
         'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
         '+': 2, '++': 4, 'bs': -2, 'bss': -4
       }
-    }, 'A4')
+    }, G.midi.config.reference.note)
   },
   {
     key: 'meanquar',
@@ -250,53 +288,11 @@ const tunings = [
           'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
         }
       },
-      'A4'
+      G.midi.config.reference.note
     )
   }
 ];
 
-const MIDI_START_TIME = 1;
-
-// Global state
-window.G = {
-  midi: {
-    ac: null,
-    output: null,
-    time: MIDI_START_TIME,
-    marker: null,
-    bpm: 100,
-    performance: {
-      sections: []
-    },
-    tuning: null,
-    timers: [],
-    config: {
-      output: null,
-      channel: 0,
-      sheet: 0,
-      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
-      marker_mode: 'measure',
-      soundfont: 'musyngkite',
-      instrument: 'acoustic_grand_piano',
-      drum: 'doumbek',
-      tuning: '12tet',
-      reference_freq: 440.0,
-    }
-  },
-  sheets: sheets.data
-};
-// G is a global variable that is a proxy to window.G
-// this allows to debug G in the JS console.
-function SimpleProxy(target) {
-  return new Proxy(target, {
-    get: function(target, name) {
-      return target[name];
-    }
-  });
-}
-var G = SimpleProxy(window.G);
-
-// Local MIDI output class that conforms to WedMidi.Output interface.
 class LocalMidiOutput {
   constructor() {
     this.pb = 0;
@@ -388,8 +384,9 @@ function freqToMidi(f) {
 // Convert microtones into MIDI pitch bends.
 function playNote(note, time, duration) {
   const noteName = `${note.key}${note.accidental||''}${note.octave}`;
-  const [ midi, pb ] = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune(noteName));
-  console.log({ noteName, midi, pb });
+  const freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
+  const [ midi, pb ] = freqToMidi(freq);
+  console.log({ noteName, freq, midi, pb });
   if (pb) {
     G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
   }
@@ -674,7 +671,10 @@ function render(notes) {
   G.vf = vf;
 }
 
+//
+// PROGRAM MAIN
 // Initialize the Web MIDI system and the UI.
+//
 WebMidi.enable(function (err) {
   // Read the saved configuration.
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
@@ -687,6 +687,7 @@ WebMidi.enable(function (err) {
   $('#sheet #outputs').on('change', () => {
     G.midi.config.output = $('#sheet #outputs').val();
     store.set('G.midi.config', G.midi.config);
+
     if (G.midi.config.output !== 'local') {
       $('#sheet #soundfonts').prop('disabled', true);
       $('#sheet #instruments').prop('disabled', true);
@@ -715,6 +716,10 @@ WebMidi.enable(function (err) {
     $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
   });
   $('#sheet #channels').val(G.midi.config.channel).change();
+  $('#sheet #channels').on('change', () => {
+    G.midi.config.channel = $('#sheet #channels').val();
+    store.set('G.midi.config', G.midi.config);
+  });
 
   // Soundfonts and instruments.
   for (const sf in soundfonts.data) {
@@ -724,6 +729,7 @@ WebMidi.enable(function (err) {
   $('#sheet #soundfonts').on('change', () => {
     G.midi.config.soundfont = $('#sheet #soundfonts').val();
     store.set('G.midi.config', G.midi.config);
+
     G.midi.output = new LocalMidiOutput();
 
     // Update the instruments list.
@@ -749,11 +755,16 @@ WebMidi.enable(function (err) {
   $('#sheet #instruments').on('change', () => {
     G.midi.config.instrument = $('#sheet #instruments').val();
     store.set('G.midi.config', G.midi.config);
+
     G.midi.output = new LocalMidiOutput();
   });
 
   // Marker mode.
   $('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
+  $('#sheet input[name="marker_mode"]').on('change', () => {
+    G.midi.config.marker_mode = $('#sheet input[name="marker_mode"]:checked').val();
+    store.set('G.midi.config', G.midi.config);
+  });
 
   // Tuning
   tunings.forEach((tuning) => {
@@ -762,16 +773,25 @@ WebMidi.enable(function (err) {
   $('#sheet #tunings').on('change', () => {
     G.midi.config.tuning = $('#sheet #tunings').val();
     store.set('G.midi.config', G.midi.config);
+
     G.midi.tuning = tunings.find((t) => t.key === G.midi.config.tuning);
   });
   $('#sheet #tunings').val(G.midi.config.tuning).change();
 
+  $('#sheet #reference').val(G.midi.config.reference.frequency);
+  $('#sheet #reference').on('keyup', e => {
+    if (e.keyCode == 13) {
+      G.midi.config.reference.frequency = $('#sheet #reference').val();
+      store.set('G.midi.config', G.midi.config);
+
+      document.activeElement.blur();
+    }
+  });
+
   // Handle "Play" button.
   $('#sheet #play').on('click', () => {
     $('#sheet #stop').trigger('click');
-    G.midi.config.channel = $('#sheet #channels').val();
-    G.midi.config.marker_mode = $('#sheet input[name="marker_mode"]:checked').val();
-    store.set('G.midi.config', G.midi.config);
+    $('#sheet #reference').val(G.midi.config.reference.frequency);
     play();
   });
 
@@ -822,6 +842,10 @@ WebMidi.enable(function (err) {
   // Render first sheet.
   render(G.sheets[G.midi.config.sheet].notes);
 });
+
+//
+// SHEETS
+//
 
 // Create a sheet of https://musescore.com/infojunkie/lamma-bada-yatathanna
 function yatathanna() {

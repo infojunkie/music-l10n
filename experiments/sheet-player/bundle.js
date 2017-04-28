@@ -576,11 +576,6 @@
 	  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 	}
 	
-	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
-	Number.isInteger = Number.isInteger || function (value) {
-	  return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
-	};
-	
 	Array.prototype.last = Array.prototype.last || function () {
 	  return this[this.length - 1];
 	};
@@ -590,6 +585,51 @@
 	  return this;
 	};
 	
+	// Global state
+	var MIDI_START_TIME = 1;
+	
+	window.G = {
+	  midi: {
+	    ac: null,
+	    output: null,
+	    time: MIDI_START_TIME,
+	    marker: null,
+	    bpm: 100,
+	    performance: {
+	      sections: []
+	    },
+	    tuning: null,
+	    timers: [],
+	    config: {
+	      output: null,
+	      channel: 0,
+	      sheet: 0,
+	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
+	      marker_mode: 'measure',
+	      soundfont: 'musyngkite',
+	      instrument: 'acoustic_grand_piano',
+	      drum: 'doumbek',
+	      tuning: '12tet',
+	      reference: {
+	        frequency: 432.0,
+	        note: 'A4'
+	      }
+	    }
+	  },
+	  sheets: _sheets2.default.data
+	};
+	// G is a global variable that is a proxy to window.G
+	// this allows to debug G in the JS console.
+	function SimpleProxy(target) {
+	  return new Proxy(target, {
+	    get: function get(target, name) {
+	      return target[name];
+	    }
+	  });
+	}
+	var G = SimpleProxy(window.G);
+	
+	// Local MIDI output class that conforms to WedMidi.Output interface.
 	//
 	// TUNING SYSTEM
 	//
@@ -762,7 +802,7 @@
 	    accidentals: {
 	      'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
 	    }
-	  }, 'A4')
+	  }, G.midi.config.reference.note)
 	}, {
 	  key: '24tet',
 	  name: 'Arabic quarter-tone tuning (24-tet)',
@@ -774,7 +814,7 @@
 	      'n': 0, '#': 2, 'b': -2, '##': 4, 'bb': -4,
 	      '+': 1, '++': 3, 'bs': -1, 'bss': -3
 	    }
-	  }, 'A4')
+	  }, G.midi.config.reference.note)
 	}, {
 	  key: 'villoteau',
 	  name: 'Arabic Villoteau third-tone tuning (36-tet)',
@@ -786,7 +826,7 @@
 	      'n': 0, '#': 3, 'b': -3, '##': 6, 'bb': -6,
 	      '+': 2, '++': 4, 'bs': -2, 'bss': -4
 	    }
-	  }, 'A4')
+	  }, G.midi.config.reference.note)
 	}, {
 	  key: 'meanquar',
 	  name: '1/4-comma meantone scale. Pietro Aaron\'s temperament (1523)',
@@ -797,51 +837,8 @@
 	    accidentals: {
 	      'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
 	    }
-	  }, 'A4')
+	  }, G.midi.config.reference.note)
 	}];
-	
-	var MIDI_START_TIME = 1;
-	
-	// Global state
-	window.G = {
-	  midi: {
-	    ac: null,
-	    output: null,
-	    time: MIDI_START_TIME,
-	    marker: null,
-	    bpm: 100,
-	    performance: {
-	      sections: []
-	    },
-	    tuning: null,
-	    timers: [],
-	    config: {
-	      output: null,
-	      channel: 0,
-	      sheet: 0,
-	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
-	      marker_mode: 'measure',
-	      soundfont: 'musyngkite',
-	      instrument: 'acoustic_grand_piano',
-	      drum: 'doumbek',
-	      tuning: '12tet',
-	      reference_freq: 440.0
-	    }
-	  },
-	  sheets: _sheets2.default.data
-	};
-	// G is a global variable that is a proxy to window.G
-	// this allows to debug G in the JS console.
-	function SimpleProxy(target) {
-	  return new Proxy(target, {
-	    get: function get(target, name) {
-	      return target[name];
-	    }
-	  });
-	}
-	var G = SimpleProxy(window.G);
-	
-	// Local MIDI output class that conforms to WedMidi.Output interface.
 	
 	var LocalMidiOutput = function () {
 	  function LocalMidiOutput() {
@@ -972,13 +969,14 @@
 	// Convert microtones into MIDI pitch bends.
 	function playNote(note, time, duration) {
 	  var noteName = '' + note.key + (note.accidental || '') + note.octave;
+	  var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
 	
-	  var _freqToMidi = freqToMidi(G.midi.config.reference_freq * G.midi.tuning.tuning.tune(noteName)),
+	  var _freqToMidi = freqToMidi(freq),
 	      _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
 	      midi = _freqToMidi2[0],
 	      pb = _freqToMidi2[1];
 	
-	  console.log({ noteName: noteName, midi: midi, pb: pb });
+	  console.log({ noteName: noteName, freq: freq, midi: midi, pb: pb });
 	  if (pb) {
 	    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: '+' + time });
 	  }
@@ -1285,7 +1283,10 @@
 	  G.vf = vf;
 	}
 	
+	//
+	// PROGRAM MAIN
 	// Initialize the Web MIDI system and the UI.
+	//
 	_webmidi2.default.enable(function (err) {
 	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
@@ -1298,6 +1299,7 @@
 	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
+	
 	    if (G.midi.config.output !== 'local') {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', true);
 	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', true);
@@ -1327,6 +1329,10 @@
 	    (0, _jquery2.default)('#sheet #channels').append((0, _jquery2.default)('<option>', { value: channel, text: channel }));
 	  });
 	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.channel).change();
+	  (0, _jquery2.default)('#sheet #channels').on('change', function () {
+	    G.midi.config.channel = (0, _jquery2.default)('#sheet #channels').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	  });
 	
 	  // Soundfonts and instruments.
 	  for (var sf in _soundfonts2.default.data) {
@@ -1336,6 +1342,7 @@
 	  (0, _jquery2.default)('#sheet #soundfonts').on('change', function () {
 	    G.midi.config.soundfont = (0, _jquery2.default)('#sheet #soundfonts').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
+	
 	    G.midi.output = new LocalMidiOutput();
 	
 	    // Update the instruments list.
@@ -1358,11 +1365,16 @@
 	  (0, _jquery2.default)('#sheet #instruments').on('change', function () {
 	    G.midi.config.instrument = (0, _jquery2.default)('#sheet #instruments').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
+	
 	    G.midi.output = new LocalMidiOutput();
 	  });
 	
 	  // Marker mode.
 	  (0, _jquery2.default)('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
+	  (0, _jquery2.default)('#sheet input[name="marker_mode"]').on('change', function () {
+	    G.midi.config.marker_mode = (0, _jquery2.default)('#sheet input[name="marker_mode"]:checked').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	  });
 	
 	  // Tuning
 	  tunings.forEach(function (tuning) {
@@ -1371,18 +1383,27 @@
 	  (0, _jquery2.default)('#sheet #tunings').on('change', function () {
 	    G.midi.config.tuning = (0, _jquery2.default)('#sheet #tunings').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
+	
 	    G.midi.tuning = tunings.find(function (t) {
 	      return t.key === G.midi.config.tuning;
 	    });
 	  });
 	  (0, _jquery2.default)('#sheet #tunings').val(G.midi.config.tuning).change();
 	
+	  (0, _jquery2.default)('#sheet #reference').val(G.midi.config.reference.frequency);
+	  (0, _jquery2.default)('#sheet #reference').on('keyup', function (e) {
+	    if (e.keyCode == 13) {
+	      G.midi.config.reference.frequency = (0, _jquery2.default)('#sheet #reference').val();
+	      _store2.default.set('G.midi.config', G.midi.config);
+	
+	      document.activeElement.blur();
+	    }
+	  });
+	
 	  // Handle "Play" button.
 	  (0, _jquery2.default)('#sheet #play').on('click', function () {
 	    (0, _jquery2.default)('#sheet #stop').trigger('click');
-	    G.midi.config.channel = (0, _jquery2.default)('#sheet #channels').val();
-	    G.midi.config.marker_mode = (0, _jquery2.default)('#sheet input[name="marker_mode"]:checked').val();
-	    _store2.default.set('G.midi.config', G.midi.config);
+	    (0, _jquery2.default)('#sheet #reference').val(G.midi.config.reference.frequency);
 	    play();
 	  });
 	
@@ -1454,6 +1475,10 @@
 	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
 	});
+	
+	//
+	// SHEETS
+	//
 	
 	// Create a sheet of https://musescore.com/infojunkie/lamma-bada-yatathanna
 	function yatathanna() {
