@@ -8,6 +8,7 @@ import Soundfont from 'soundfont-player';
 import sheets from './sheets.json';
 import soundfonts from './soundfonts.json';
 import math from 'mathjs';
+import parser from 'note-parser';
 
 // Reach in deep structures without fear of TypeError exceptions.
 // e.g. x = ORNULL(a.b.c.d['e'].f.g);
@@ -50,17 +51,24 @@ window.G = {
     tuning: null,
     timers: [],
     config: {
-      output: null,
-      channel: 0,
+      output: 'local',
       sheet: 0,
       sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
       marker_mode: 'measure',
-      soundfont: 'musyngkite',
-      instrument: 'acoustic_grand_piano',
-      drum: 'doumbek',
+      melody: {
+        soundfont: 'musyngkite',
+        instrument: 'acoustic_grand_piano',
+        channel: 1,
+      },
+      percussion: {
+        soundfont: 'doumbek',
+        instrument: 'doumbek',
+        channel: 10,
+        on: true,
+      },
       tuning: '12tet',
       reference: {
-        frequency: 432.0,
+        frequency: 440.0,
         note: 'A4'
       }
     }
@@ -78,7 +86,6 @@ function SimpleProxy(target) {
 }
 var G = SimpleProxy(window.G);
 
-// Local MIDI output class that conforms to WedMidi.Output interface.
 //
 // TUNING SYSTEM
 //
@@ -293,38 +300,58 @@ const tunings = [
   }
 ];
 
+// Local MIDI output class that conforms to WedMidi.Output interface.
 class LocalMidiOutput {
   constructor() {
-    this.pb = 0;
-    this.instrument = null;
+    this.instruments = {
+      /*
+      channel-num: {
+        instrument,
+        pb
+      },
+      ...
+      */
+    };
     this.load();
   }
   playNote(note, channel, options) {
+    if (!this.instruments[channel]) return;
+
     const time = G.midi.ac.currentTime + eval(options.time) * 0.001;
     const duration = options.duration * 0.001;
-    if (this.pb) {
-      note += (this.pb*2); // Local player counts microtones in fractions of semitones
+    if (this.instruments[channel].pb) {
+      note += (this.instruments[channel].pb*2); // Local player counts microtones in fractions of semitones
     }
-    if (this.instrument) this.instrument.play(note, time, { duration });
+    this.instruments[channel].instrument.play(note, time, { duration });
   }
   sendPitchBend(pb, channel, options) {
-    this.pb = pb;
+    if (!this.instruments[channel]) return;
+    this.instruments[channel].pb = pb;
   }
   stop() {
-    if (this.instrument) this.instrument.stop();
+    for (var channel in this.instruments) {
+      this.instruments[channel].instrument.stop();
+    }
+  }
+  static nameToUrl(name, soundfont, format) {
+    format = format || 'mp3';
+    const url = soundfonts.data[soundfont].url;
+    return url + name + '-' + format + '.js';
   }
   load() {
     const that = this;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     G.midi.ac = G.midi.ac || new AudioContext();
     $('#sheet #play').prop('disabled', true);
-    Soundfont.instrument(G.midi.ac, G.midi.config.instrument, { soundfont: G.midi.config.soundfont, nameToUrl: (name, soundfont, format) => {
-      format = format || 'mp3';
-      const url = soundfonts.data[soundfont].url;
-      return url + name + '-' + format + '.js';
-    }})
+    that.instruments = {};
+    Soundfont.instrument(G.midi.ac, G.midi.config.melody.instrument, { soundfont: G.midi.config.melody.soundfont, nameToUrl: LocalMidiOutput.nameToUrl})
     .then(function (instrument) {
-      that.instrument = instrument;
+      that.instruments[G.midi.config.melody.channel] = { instrument, pb: 0 };
+      $('#sheet #play').prop('disabled', false);
+    });
+    Soundfont.instrument(G.midi.ac, G.midi.config.percussion.instrument, { soundfont: G.midi.config.percussion.soundfont, nameToUrl: LocalMidiOutput.nameToUrl})
+    .then(function (instrument) {
+      that.instruments[G.midi.config.percussion.channel] = { instrument, pb: 0 };
       $('#sheet #play').prop('disabled', false);
     });
   }
@@ -388,17 +415,28 @@ function playNote(note, time, duration) {
   const [ midi, pb ] = freqToMidi(freq);
   console.log({ noteName, freq, midi, pb });
   if (pb) {
-    G.midi.output.sendPitchBend(pb, G.midi.config.channel, { time: `+${time}` });
+    G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: `+${time}` });
   }
   if (midi) {
-    G.midi.output.playNote(midi, G.midi.config.channel, {
+    G.midi.output.playNote(midi, G.midi.config.melody.channel, {
       time: `+${time}`,
       duration: duration
     });
   }
   if (pb) {
-    const endTime = time + duration;
-    G.midi.output.sendPitchBend(0, G.midi.config.channel, { time: `+${endTime}` });
+    const endTime = time + duration - 1; // -1 to help the synth order the events
+    G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: `+${endTime}` });
+  }
+}
+
+// Convert a percussion note to a MIDI message.
+function playPercussion(note, time, duration) {
+  const midi = parser.midi(note);
+  if (midi) {
+    G.midi.output.playNote(midi, G.midi.config.percussion.channel, {
+      time: `+${time}`,
+      duration: duration
+    });
   }
 }
 
@@ -538,6 +576,12 @@ function play() {
   G.midi.performance.sections.forEach((section) => {
     for (var i=1; i<=section.repeat; i++) {
       section.systems.forEach((system) => {
+
+        // Insert a percussion measure.
+        if (G.midi.config.percussion.on) {
+          playPercussion('f4', G.midi.time, 500);
+        }
+
         system.formatter.tickContexts.list.forEach((tickStart) => {
           const tickContext = system.formatter.tickContexts.map[tickStart];
 
@@ -715,11 +759,11 @@ WebMidi.enable(function (err) {
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
     $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
   });
-  $('#sheet #channels').val(G.midi.config.channel).change();
   $('#sheet #channels').on('change', () => {
-    G.midi.config.channel = $('#sheet #channels').val();
+    G.midi.config.melody.channel = $('#sheet #channels').val();
     store.set('G.midi.config', G.midi.config);
   });
+  $('#sheet #channels').val(G.midi.config.melody.channel).change();
 
   // Soundfonts and instruments.
   for (const sf in soundfonts.data) {
@@ -727,14 +771,12 @@ WebMidi.enable(function (err) {
     $('#sheet #soundfonts').append($('<option>', { text: soundfont.name, value: sf }));
   }
   $('#sheet #soundfonts').on('change', () => {
-    G.midi.config.soundfont = $('#sheet #soundfonts').val();
+    G.midi.config.melody.soundfont = $('#sheet #soundfonts').val();
     store.set('G.midi.config', G.midi.config);
-
-    G.midi.output = new LocalMidiOutput();
 
     // Update the instruments list.
     $('#sheet #instruments').empty();
-    fetch(soundfonts.data[G.midi.config.soundfont].url + 'names.json')
+    fetch(soundfonts.data[G.midi.config.melody.soundfont].url + 'names.json')
     .then(function(response) {
       return response.json();
     })
@@ -745,17 +787,18 @@ WebMidi.enable(function (err) {
       instruments.forEach((instrument) => {
         $('#sheet #instruments').append($('<option>', { text: instrument, value: instrument }));
       });
-      if (instruments.indexOf(G.midi.config.instrument) === -1) {
-        G.midi.config.instrument = instruments[0];
+      if (instruments.indexOf(G.midi.config.melody.instrument) === -1) {
+        G.midi.config.melody.instrument = instruments[0];
       }
-      $('#sheet #instruments').val(G.midi.config.instrument).change();
+      $('#sheet #instruments').val(G.midi.config.melody.instrument).change();
     });
   });
-  $('#sheet #soundfonts').val(G.midi.config.soundfont).change();
+  $('#sheet #soundfonts').val(G.midi.config.melody.soundfont).change();
   $('#sheet #instruments').on('change', () => {
-    G.midi.config.instrument = $('#sheet #instruments').val();
+    G.midi.config.melody.instrument = $('#sheet #instruments').val();
     store.set('G.midi.config', G.midi.config);
 
+    if ($('#sheet #instruments').prop('disabled')) return;
     G.midi.output = new LocalMidiOutput();
   });
 
