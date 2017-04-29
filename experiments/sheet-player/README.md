@@ -7,7 +7,7 @@ A demo of music localization in action. The sheet player supports the following 
 - Microtonal tunings including ability to replay piece in a different tuning
 - Microtonal key signatures
 
-[CHECK OUT THE DEMO!](http://ethereum.karimratib.me:8080/)
+[CHECK OUT THE DEMO!](https://ethereum.karimratib.me:8080/)
 
 ## Getting started
 - `git clone git@github.com:infojunkie/music-l10n.git && cd music-l10n/experiments/sheet-player/`
