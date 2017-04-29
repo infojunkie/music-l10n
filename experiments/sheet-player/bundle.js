@@ -606,7 +606,7 @@
 	    timers: [],
 	    config: {
 	      output: 'local',
-	      sheet: 0,
+	      sheet: null,
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
 	      marker_mode: 'measure',
 	      melody: {
@@ -648,8 +648,8 @@
 	// Other tones subdivide the octave interval. A finite number of tones N make up the tuning.
 	// Tones are indexed according to their rank in the ordered sequence of ratios
 	// index 0 => ratio 1 (unison)
-	// index 1 => ratio 1.xx (first interval)
-	// index 2 => ratio 1.yy (second interval)
+	// index 1 => ratio 1.abc (first interval)
+	// index 2 => ratio 1.xyz (second interval)
 	// ...
 	// index N-1 => ratio 2 (octave)
 	//
@@ -660,7 +660,7 @@
 	//
 	
 	function ratioToCents(ratio) {
-	  return 1200 * Math.log2(ratio);
+	  return Math.round(1200 * Math.log2(ratio));
 	}
 	
 	function centsToRatio(cents) {
@@ -869,6 +869,9 @@
 	  }
 	
 	  _createClass(LocalMidiOutput, [{
+	    key: 'sendSysex',
+	    value: function sendSysex(manufacturer, data, options) {}
+	  }, {
 	    key: 'playNote',
 	    value: function playNote(note, channel, options) {
 	      if (!this.instruments[channel]) return;
@@ -987,7 +990,7 @@
 	
 	// Convert MIDI note number to a frequency.
 	function midiToFreq(m) {
-	  return Math.pow(2, (midi - 69) / 12) * 440;
+	  return Math.pow(2, (m - 69) / 12) * 440;
 	}
 	
 	// Convert frequency to closest MIDI note number and pitch bend value [-1,1].
@@ -1010,9 +1013,17 @@
 	
 	  console.log({ noteName: noteName, freq: freq, midi: midi, pb: pb });
 	  if (pb) {
-	    G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
+	    //G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: `+${time}` });
 	  }
 	  if (midi) {
+	    var key = pb > 0 ? midi : midi - 1;
+	    var cents = Math.round(pb * 16383);
+	    var msb = cents >> 7 & 0x7F;
+	    var lsb = cents & 0x7F;
+	    console.log({ cents: cents, msb: msb, lsb: lsb });
+	    G.midi.output.sendSysex(0x7F, [0x08, 0x02, 0x00, 0x01, key, key, msb, lsb], {}, {
+	      time: '+' + time
+	    });
 	    G.midi.output.playNote(midi, G.midi.config.melody.channel, {
 	      time: '+' + time,
 	      duration: duration
@@ -1523,7 +1534,7 @@
 	
 	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
-	});
+	}, true /* sysex */);
 	
 	//
 	// SHEETS

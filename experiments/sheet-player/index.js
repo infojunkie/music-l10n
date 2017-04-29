@@ -52,7 +52,7 @@ window.G = {
     timers: [],
     config: {
       output: 'local',
-      sheet: 0,
+      sheet: null,
       sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
       marker_mode: 'measure',
       melody: {
@@ -94,8 +94,8 @@ var G = SimpleProxy(window.G);
 // Other tones subdivide the octave interval. A finite number of tones N make up the tuning.
 // Tones are indexed according to their rank in the ordered sequence of ratios
 // index 0 => ratio 1 (unison)
-// index 1 => ratio 1.xx (first interval)
-// index 2 => ratio 1.yy (second interval)
+// index 1 => ratio 1.abc (first interval)
+// index 2 => ratio 1.xyz (second interval)
 // ...
 // index N-1 => ratio 2 (octave)
 //
@@ -106,7 +106,7 @@ var G = SimpleProxy(window.G);
 //
 
 function ratioToCents(ratio) {
-  return 1200 * Math.log2(ratio);
+  return Math.round(1200 * Math.log2(ratio));
 }
 
 function centsToRatio(cents) {
@@ -314,6 +314,8 @@ class LocalMidiOutput {
     };
     this.load();
   }
+  sendSysex(manufacturer, data, options) {
+  }
   playNote(note, channel, options) {
     if (!this.instruments[channel]) return;
 
@@ -397,7 +399,7 @@ function getKeyAccidentals(keySignature) {
 
 // Convert MIDI note number to a frequency.
 function midiToFreq(m) {
-  return Math.pow(2, (midi - 69) / 12) * 440;
+  return Math.pow(2, (m - 69) / 12) * 440;
 }
 
 // Convert frequency to closest MIDI note number and pitch bend value [-1,1].
@@ -885,7 +887,7 @@ WebMidi.enable(function (err) {
 
   // Render first sheet.
   render(G.sheets[G.midi.config.sheet].notes);
-});
+}, true /* sysex */);
 
 //
 // SHEETS
