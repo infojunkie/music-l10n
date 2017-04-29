@@ -96,7 +96,6 @@ options snd-seq-dummy ports=4
 ## TODO
 
 ### Model
-- Support Scala specification
 - Library of scales in any key
 - Add metronome track
 - Add percussion track
@@ -125,4 +124,3 @@ options snd-seq-dummy ports=4
 - Add unit tests
 - Refactor code
 - Use React
-- Use [JZZ.js](https://github.com/jazz-soft/JZZ) instead of WebMidi.js
