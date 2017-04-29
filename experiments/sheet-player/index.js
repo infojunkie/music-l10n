@@ -52,7 +52,7 @@ window.G = {
     timers: [],
     config: {
       output: 'local',
-      sheet: null,
+      sheet: 0,
       sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
       marker_mode: 'measure',
       melody: {
@@ -64,7 +64,7 @@ window.G = {
         soundfont: 'doumbek',
         instrument: 'doumbek',
         channel: 10,
-        on: true,
+        on: false,
       },
       tuning: '12tet',
       reference: {

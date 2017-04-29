@@ -606,7 +606,7 @@
 	    timers: [],
 	    config: {
 	      output: 'local',
-	      sheet: null,
+	      sheet: 0,
 	      sync: 100, // the play marker is assumed to be 100 ms ahead of MIDI playback
 	      marker_mode: 'measure',
 	      melody: {
@@ -618,7 +618,7 @@
 	        soundfont: 'doumbek',
 	        instrument: 'doumbek',
 	        channel: 10,
-	        on: true
+	        on: false
 	      },
 	      tuning: '12tet',
 	      reference: {
@@ -1013,17 +1013,9 @@
 	
 	  console.log({ noteName: noteName, freq: freq, midi: midi, pb: pb });
 	  if (pb) {
-	    //G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: `+${time}` });
+	    G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
 	  }
 	  if (midi) {
-	    var key = pb > 0 ? midi : midi - 1;
-	    var cents = Math.round(pb * 16383);
-	    var msb = cents >> 7 & 0x7F;
-	    var lsb = cents & 0x7F;
-	    console.log({ cents: cents, msb: msb, lsb: lsb });
-	    G.midi.output.sendSysex(0x7F, [0x08, 0x02, 0x00, 0x01, key, key, msb, lsb], {}, {
-	      time: '+' + time
-	    });
 	    G.midi.output.playNote(midi, G.midi.config.melody.channel, {
 	      time: '+' + time,
 	      duration: duration
