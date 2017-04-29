@@ -1340,6 +1340,10 @@
 	// Initialize the Web MIDI system and the UI.
 	//
 	_webmidi2.default.enable(function (err) {
+	  if (err) {
+	    console.log('Web MIDI not enabled: ' + err);
+	  }
+	
 	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
@@ -1450,6 +1454,12 @@
 	  (0, _jquery2.default)('#sheet #reference').on('blur', function (e) {
 	    G.midi.config.reference.frequency = (0, _jquery2.default)('#sheet #reference').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
+	  });
+	
+	  // Handle reset button.
+	  (0, _jquery2.default)('#sheet #reset').on('click', function () {
+	    _store2.default.clear();
+	    location.reload();
 	  });
 	
 	  // Handle "Play" button.
