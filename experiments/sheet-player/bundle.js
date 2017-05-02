@@ -591,19 +591,24 @@
 	  return this;
 	};
 	
-	// Global state
+	Number.prototype.repeat = Number.prototype.repeat || function (f) {
+	  var n = this;
+	  while (n-- > 0) {
+	    f();
+	  }
+	};
+	
+	// Global state.
 	var MIDI_START_TIME = 1;
 	
 	window.G = {
 	  midi: {
 	    ac: null,
 	    output: null,
-	    time: MIDI_START_TIME,
+	    time: null,
 	    marker: null,
 	    bpm: 100,
-	    performance: {
-	      sections: []
-	    },
+	    performance: null,
 	    tuning: null,
 	    timers: [],
 	    config: {
@@ -997,7 +1002,7 @@
 	  return map;
 	}
 	
-	// convert MIDI note number to a note name.
+	// Convert MIDI note number to a note name.
 	function midiToNote(m) {
 	  var notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 	  var note = notes[m % notes.length];
@@ -1055,21 +1060,45 @@
 	  }
 	}
 	
-	var Section = function Section() {
-	  _classCallCheck(this, Section);
+	// A performance is a sequence of sections.
 	
-	  this.key = null; // section label
-	  this.repeat = 1; // number of times this section should be played
-	  this.systems = [];
-	};
+	var Performance = function () {
+	  function Performance() {
+	    _classCallCheck(this, Performance);
 	
-	;
+	    this.sections = {};
+	    this.sequence = [];
+	  }
+	
+	  _createClass(Performance, [{
+	    key: 'addSection',
+	    value: function addSection(key, section) {
+	      if (key === null) {
+	        return null;
+	      }
+	      if (Array.isArray(section) && !section.length) {
+	        return null;
+	      }
+	      if (section && !(key in this.sections)) {
+	        this.sections[key] = section;
+	      }
+	      this.sequence.push(key);
+	      return key;
+	    }
+	  }]);
+	
+	  return Performance;
+	}();
 	
 	// Convert a Vex.Flow.Factory structure into a MIDI stream.
+	
+	
 	function parseVexFlow() {
-	  G.midi.performance = {
-	    sections: []
-	  };
+	  G.midi.performance = new Performance();
+	
+	  // A section is a list of measures bounded by double barlines
+	  // or other bounding symbols.
+	  var section = [];
 	
 	  // Current key signature.
 	  var keyAccidentals = null;
@@ -1081,13 +1110,9 @@
 	    ticksToTime: 60000 / (G.midi.bpm * _vexflow2.default.Flow.RESOLUTION / 4)
 	  };
 	
-	  // A section is bounded by double barlines
-	  // or other bounding symbols.
-	  var currentSection = new Section();
-	
 	  // A system is a full measure.
 	  G.vf.systems.forEach(function (system) {
-	    currentSection.systems.push(system);
+	    section.push(system);
 	
 	    // Remember which accidentals apply to which note keys.
 	    var measureAccidentals = [];
@@ -1118,32 +1143,49 @@
 	                time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
 	              }
 	              if (modifier instanceof _vexflow2.default.Flow.Barline) {
+	                var _ornull2 = void 0;
+	
+	                _ORNULL2: {
+	                  try {
+	                    _ornull2 = section[0].attrs.id;
+	                    break _ORNULL2;
+	                  } catch (e) {
+	                    _ornull2 = null;
+	                    break _ORNULL2;
+	                  }
+	                }
+	
+	                var _ornull3 = void 0;
+	
+	                _ORNULL3: {
+	                  try {
+	                    _ornull3 = section[0].attrs.id;
+	                    break _ORNULL3;
+	                  } catch (e) {
+	                    _ornull3 = null;
+	                    break _ORNULL3;
+	                  }
+	                }
+	
 	                switch (modifier.type) {
 	                  case _vexflow2.default.Flow.Barline.type.SINGLE:
-	                    // 1
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.DOUBLE:
-	                    // 2
-	                    G.midi.performance.sections.push(currentSection);
-	                    currentSection = new Section();
+	                    G.midi.performance.addSection(_ornull2, section);
+	                    section = [];
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.END:
-	                    // 3
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.REPEAT_BEGIN:
-	                    // 4
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.REPEAT_END:
-	                    // 5
-	                    currentSection.repeat = 2;
-	                    G.midi.performance.sections.push(currentSection);
-	                    currentSection = new Section();
-	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.REPEAT_BOTH:
-	                    // 6
+	                    Number(2).repeat(function () {
+	                      return G.midi.performance.addSection(_ornull3, section);
+	                    });
+	                    section = [];
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.NONE:
-	                    // 7
 	                    break;
 	                }
 	              }
@@ -1168,31 +1210,31 @@
 	          };
 	          if (tickable.noteType === 'n') {
 	            tickable.keyProps.forEach(function (note) {
-	              var _ornull2 = void 0;
+	              var _ornull4 = void 0;
 	
-	              _ORNULL2: {
+	              _ORNULL4: {
 	                try {
-	                  _ornull2 = measureAccidentals[note.key];
-	                  break _ORNULL2;
+	                  _ornull4 = measureAccidentals[note.key];
+	                  break _ORNULL4;
 	                } catch (e) {
-	                  _ornull2 = null;
-	                  break _ORNULL2;
+	                  _ornull4 = null;
+	                  break _ORNULL4;
 	                }
 	              }
 	
-	              var _ornull3 = void 0;
+	              var _ornull5 = void 0;
 	
-	              _ORNULL3: {
+	              _ORNULL5: {
 	                try {
-	                  _ornull3 = keyAccidentals[note.key];
-	                  break _ORNULL3;
+	                  _ornull5 = keyAccidentals[note.key];
+	                  break _ORNULL5;
 	                } catch (e) {
-	                  _ornull3 = null;
-	                  break _ORNULL3;
+	                  _ornull5 = null;
+	                  break _ORNULL5;
 	                }
 	              }
 	
-	              note.accidental = note.accidental || _ornull2 || _ornull3;
+	              note.accidental = note.accidental || _ornull4 || _ornull5;
 	            });
 	          }
 	        }
@@ -1207,7 +1249,20 @@
 	  });
 	
 	  // Last remaining section.
-	  G.midi.performance.sections.push(currentSection);
+	
+	  var _ornull6 = void 0;
+	
+	  _ORNULL6: {
+	    try {
+	      _ornull6 = section[0].attrs.id;
+	      break _ORNULL6;
+	    } catch (e) {
+	      _ornull6 = null;
+	      break _ORNULL6;
+	    }
+	  }
+	
+	  G.midi.performance.addSection(_ornull6, section);
 	}
 	
 	// Play the sheet.
@@ -1218,76 +1273,71 @@
 	  // Play the performance.
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
-	  G.midi.performance.sections.forEach(function (section) {
-	    for (var i = 1; i <= section.repeat; i++) {
-	      section.systems.forEach(function (system) {
+	  G.midi.performance.sequence.forEach(function (sectionKey) {
+	    var section = G.midi.performance.sections[sectionKey];
+	    section.forEach(function (system) {
 	
-	        // Insert a percussion measure.
-	        if (G.midi.config.percussion.on) {
-	          playPercussion('f4', G.midi.time, 500);
-	        }
+	      // Insert a percussion measure.
+	      if (G.midi.config.percussion.on) {
+	        playPercussion('f4', G.midi.time, 500);
+	      }
 	
-	        system.formatter.tickContexts.list.forEach(function (tickStart) {
-	          var tickContext = system.formatter.tickContexts.map[tickStart];
+	      // Play the notes.
+	      system.formatter.tickContexts.list.forEach(function (tickStart) {
+	        var tickContext = system.formatter.tickContexts.map[tickStart];
 	
-	          // Used to display play marker.
-	          var marker = {
-	            ctx: system.checkContext(),
-	            y1: system.options.y,
-	            y2: system.lastY,
-	            x1: G.midi.config.marker_mode == 'note' ? Number.MAX_SAFE_INTEGER : system.startX,
-	            x2: G.midi.config.marker_mode == 'note' ? 0 : system.startX + system.formatter.justifyWidth
-	          };
+	        // Used to display play marker.
+	        var marker = {
+	          ctx: system.checkContext(),
+	          y1: system.options.y,
+	          y2: system.lastY,
+	          x1: G.midi.config.marker_mode == 'note' ? Number.MAX_SAFE_INTEGER : system.startX,
+	          x2: G.midi.config.marker_mode == 'note' ? 0 : system.startX + system.formatter.justifyWidth
+	        };
 	
-	          tickContext.tickables.forEach(function (tickable) {
-	            if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
-	              // Compute play marker position.
-	              if (G.midi.config.marker_mode == 'note') {
-	                var metrics = tickable.getMetrics();
-	                var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-	                var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
-	                marker.x1 = Math.min(marker.x1, xStart);
-	                marker.x2 = Math.max(marker.x2, xEnd);
-	              }
-	
-	              // Output to MIDI.
-	              if (tickable.noteType === 'n') {
-	                tickable.keyProps.forEach(function (note) {
-	                  playNote(note, G.midi.time + tickable.midi.start, tickable.midi.duration);
-	                });
-	              }
-	
-	              // Draw play marker.
-	              G.midi.timers.push(setTimeout(function () {
-	                var ctx = marker.ctx;
-	                if (G.midi.marker) {
-	                  try {
-	                    ctx.svg.removeChild(G.midi.marker);
-	                  } catch (e) {
-	                    // never mind.
-	                  }
-	                }
-	                ctx.beginPath();
-	                ctx.setStrokeStyle('#aaa');
-	                ctx.setFillStyle('#aaa');
-	                ctx.setLineWidth(1);
-	                ctx.attributes.opacity = 0.2;
-	                ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
-	
-	                // Show return markers on first and end bars of section.
-	                if (section.repeat > 1 && i < section.repeat) {
-	                  // TODO
-	                }
-	
-	                G.midi.marker = ctx.svg.lastChild;
-	              }, G.midi.time + tickable.midi.start + G.midi.config.sync));
+	        tickContext.tickables.forEach(function (tickable) {
+	          if (tickable instanceof _vexflow2.default.Flow.StaveNote) {
+	            // Compute play marker position.
+	            if (G.midi.config.marker_mode == 'note') {
+	              var metrics = tickable.getMetrics();
+	              var xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+	              var xEnd = tickable.getAbsoluteX() + metrics.noteWidth + metrics.extraRightPx + metrics.modRightPx;
+	              marker.x1 = Math.min(marker.x1, xStart);
+	              marker.x2 = Math.max(marker.x2, xEnd);
 	            }
-	          });
-	        });
 	
-	        G.midi.time += system.midi.duration;
+	            // Output to MIDI.
+	            if (tickable.noteType === 'n') {
+	              tickable.keyProps.forEach(function (note) {
+	                playNote(note, G.midi.time + tickable.midi.start, tickable.midi.duration);
+	              });
+	            }
+	
+	            // Draw play marker.
+	            G.midi.timers.push(setTimeout(function () {
+	              var ctx = marker.ctx;
+	              if (G.midi.marker) {
+	                try {
+	                  ctx.svg.removeChild(G.midi.marker);
+	                } catch (e) {
+	                  // never mind.
+	                }
+	              }
+	              ctx.beginPath();
+	              ctx.setStrokeStyle('#aaa');
+	              ctx.setFillStyle('#aaa');
+	              ctx.setLineWidth(1);
+	              ctx.attributes.opacity = 0.2;
+	              ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
+	
+	              G.midi.marker = ctx.svg.lastChild;
+	            }, G.midi.time + tickable.midi.start + G.midi.config.sync));
+	          }
+	        });
 	      });
-	    }
+	
+	      G.midi.time += system.midi.duration;
+	    });
 	  });
 	}
 	
@@ -1468,19 +1518,19 @@
 	
 	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
-	    var _ornull4 = void 0;
+	    var _ornull7 = void 0;
 	
-	    _ORNULL4: {
+	    _ORNULL7: {
 	      try {
-	        _ornull4 = G.midi.output.stop;
-	        break _ORNULL4;
+	        _ornull7 = G.midi.output.stop;
+	        break _ORNULL7;
 	      } catch (e) {
-	        _ornull4 = null;
-	        break _ORNULL4;
+	        _ornull7 = null;
+	        break _ORNULL7;
 	      }
 	    }
 	
-	    if (_ornull4) {
+	    if (_ornull7) {
 	      G.midi.output.stop();
 	    } else {}
 	    // FIXME

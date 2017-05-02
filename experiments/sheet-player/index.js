@@ -35,19 +35,22 @@ Array.prototype.insert = Array.prototype.insert || function() {
   return this;
 }
 
-// Global state
+Number.prototype.repeat = Number.prototype.repeat || function(f) {
+  let n = this;
+  while (n-- > 0) f();
+}
+
+// Global state.
 const MIDI_START_TIME = 1;
 
 window.G = {
   midi: {
     ac: null,
     output: null,
-    time: MIDI_START_TIME,
+    time: null,
     marker: null,
     bpm: 100,
-    performance: {
-      sections: []
-    },
+    performance: null,
     tuning: null,
     timers: [],
     config: {
@@ -58,13 +61,13 @@ window.G = {
       melody: {
         soundfont: 'musyngkite',
         instrument: 'acoustic_grand_piano',
-        channel: 1,
+        channel: 1
       },
       percussion: {
         soundfont: 'doumbek',
         instrument: 'doumbek',
         channel: 10,
-        on: false,
+        on: false
       },
       tuning: '12tet',
       reference: {
@@ -402,7 +405,7 @@ function getKeyAccidentals(keySignature) {
   return map;
 }
 
-// convert MIDI note number to a note name.
+// Convert MIDI note number to a note name.
 function midiToNote(m) {
   const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
   const note = notes[m % notes.length];
@@ -455,19 +458,34 @@ function playPercussion(note, time, duration) {
   }
 }
 
-class Section {
+// A performance is a sequence of sections.
+class Performance {
   constructor() {
-    this.key = null; // section label
-    this.repeat = 1; // number of times this section should be played
-    this.systems = [];
+    this.sections = {};
+    this.sequence = [];
   }
-};
+  addSection(key, section) {
+    if (key === null) {
+      return null;
+    }
+    if (Array.isArray(section) && !section.length) {
+      return null;
+    }
+    if (section && !(key in this.sections)) {
+      this.sections[key] = section;
+    }
+    this.sequence.push(key);
+    return key;
+  }
+}
 
 // Convert a Vex.Flow.Factory structure into a MIDI stream.
 function parseVexFlow() {
-  G.midi.performance = {
-    sections: []
-  };
+  G.midi.performance = new Performance();
+
+  // A section is a list of measures bounded by double barlines
+  // or other bounding symbols.
+  let section = [];
 
   // Current key signature.
   let keyAccidentals = null;
@@ -479,13 +497,9 @@ function parseVexFlow() {
     ticksToTime: 60000 / (G.midi.bpm * Vex.Flow.RESOLUTION / 4),
   };
 
-  // A section is bounded by double barlines
-  // or other bounding symbols.
-  let currentSection = new Section();
-
   // A system is a full measure.
   G.vf.systems.forEach((system) => {
-    currentSection.systems.push(system);
+    section.push(system);
 
     // Remember which accidentals apply to which note keys.
     let measureAccidentals = [];
@@ -517,24 +531,22 @@ function parseVexFlow() {
               }
               if (modifier instanceof Vex.Flow.Barline) {
                 switch (modifier.type) {
-                  case Vex.Flow.Barline.type.SINGLE: // 1
+                  case Vex.Flow.Barline.type.SINGLE:
                     break;
-                  case Vex.Flow.Barline.type.DOUBLE: // 2
-                    G.midi.performance.sections.push(currentSection);
-                    currentSection = new Section();
+                  case Vex.Flow.Barline.type.DOUBLE:
+                    G.midi.performance.addSection(ORNULL(section[0].attrs.id), section);
+                    section = [];
                     break;
-                  case Vex.Flow.Barline.type.END: // 3
+                  case Vex.Flow.Barline.type.END:
                     break;
-                  case Vex.Flow.Barline.type.REPEAT_BEGIN: // 4
+                  case Vex.Flow.Barline.type.REPEAT_BEGIN:
                     break;
-                  case Vex.Flow.Barline.type.REPEAT_END: // 5
-                    currentSection.repeat = 2;
-                    G.midi.performance.sections.push(currentSection);
-                    currentSection = new Section();
+                  case Vex.Flow.Barline.type.REPEAT_END:
+                  case Vex.Flow.Barline.type.REPEAT_BOTH:
+                    Number(2).repeat(() => G.midi.performance.addSection(ORNULL(section[0].attrs.id), section));
+                    section = [];
                     break;
-                  case Vex.Flow.Barline.type.REPEAT_BOTH: // 6
-                    break;
-                  case Vex.Flow.Barline.type.NONE: // 7
+                  case Vex.Flow.Barline.type.NONE:
                     break;
                 }
               }
@@ -577,7 +589,7 @@ function parseVexFlow() {
   });
 
   // Last remaining section.
-  G.midi.performance.sections.push(currentSection);
+  G.midi.performance.addSection(ORNULL(section[0].attrs.id), section);
 }
 
 // Play the sheet.
@@ -588,83 +600,75 @@ function play() {
   // Play the performance.
   G.midi.time = MIDI_START_TIME;
   G.midi.timers = [];
-  G.midi.performance.sections.forEach((section) => {
-    for (var i=1; i<=section.repeat; i++) {
-      section.systems.forEach((system) => {
+  G.midi.performance.sequence.forEach((sectionKey) => {
+    const section = G.midi.performance.sections[sectionKey];
+    section.forEach((system) => {
 
-        // Insert a percussion measure.
-        if (G.midi.config.percussion.on) {
-          playPercussion('f4', G.midi.time, 500);
-        }
+      // Insert a percussion measure.
+      if (G.midi.config.percussion.on) {
+        playPercussion('f4', G.midi.time, 500);
+      }
 
-        system.formatter.tickContexts.list.forEach((tickStart) => {
-          const tickContext = system.formatter.tickContexts.map[tickStart];
+      // Play the notes.
+      system.formatter.tickContexts.list.forEach((tickStart) => {
+        const tickContext = system.formatter.tickContexts.map[tickStart];
 
-          // Used to display play marker.
-          let marker = {
-            ctx: system.checkContext(),
-            y1: system.options.y,
-            y2: system.lastY,
-            x1: G.midi.config.marker_mode == 'note' ? Number.MAX_SAFE_INTEGER : system.startX,
-            x2: G.midi.config.marker_mode == 'note' ? 0 : system.startX + system.formatter.justifyWidth
-          };
+        // Used to display play marker.
+        let marker = {
+          ctx: system.checkContext(),
+          y1: system.options.y,
+          y2: system.lastY,
+          x1: G.midi.config.marker_mode == 'note' ? Number.MAX_SAFE_INTEGER : system.startX,
+          x2: G.midi.config.marker_mode == 'note' ? 0 : system.startX + system.formatter.justifyWidth
+        };
 
-          tickContext.tickables.forEach((tickable) => {
-            if (tickable instanceof Vex.Flow.StaveNote) {
-              // Compute play marker position.
-              if (G.midi.config.marker_mode == 'note') {
-                const metrics = tickable.getMetrics();
-                const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
-                const xEnd = tickable.getAbsoluteX()
-                  + metrics.noteWidth
-                  + metrics.extraRightPx
-                  + metrics.modRightPx;
-                marker.x1 = Math.min(marker.x1, xStart);
-                marker.x2 = Math.max(marker.x2, xEnd);
-              }
-
-              // Output to MIDI.
-              if (tickable.noteType === 'n') {
-                tickable.keyProps.forEach((note) => {
-                  playNote(note, G.midi.time + tickable.midi.start, tickable.midi.duration);
-                });
-              }
-
-              // Draw play marker.
-              G.midi.timers.push(setTimeout(() => {
-                const ctx = marker.ctx;
-                if (G.midi.marker) {
-                  try {
-                    ctx.svg.removeChild(G.midi.marker);
-                  }
-                  catch (e) {
-                    // never mind.
-                  }
-                }
-                ctx.beginPath();
-                ctx.setStrokeStyle('#aaa');
-                ctx.setFillStyle('#aaa');
-                ctx.setLineWidth(1);
-                ctx.attributes.opacity = 0.2;
-                ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
-
-                // Show return markers on first and end bars of section.
-                if (
-                  section.repeat > 1 &&
-                  i < section.repeat
-                ) {
-                  // TODO
-                }
-
-                G.midi.marker = ctx.svg.lastChild;
-              }, G.midi.time + tickable.midi.start + G.midi.config.sync));
+        tickContext.tickables.forEach((tickable) => {
+          if (tickable instanceof Vex.Flow.StaveNote) {
+            // Compute play marker position.
+            if (G.midi.config.marker_mode == 'note') {
+              const metrics = tickable.getMetrics();
+              const xStart = tickable.getAbsoluteX() - metrics.modLeftPx - metrics.extraLeftPx;
+              const xEnd = tickable.getAbsoluteX()
+                + metrics.noteWidth
+                + metrics.extraRightPx
+                + metrics.modRightPx;
+              marker.x1 = Math.min(marker.x1, xStart);
+              marker.x2 = Math.max(marker.x2, xEnd);
             }
-          });
-        });
 
-        G.midi.time += system.midi.duration;
+            // Output to MIDI.
+            if (tickable.noteType === 'n') {
+              tickable.keyProps.forEach((note) => {
+                playNote(note, G.midi.time + tickable.midi.start, tickable.midi.duration);
+              });
+            }
+
+            // Draw play marker.
+            G.midi.timers.push(setTimeout(() => {
+              const ctx = marker.ctx;
+              if (G.midi.marker) {
+                try {
+                  ctx.svg.removeChild(G.midi.marker);
+                }
+                catch (e) {
+                  // never mind.
+                }
+              }
+              ctx.beginPath();
+              ctx.setStrokeStyle('#aaa');
+              ctx.setFillStyle('#aaa');
+              ctx.setLineWidth(1);
+              ctx.attributes.opacity = 0.2;
+              ctx.fillRect(marker.x1, marker.y1, marker.x2 - marker.x1, marker.y2 - marker.y1);
+
+              G.midi.marker = ctx.svg.lastChild;
+            }, G.midi.time + tickable.midi.start + G.midi.config.sync));
+          }
+        });
       });
-    }
+
+      G.midi.time += system.midi.duration;
+    });
   });
 }
 
