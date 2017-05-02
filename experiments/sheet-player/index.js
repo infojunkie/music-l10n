@@ -672,7 +672,7 @@ const CANVAS_WIDTH=500;
 const CANVAS_HEIGHT=200;
 
 // Convert an array of notes to a Vex.Flow.Factory structure.
-function renderVexFlow(notes) {
+function notesToVexFlow(notes) {
   var vf_notes = notes.map((n) => n + '/4').join(', ');
   var time = '' + notes.length + '/4';
 
@@ -698,15 +698,8 @@ function renderVexFlow(notes) {
 // If the passed argument is an array of notes, convert it to a sheet.
 // If the passed argument is a function, call it to get the sheet.
 function render(notes) {
-  var vf;
-  if (Array.isArray(notes)) {
-    vf = renderVexFlow(notes);
-  }
-  else {
-    vf = notes();
-  }
-
-  // Render and save Vex.Flow.Factory.
+  // Render VexFlow model.
+  const vf = Array.isArray(notes) ? notesToVexFlow(notes) : notes();
   vf.drawWithoutReset();
 
   // Attach UI event handlers.
@@ -726,7 +719,7 @@ function render(notes) {
     }
   });
 
-  // Remember VexFlow structure.
+  // Save VexFlow model.
   G.vf = vf;
 }
 
@@ -739,7 +732,7 @@ function render(notes) {
   // Read the saved configuration.
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
-  // MIDI Output.
+  // MIDI Output
   $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   $('#sheet #outputs').on('change', () => {
     G.midi.config.output = $('#sheet #outputs').val();
@@ -758,7 +751,7 @@ function render(notes) {
   });
   $('#sheet #outputs').val(G.midi.config.output).change();
 
-  // MIDI Channel.
+  // MIDI Channel
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
   Array.from(Array(16)).map((e,i)=>i+1).concat(['all']).forEach((channel) => {
     $('#sheet #channels').append($('<option>', { value: channel, text: channel }));
@@ -769,7 +762,7 @@ function render(notes) {
   });
   $('#sheet #channels').val(G.midi.config.melody.channel).change();
 
-  // Soundfonts and instruments.
+  // Soundfonts and instruments
   for (const sf in soundfonts.data) {
     const soundfont = soundfonts.data[sf];
     $('#sheet #soundfonts').append($('<option>', { text: soundfont.name, value: sf }));
@@ -806,7 +799,7 @@ function render(notes) {
     G.midi.output = new LocalMidiOutput();
   });
 
-  // Marker mode.
+  // Marker mode
   $('#sheet input[name="marker_mode"][value=' + G.midi.config.marker_mode + ']').attr('checked', 'checked');
   $('#sheet input[name="marker_mode"]').on('change', () => {
     G.midi.config.marker_mode = $('#sheet input[name="marker_mode"]:checked').val();
@@ -867,7 +860,7 @@ function render(notes) {
     }
   });
 
-  // Build sheets.
+  // Build sheet list.
   G.sheets.push({
     name: 'C Lydian',
     notes: tonal.scale('C lydian').map((n) => `${n}4`).concat(['c5'])
@@ -1073,7 +1066,7 @@ function labesyn() {
 }
 
 // Create a sheet of Bach's Minuet in G.
-// Copied from one of VexFlow's tests.
+// https://github.com/0xfe/vexflow/blob/master/tests/bach_tests.js
 function bach() {
   var registry = new Vex.Flow.Registry();
   Vex.Flow.Registry.enableDefaultRegistry(registry);
