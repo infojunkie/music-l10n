@@ -569,6 +569,8 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	// https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
@@ -710,10 +712,10 @@
 	    // recognize notes in scientific pitch notation, given the nomenclature supplied by the caller.
 	    this.regex = new RegExp('^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' + '(' + Object.keys(nomenclature.accidentals).map(escapeRegExp).sort(function (a, b) {
 	      return b.length - a.length;
-	    }).join('|') + ')?' + '(\\d)$', 'i');
+	    }).join('|') + ')?' + '(-?\\d)$', 'i');
 	
 	    // `regexNoAccidentals` is a regex for note names only, to be used when an accidental is not found during parsing.
-	    this.regexNoAccidentals = new RegExp('^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' + '\\D*' + '(\\d)$', 'i');
+	    this.regexNoAccidentals = new RegExp('^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' + '\\D*' + '(-?\\d)$', 'i');
 	
 	    // `reference` is the reference note information (index, octave)
 	    this.reference = this.parse(reference);
@@ -760,7 +762,7 @@
 	      if (match) {
 	        result = {
 	          index: this.nomenclature.notes[match[1]] + (match[2] ? this.nomenclature.accidentals[match[2]] : 0),
-	          octave: match[3]
+	          octave: parseInt(match[3])
 	        };
 	      } else {
 	        console.log('Could not parse note ' + note + '. Trying without accidentals...');
@@ -768,7 +770,7 @@
 	        if (match2) {
 	          result = {
 	            index: this.nomenclature.notes[match2[1]],
-	            octave: match2[2]
+	            octave: parseInt(match2[2])
 	          };
 	        }
 	      }
@@ -849,6 +851,13 @@
 	    }
 	  }, G.midi.config.reference.note)
 	}];
+	
+	// Generate a MIDI tuning from a tuning object.
+	function generateMidiTuning(tuning) {
+	  [].concat(_toConsumableArray(Array(128).keys())).map(midiToNote).map(function (n) {
+	    return G.midi.tuning.tuning.tune(n);
+	  });
+	}
 	
 	// Local MIDI output class that conforms to WedMidi.Output interface.
 	
@@ -986,6 +995,14 @@
 	    map[keys[index]] = acc.type;
 	  });
 	  return map;
+	}
+	
+	// convert MIDI note number to a note name.
+	function midiToNote(m) {
+	  var notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+	  var note = notes[m % notes.length];
+	  var octave = (m / notes.length | 0) - 1;
+	  return '' + note + octave;
 	}
 	
 	// Convert MIDI note number to a frequency.
@@ -1339,19 +1356,13 @@
 	// PROGRAM MAIN
 	// Initialize the Web MIDI system and the UI.
 	//
-	_webmidi2.default.enable(function (err) {
-	  if (err) {
-	    console.log('Web MIDI not enabled: ' + err);
-	  }
+	(function main() {
 	
 	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
 	  // MIDI Output.
 	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
-	  _webmidi2.default.outputs.forEach(function (output) {
-	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
-	  });
 	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
@@ -1367,15 +1378,6 @@
 	    }
 	  });
 	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
-	
-	  // Listen to Web MIDI state events.
-	  _webmidi2.default.addListener('connected', function (event) {
-	    if ((0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').length) return;
-	    (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
-	  });
-	  _webmidi2.default.addListener('disconnected', function (event) {
-	    (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
-	  });
 	
 	  // MIDI Channel.
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
@@ -1442,6 +1444,7 @@
 	    G.midi.tuning = tunings.find(function (t) {
 	      return t.key === G.midi.config.tuning;
 	    });
+	    generateMidiTuning(G.midi.tuning.tuning);
 	  });
 	  (0, _jquery2.default)('#sheet #tunings').val(G.midi.config.tuning).change();
 	
@@ -1534,9 +1537,31 @@
 	    render(G.sheets[G.midi.config.sheet].notes);
 	  });
 	
+	  // Enable Web MIDI.
+	  _webmidi2.default.enable(function (err) {
+	    if (err) {
+	      console.log('Web MIDI not enabled: ' + err);
+	      return;
+	    }
+	
+	    // Web MIDI outputs.
+	    _webmidi2.default.outputs.forEach(function (output) {
+	      (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
+	    });
+	
+	    // Listen to Web MIDI state events.
+	    _webmidi2.default.addListener('connected', function (event) {
+	      if ((0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').length) return;
+	      (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
+	    });
+	    _webmidi2.default.addListener('disconnected', function (event) {
+	      (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
+	    });
+	  }, true /* sysex */);
+	
 	  // Render first sheet.
 	  render(G.sheets[G.midi.config.sheet].notes);
-	}, true /* sysex */);
+	})();
 	
 	//
 	// SHEETS

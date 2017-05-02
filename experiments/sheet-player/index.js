@@ -154,7 +154,7 @@ class Tuning {
     this.regex = new RegExp(
       '^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' +
       '(' + Object.keys(nomenclature.accidentals).map(escapeRegExp).sort((a,b) => b.length - a.length).join('|') + ')?' +
-      '(\\d)$',
+      '(-?\\d)$',
       'i'
     );
 
@@ -162,7 +162,7 @@ class Tuning {
     this.regexNoAccidentals = new RegExp(
       '^(' + Object.keys(nomenclature.notes).map(escapeRegExp).join('|') + ')' +
       '\\D*' +
-      '(\\d)$',
+      '(-?\\d)$',
       'i'
     );
 
@@ -204,7 +204,7 @@ class Tuning {
     if (match) {
       result = {
         index: this.nomenclature.notes[ match[1] ] + (match[2] ? this.nomenclature.accidentals[ match[2] ] : 0),
-        octave: match[3]
+        octave: parseInt(match[3])
       };
     }
     else {
@@ -213,7 +213,7 @@ class Tuning {
       if (match2) {
         result = {
           index: this.nomenclature.notes[ match2[1] ],
-          octave: match2[2]
+          octave: parseInt(match2[2])
         };
       }
     }
@@ -299,6 +299,11 @@ const tunings = [
     )
   }
 ];
+
+// Generate a MIDI tuning from a tuning object.
+function generateMidiTuning(tuning) {
+  [...Array(128).keys()].map(midiToNote).map(n => G.midi.tuning.tuning.tune(n));
+}
 
 // Local MIDI output class that conforms to WedMidi.Output interface.
 class LocalMidiOutput {
@@ -395,6 +400,14 @@ function getKeyAccidentals(keySignature) {
     map[ keys[index] ] = acc.type;
   });
   return map;
+}
+
+// convert MIDI note number to a note name.
+function midiToNote(m) {
+  const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
+  const note = notes[m % notes.length];
+  const octave = ((m / notes.length) | 0) - 1;
+  return `${note}${octave}`;
 }
 
 // Convert MIDI note number to a frequency.
@@ -721,19 +734,13 @@ function render(notes) {
 // PROGRAM MAIN
 // Initialize the Web MIDI system and the UI.
 //
-WebMidi.enable(function (err) {
-  if (err) {
-    console.log(`Web MIDI not enabled: ${err}`);
-  }
+(function main() {
 
   // Read the saved configuration.
   G.midi.config = Object.assign({}, G.midi.config, store.get('G.midi.config'));
 
   // MIDI Output.
   $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
-  WebMidi.outputs.forEach((output) => {
-    $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
-  });
   $('#sheet #outputs').on('change', () => {
     G.midi.config.output = $('#sheet #outputs').val();
     store.set('G.midi.config', G.midi.config);
@@ -750,15 +757,6 @@ WebMidi.enable(function (err) {
     }
   });
   $('#sheet #outputs').val(G.midi.config.output).change();
-
-  // Listen to Web MIDI state events.
-  WebMidi.addListener('connected', (event) => {
-    if ($('#sheet #outputs option[value="' + event.id + '"]').length) return;
-    $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
-  });
-  WebMidi.addListener('disconnected', (event) => {
-    $('#sheet #outputs option[value="' + event.id + '"]').remove();
-  });
 
   // MIDI Channel.
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
@@ -824,6 +822,7 @@ WebMidi.enable(function (err) {
     store.set('G.midi.config', G.midi.config);
 
     G.midi.tuning = tunings.find((t) => t.key === G.midi.config.tuning);
+    generateMidiTuning(G.midi.tuning.tuning);
   });
   $('#sheet #tunings').val(G.midi.config.tuning).change();
 
@@ -895,9 +894,32 @@ WebMidi.enable(function (err) {
     render(G.sheets[G.midi.config.sheet].notes);
   });
 
+  // Enable Web MIDI.
+  WebMidi.enable(function (err) {
+    if (err) {
+      console.log(`Web MIDI not enabled: ${err}`);
+      return;
+    }
+
+    // Web MIDI outputs.
+    WebMidi.outputs.forEach((output) => {
+      $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
+    });
+
+    // Listen to Web MIDI state events.
+    WebMidi.addListener('connected', (event) => {
+      if ($('#sheet #outputs option[value="' + event.id + '"]').length) return;
+      $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
+    });
+    WebMidi.addListener('disconnected', (event) => {
+      $('#sheet #outputs option[value="' + event.id + '"]').remove();
+    });
+
+  }, true /* sysex */);
+
   // Render first sheet.
   render(G.sheets[G.midi.config.sheet].notes);
-}, true /* sysex */);
+})();
 
 //
 // SHEETS
