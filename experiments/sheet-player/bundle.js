@@ -598,6 +598,13 @@
 	  }
 	};
 	
+	// https://stackoverflow.com/a/28191966/209184
+	function keyOf(object, value) {
+	  return Object.keys(object).find(function (key) {
+	    return object[key] === value;
+	  });
+	}
+	
 	// Global state.
 	var MIDI_START_TIME = 1;
 	
@@ -628,6 +635,7 @@
 	        on: false
 	      },
 	      tuning: '12tet',
+	      mts: false,
 	      reference: {
 	        frequency: 440.0,
 	        note: 'A4'
@@ -858,10 +866,105 @@
 	}];
 	
 	// Generate a MIDI tuning from a tuning object.
-	function generateMidiTuning(tuning) {
-	  [].concat(_toConsumableArray(Array(128).keys())).map(midiToNote).map(function (n) {
-	    return G.midi.tuning.tuning.tune(n);
+	/*
+	Frequency Data Format
+	
+	The frequency resolution of MIDI Tuning should be stringent enough to satisfy most demands of music and experimentation.
+	The specification provides resolution somewhat finer than one-hundredth of a cent. Instruments may support MIDI tuning
+	without necessarily providing this resolution in their hardware; the specification simply permits the transfer of tuning data at
+	any resolution up to this limit.
+	
+	Frequency data shall be sent via system exclusive messages. Because system exclusive data bytes have their high bit set
+	low, containing 7 bits of data, a 3-byte (21-bit) frequency data word is used for specifying a frequency with the suggested
+	resolution. An instrument which does not support the full suggested resolution may discard any unneeded lower bits on
+	reception, but it is preferred where possible that full resolution be stored internally, for possible transmission to other
+	instruments which can use the increased resolution.
+	
+	Frequency data shall be defined in units which are fractions of a semitone. The frequency range starts at MIDI note 0, C =
+	8.1758 Hz, and extends above MIDI note 127, G = 12543.875 Hz. The first byte of the frequency data word specifies the
+	nearest equal-tempered semitone below the frequency. The next two bytes (14 bits) specify the fraction of 100 cents above
+	the semitone at which the frequency lies. Effective resolution = 100 cents / 2^14 = .0061 cents.
+	One of these values ( 7F 7F 7F ) is reserved to indicate not frequency data but a "no change" condition. When an instrument
+	receives these bytes as frequency data, it should make no change to its stored frequency data for that MIDI key number.
+	This is to prevent instruments which do not use the full range of 128 MIDI key numbers from sending erroneous tuning data
+	to instrument which do use the full range. The three-byte frequency representation may be interpreted as follows:
+	
+	0xxxxxxx 0abcdefg 0hijklmn
+	xxxxxxx = semitone
+	abcdefghijklmn = fraction of semitone, in .0061-cent units
+	*/
+	function generateMidiTuning(vf, tuning) {
+	  console.log(tuning);
+	  // Iterate through the notes to create a map from the tuning's
+	  // notes to MIDI notes.
+	  var map = vf.renderQ.filter(function (s) {
+	    return s instanceof _vexflow2.default.Flow.StaveNote;
+	  }).reduce(function (n, s) {
+	    return n.concat(s.keyProps);
+	  }, []).reduce(function (m, n) {
+	    var _ornull = void 0;
+	
+	    _ORNULL: {
+	      try {
+	        _ornull = tuning.nomenclature.notes[n.key];
+	        break _ORNULL;
+	      } catch (e) {
+	        _ornull = null;
+	        break _ORNULL;
+	      }
+	    }
+	
+	    var note = _ornull;
+	
+	    var _ornull2 = void 0;
+	
+	    _ORNULL2: {
+	      try {
+	        _ornull2 = tuning.nomenclature.accidentals[n.accidental];
+	        break _ORNULL2;
+	      } catch (e) {
+	        _ornull2 = null;
+	        break _ORNULL2;
+	      }
+	    }
+	
+	    var accidental = _ornull2;
+	    console.log([n, note, accidental]);
+	
+	    if (note === null || accidental === null) return;
+	    if (keyOf(tuning.nomenclature.notes, note + accidental) !== null) return;
+	    m['' + note.key + note.accidental] = note.accidental > 0 ? note.key + '#' : note.key + 'b';
+	  }, {});
+	
+	  console.log(map);
+	
+	  var mts = [].concat(_toConsumableArray(Array(128).keys())).map(midiToNote).map(function (n) {
+	    var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(n);
+	
+	    var _freqToMidi = freqToMidi(freq),
+	        _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
+	        midi = _freqToMidi2[0],
+	        pb = _freqToMidi2[1];
+	
+	    var semi = midi;
+	
+	    // adjust pb which returns [-1,1]
+	    if (pb < 0) {
+	      if (midi === 0) console.log('generateMidiTuning: requesting MIDI tuning below C0');
+	      semi--;
+	    }
+	    var bend = Math.round((pb >= 0 ? pb : pb + 1.0) * 100 / 16384);
+	    var lsb = bend & 0x7F;
+	    var msb = bend >> 7 & 0x7F;
+	    return [midi, semi, msb, lsb];
 	  });
+	
+	  // Send a universal sysex message.
+	  G.midi.output.sendSysex([], // manufacturer is not used
+	  [0x7E, // non-real-time
+	  0x7F, // channel
+	  0x08, // code 8 = MIDI Tuning Standard
+	  0x02].concat(_toConsumableArray(Array.prototype.concat.apply([], mts))));
 	}
 	
 	// Local MIDI output class that conforms to WedMidi.Output interface.
@@ -893,7 +996,7 @@
 	      var time = G.midi.ac.currentTime + eval(options.time) * 0.001;
 	      var duration = options.duration * 0.001;
 	      if (this.instruments[channel].pb) {
-	        note += this.instruments[channel].pb * 2; // Local player counts microtones in fractions of semitones
+	        note += this.instruments[channel].pb;
 	      }
 	      this.instruments[channel].instrument.play(note, time, { duration: duration });
 	    }
@@ -901,7 +1004,7 @@
 	    key: 'sendPitchBend',
 	    value: function sendPitchBend(pb, channel, options) {
 	      if (!this.instruments[channel]) return;
-	      this.instruments[channel].pb = pb;
+	      this.instruments[channel].pb = pb * 2; // Local player counts microtones in fractions of semitones
 	    }
 	  }, {
 	    key: 'stop',
@@ -982,19 +1085,19 @@
 	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
 	  };
 	
-	  var _ornull = void 0;
+	  var _ornull3 = void 0;
 	
-	  _ORNULL: {
+	  _ORNULL3: {
 	    try {
-	      _ornull = accidentalsMap[keySignature.keySpec];
-	      break _ORNULL;
+	      _ornull3 = accidentalsMap[keySignature.keySpec];
+	      break _ORNULL3;
 	    } catch (e) {
-	      _ornull = null;
-	      break _ORNULL;
+	      _ornull3 = null;
+	      break _ORNULL3;
 	    }
 	  }
 	
-	  var map = _ornull;
+	  var map = _ornull3;
 	  var keys = Object.keys(map);
 	  keySignature.accList.forEach(function (acc, index) {
 	    map[keys[index]] = acc.type;
@@ -1028,13 +1131,13 @@
 	  var noteName = '' + note.key + (note.accidental || '') + note.octave;
 	  var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
 	
-	  var _freqToMidi = freqToMidi(freq),
-	      _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
-	      midi = _freqToMidi2[0],
-	      pb = _freqToMidi2[1];
+	  var _freqToMidi3 = freqToMidi(freq),
+	      _freqToMidi4 = _slicedToArray(_freqToMidi3, 2),
+	      midi = _freqToMidi4[0],
+	      pb = _freqToMidi4[1];
 	
 	  console.log({ noteName: noteName, freq: freq, midi: midi, pb: pb });
-	  if (pb) {
+	  if (pb && !G.midi.config.mts) {
 	    G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
 	  }
 	  if (midi) {
@@ -1043,7 +1146,7 @@
 	      duration: duration
 	    });
 	  }
-	  if (pb) {
+	  if (pb && !G.midi.config.mts) {
 	    var endTime = time + duration - 1; // -1 to help the synth order the events
 	    G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: '+' + endTime });
 	  }
@@ -1143,27 +1246,27 @@
 	                time.ticksToTime = 60000 / (modifier.tempo.bpm * ticksPerTempoUnit);
 	              }
 	              if (modifier instanceof _vexflow2.default.Flow.Barline) {
-	                var _ornull2 = void 0;
+	                var _ornull4 = void 0;
 	
-	                _ORNULL2: {
+	                _ORNULL4: {
 	                  try {
-	                    _ornull2 = section[0].attrs.id;
-	                    break _ORNULL2;
+	                    _ornull4 = section[0].attrs.id;
+	                    break _ORNULL4;
 	                  } catch (e) {
-	                    _ornull2 = null;
-	                    break _ORNULL2;
+	                    _ornull4 = null;
+	                    break _ORNULL4;
 	                  }
 	                }
 	
-	                var _ornull3 = void 0;
+	                var _ornull5 = void 0;
 	
-	                _ORNULL3: {
+	                _ORNULL5: {
 	                  try {
-	                    _ornull3 = section[0].attrs.id;
-	                    break _ORNULL3;
+	                    _ornull5 = section[0].attrs.id;
+	                    break _ORNULL5;
 	                  } catch (e) {
-	                    _ornull3 = null;
-	                    break _ORNULL3;
+	                    _ornull5 = null;
+	                    break _ORNULL5;
 	                  }
 	                }
 	
@@ -1171,7 +1274,7 @@
 	                  case _vexflow2.default.Flow.Barline.type.SINGLE:
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.DOUBLE:
-	                    G.midi.performance.addSection(_ornull2, section);
+	                    G.midi.performance.addSection(_ornull4, section);
 	                    section = [];
 	                    break;
 	                  case _vexflow2.default.Flow.Barline.type.END:
@@ -1181,7 +1284,7 @@
 	                  case _vexflow2.default.Flow.Barline.type.REPEAT_END:
 	                  case _vexflow2.default.Flow.Barline.type.REPEAT_BOTH:
 	                    Number(2).repeat(function () {
-	                      return G.midi.performance.addSection(_ornull3, section);
+	                      return G.midi.performance.addSection(_ornull5, section);
 	                    });
 	                    section = [];
 	                    break;
@@ -1210,31 +1313,31 @@
 	          };
 	          if (tickable.noteType === 'n') {
 	            tickable.keyProps.forEach(function (note) {
-	              var _ornull4 = void 0;
+	              var _ornull6 = void 0;
 	
-	              _ORNULL4: {
+	              _ORNULL6: {
 	                try {
-	                  _ornull4 = measureAccidentals[note.key];
-	                  break _ORNULL4;
+	                  _ornull6 = measureAccidentals[note.key];
+	                  break _ORNULL6;
 	                } catch (e) {
-	                  _ornull4 = null;
-	                  break _ORNULL4;
+	                  _ornull6 = null;
+	                  break _ORNULL6;
 	                }
 	              }
 	
-	              var _ornull5 = void 0;
+	              var _ornull7 = void 0;
 	
-	              _ORNULL5: {
+	              _ORNULL7: {
 	                try {
-	                  _ornull5 = keyAccidentals[note.key];
-	                  break _ORNULL5;
+	                  _ornull7 = keyAccidentals[note.key];
+	                  break _ORNULL7;
 	                } catch (e) {
-	                  _ornull5 = null;
-	                  break _ORNULL5;
+	                  _ornull7 = null;
+	                  break _ORNULL7;
 	                }
 	              }
 	
-	              note.accidental = note.accidental || _ornull4 || _ornull5;
+	              note.accidental = note.accidental || _ornull6 || _ornull7;
 	            });
 	          }
 	        }
@@ -1250,19 +1353,19 @@
 	
 	  // Last remaining section.
 	
-	  var _ornull6 = void 0;
+	  var _ornull8 = void 0;
 	
-	  _ORNULL6: {
+	  _ORNULL8: {
 	    try {
-	      _ornull6 = section[0].attrs.id;
-	      break _ORNULL6;
+	      _ornull8 = section[0].attrs.id;
+	      break _ORNULL8;
 	    } catch (e) {
-	      _ornull6 = null;
-	      break _ORNULL6;
+	      _ornull8 = null;
+	      break _ORNULL8;
 	    }
 	  }
 	
-	  G.midi.performance.addSection(_ornull6, section);
+	  G.midi.performance.addSection(_ornull8, section);
 	}
 	
 	// Play the sheet.
@@ -1270,9 +1373,16 @@
 	  // This creates a G.midi.performance.
 	  parseVexFlow();
 	
-	  // Play the performance.
+	  // Initialize
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
+	
+	  // Tune.
+	  if (G.midi.config.mts) {
+	    generateMidiTuning(G.vf, G.midi.tuning.tuning);
+	  }
+	
+	  // Play.
 	  G.midi.performance.sequence.forEach(function (sectionKey) {
 	    var section = G.midi.performance.sections[sectionKey];
 	    section.forEach(function (system) {
@@ -1488,7 +1598,6 @@
 	    G.midi.tuning = tunings.find(function (t) {
 	      return t.key === G.midi.config.tuning;
 	    });
-	    generateMidiTuning(G.midi.tuning.tuning);
 	  });
 	  (0, _jquery2.default)('#sheet #tunings').val(G.midi.config.tuning).change();
 	
@@ -1518,19 +1627,19 @@
 	
 	  // Handle "Stop" button.
 	  (0, _jquery2.default)('#sheet #stop').on('click', function () {
-	    var _ornull7 = void 0;
+	    var _ornull9 = void 0;
 	
-	    _ORNULL7: {
+	    _ORNULL9: {
 	      try {
-	        _ornull7 = G.midi.output.stop;
-	        break _ORNULL7;
+	        _ornull9 = G.midi.output.stop;
+	        break _ORNULL9;
 	      } catch (e) {
-	        _ornull7 = null;
-	        break _ORNULL7;
+	        _ornull9 = null;
+	        break _ORNULL9;
 	      }
 	    }
 	
-	    if (_ornull7) {
+	    if (_ornull9) {
 	      G.midi.output.stop();
 	    } else {}
 	    // FIXME
@@ -1601,6 +1710,10 @@
 	    _webmidi2.default.addListener('disconnected', function (event) {
 	      (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
 	    });
+	
+	    if (G.midi.config.output !== 'local') {
+	      (0, _jquery2.default)('#sheet #outputs').change();
+	    }
 	  }, true /* sysex */);
 	
 	  // Render first sheet.
