@@ -20,8 +20,8 @@ A demo of music localization in action. The sheet player supports the following 
 
 ## MIDI / Web MIDI setup
 My OS setup:
-- Ubuntu 16.04 x86_64 kernel `4.4.0-59-lowlatency` GNU/Linux
-- Google Chrome from repo `http://dl.google.com/linux/chrome/deb stable/main`.
+- Ubuntu 16.04 x86_64 kernel `4.4.0-XX-lowlatency` GNU/Linux
+- Google Chrome from repo `http://dl.google.com/linux/chrome/deb stable/main`
 - Mozilla Firefox from `http://ca.archive.ubuntu.com/ubuntu xenial-updates/main`
 
 My MIDI setup:
