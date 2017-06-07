@@ -742,7 +742,7 @@ function render(notes) {
     G.midi.config.output = $('#sheet #outputs').val();
     store.set('G.midi.config', G.midi.config);
 
-    if (G.midi.config.output !== 'local') {
+    if (G.midi.config.output !== 'local' && WebMidi.enabled) {
       $('#sheet #soundfonts').prop('disabled', true);
       $('#sheet #instruments').prop('disabled', true);
       G.midi.output = WebMidi.getOutputById(G.midi.config.output);
@@ -753,7 +753,6 @@ function render(notes) {
       G.midi.output = new LocalMidiOutput();
     }
   });
-  $('#sheet #outputs').val(G.midi.config.output).change();
 
   // MIDI Channel
   // [1..16] as per http://stackoverflow.com/a/33352604/209184
@@ -894,6 +893,7 @@ function render(notes) {
   // Enable Web MIDI.
   WebMidi.enable(function (err) {
     if (err) {
+      $('#sheet #outputs').val(G.midi.config.output).change();
       console.log(`Web MIDI not enabled: ${err}`);
       return;
     }
@@ -907,10 +907,14 @@ function render(notes) {
     WebMidi.addListener('connected', (event) => {
       if ($('#sheet #outputs option[value="' + event.id + '"]').length) return;
       $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
+      $('#sheet #outputs').change();
     });
     WebMidi.addListener('disconnected', (event) => {
       $('#sheet #outputs option[value="' + event.id + '"]').remove();
+      $('#sheet #outputs').change();
     });
+
+    $('#sheet #outputs').val(G.midi.config.output).change();
 
   }, true /* sysex */);
 
