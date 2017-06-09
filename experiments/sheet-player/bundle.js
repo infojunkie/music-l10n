@@ -760,6 +760,18 @@
 	      return Math.pow(this.intervals.last(), n.octave - this.reference.octave) * this.intervals[n.index] / this.intervals[this.reference.index];
 	    }
 	
+	    // OFFSET OF A NOTE
+	    // get the node offset with respect to the reference
+	
+	  }, {
+	    key: 'offsetOf',
+	    value: function offsetOf(note) {
+	      var n = this.parse(note);
+	      if (!n) return;
+	
+	      return n.index - this.reference.index + (n.octave - this.reference.octave) * this.steps;
+	    }
+	
 	    // PARSE A NOTE
 	    // get a note's index and octave given its scientific pitch notation
 	    //
@@ -864,108 +876,6 @@
 	    }
 	  }, G.midi.config.reference.note)
 	}];
-	
-	// Generate a MIDI tuning from a tuning object.
-	/*
-	Frequency Data Format
-	
-	The frequency resolution of MIDI Tuning should be stringent enough to satisfy most demands of music and experimentation.
-	The specification provides resolution somewhat finer than one-hundredth of a cent. Instruments may support MIDI tuning
-	without necessarily providing this resolution in their hardware; the specification simply permits the transfer of tuning data at
-	any resolution up to this limit.
-	
-	Frequency data shall be sent via system exclusive messages. Because system exclusive data bytes have their high bit set
-	low, containing 7 bits of data, a 3-byte (21-bit) frequency data word is used for specifying a frequency with the suggested
-	resolution. An instrument which does not support the full suggested resolution may discard any unneeded lower bits on
-	reception, but it is preferred where possible that full resolution be stored internally, for possible transmission to other
-	instruments which can use the increased resolution.
-	
-	Frequency data shall be defined in units which are fractions of a semitone. The frequency range starts at MIDI note 0, C =
-	8.1758 Hz, and extends above MIDI note 127, G = 12543.875 Hz. The first byte of the frequency data word specifies the
-	nearest equal-tempered semitone below the frequency. The next two bytes (14 bits) specify the fraction of 100 cents above
-	the semitone at which the frequency lies. Effective resolution = 100 cents / 2^14 = .0061 cents.
-	One of these values ( 7F 7F 7F ) is reserved to indicate not frequency data but a "no change" condition. When an instrument
-	receives these bytes as frequency data, it should make no change to its stored frequency data for that MIDI key number.
-	This is to prevent instruments which do not use the full range of 128 MIDI key numbers from sending erroneous tuning data
-	to instrument which do use the full range. The three-byte frequency representation may be interpreted as follows:
-	
-	0xxxxxxx 0abcdefg 0hijklmn
-	xxxxxxx = semitone
-	abcdefghijklmn = fraction of semitone, in .0061-cent units
-	*/
-	function generateMidiTuning(vf, tuning) {
-	  console.log(tuning);
-	  // Iterate through the notes to create a map from the tuning's
-	  // notes to MIDI notes.
-	  var map = vf.renderQ.filter(function (s) {
-	    return s instanceof _vexflow2.default.Flow.StaveNote;
-	  }).reduce(function (n, s) {
-	    return n.concat(s.keyProps);
-	  }, []).reduce(function (m, n) {
-	    var _ornull = void 0;
-	
-	    _ORNULL: {
-	      try {
-	        _ornull = tuning.nomenclature.notes[n.key];
-	        break _ORNULL;
-	      } catch (e) {
-	        _ornull = null;
-	        break _ORNULL;
-	      }
-	    }
-	
-	    var note = _ornull;
-	
-	    var _ornull2 = void 0;
-	
-	    _ORNULL2: {
-	      try {
-	        _ornull2 = tuning.nomenclature.accidentals[n.accidental];
-	        break _ORNULL2;
-	      } catch (e) {
-	        _ornull2 = null;
-	        break _ORNULL2;
-	      }
-	    }
-	
-	    var accidental = _ornull2;
-	    console.log([n, note, accidental]);
-	
-	    if (note === null || accidental === null) return;
-	    if (keyOf(tuning.nomenclature.notes, note + accidental) !== null) return;
-	    m['' + note.key + note.accidental] = note.accidental > 0 ? note.key + '#' : note.key + 'b';
-	  }, {});
-	
-	  console.log(map);
-	
-	  var mts = [].concat(_toConsumableArray(Array(128).keys())).map(midiToNote).map(function (n) {
-	    var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(n);
-	
-	    var _freqToMidi = freqToMidi(freq),
-	        _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
-	        midi = _freqToMidi2[0],
-	        pb = _freqToMidi2[1];
-	
-	    var semi = midi;
-	
-	    // adjust pb which returns [-1,1]
-	    if (pb < 0) {
-	      if (midi === 0) console.log('generateMidiTuning: requesting MIDI tuning below C0');
-	      semi--;
-	    }
-	    var bend = Math.round((pb >= 0 ? pb : pb + 1.0) * 100 / 16384);
-	    var lsb = bend & 0x7F;
-	    var msb = bend >> 7 & 0x7F;
-	    return [midi, semi, msb, lsb];
-	  });
-	
-	  // Send a universal sysex message.
-	  G.midi.output.sendSysex([], // manufacturer is not used
-	  [0x7E, // non-real-time
-	  0x7F, // channel
-	  0x08, // code 8 = MIDI Tuning Standard
-	  0x02].concat(_toConsumableArray(Array.prototype.concat.apply([], mts))));
-	}
 	
 	// Local MIDI output class that conforms to WedMidi.Output interface.
 	
@@ -1085,19 +995,19 @@
 	    'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
 	  };
 	
-	  var _ornull3 = void 0;
+	  var _ornull = void 0;
 	
-	  _ORNULL3: {
+	  _ORNULL: {
 	    try {
-	      _ornull3 = accidentalsMap[keySignature.keySpec];
-	      break _ORNULL3;
+	      _ornull = accidentalsMap[keySignature.keySpec];
+	      break _ORNULL;
 	    } catch (e) {
-	      _ornull3 = null;
-	      break _ORNULL3;
+	      _ornull = null;
+	      break _ORNULL;
 	    }
 	  }
 	
-	  var map = _ornull3;
+	  var map = _ornull;
 	  var keys = Object.keys(map);
 	  keySignature.accList.forEach(function (acc, index) {
 	    map[keys[index]] = acc.type;
@@ -1105,11 +1015,26 @@
 	  return map;
 	}
 	
+	//
+	// MIDI FUNCTIONS
+	//
+	// Since MIDI is an instrument / tuning, functions below should be moved to Tuning
+	// and generalized.
+	//
+	var MidiTuning = new Tuning(tuningIntervalsEdo(12), {
+	  notes: {
+	    'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11
+	  },
+	  accidentals: {
+	    'n': 0, '#': 1, 'b': -1, '##': 2, 'bb': -2
+	  }
+	}, 'C-1'); // First note is the reference
+	
 	// Convert MIDI note number to a note name.
-	function midiToNote(m) {
+	function midiToNote(midi) {
 	  var notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-	  var note = notes[m % notes.length];
-	  var octave = (m / notes.length | 0) - 1;
+	  var note = notes[midi % notes.length];
+	  var octave = (midi / notes.length | 0) - 1;
 	  return '' + note + octave;
 	}
 	
@@ -1125,30 +1050,179 @@
 	  return [r, (m - r) / 2];
 	}
 	
+	// Generate a MIDI tuning from a tuning object.
+	/*
+	Frequency Data Format
+	
+	The frequency resolution of MIDI Tuning should be stringent enough to satisfy most demands of music and experimentation.
+	The specification provides resolution somewhat finer than one-hundredth of a cent. Instruments may support MIDI tuning
+	without necessarily providing this resolution in their hardware; the specification simply permits the transfer of tuning data at
+	any resolution up to this limit.
+	
+	Frequency data shall be sent via system exclusive messages. Because system exclusive data bytes have their high bit set
+	low, containing 7 bits of data, a 3-byte (21-bit) frequency data word is used for specifying a frequency with the suggested
+	resolution. An instrument which does not support the full suggested resolution may discard any unneeded lower bits on
+	reception, but it is preferred where possible that full resolution be stored internally, for possible transmission to other
+	instruments which can use the increased resolution.
+	
+	Frequency data shall be defined in units which are fractions of a semitone. The frequency range starts at MIDI note 0, C =
+	8.1758 Hz, and extends above MIDI note 127, G = 12543.875 Hz. The first byte of the frequency data word specifies the
+	nearest equal-tempered semitone below the frequency. The next two bytes (14 bits) specify the fraction of 100 cents above
+	the semitone at which the frequency lies. Effective resolution = 100 cents / 2^14 = .0061 cents.
+	One of these values ( 7F 7F 7F ) is reserved to indicate not frequency data but a "no change" condition. When an instrument
+	receives these bytes as frequency data, it should make no change to its stored frequency data for that MIDI key number.
+	This is to prevent instruments which do not use the full range of 128 MIDI key numbers from sending erroneous tuning data
+	to instrument which do use the full range. The three-byte frequency representation may be interpreted as follows:
+	
+	0xxxxxxx 0abcdefg 0hijklmn
+	xxxxxxx = semitone
+	abcdefghijklmn = fraction of semitone, in .0061-cent units
+	*/
+	function generateMidiTuning(vf, tuning) {
+	  // Iterate through the notes to create a map from the tuning's
+	  // notes to MIDI notes.
+	  // We need to:
+	  // - index the note that will be played with its MIDI note number,
+	  //   so that we can look it up during playback
+	  // - index each MIDI note number with its tuning to send to the MIDI device
+	  // - ensure each MIDI note number is mapped to only one sheet note
+	  var map = vf.renderQ.filter(function (s) {
+	    return s instanceof _vexflow2.default.Flow.StaveNote;
+	  }).reduce(function (n, s) {
+	    return n.concat(s.keyProps);
+	  }, []).reduce(function (_map, n) {
+	    var _ornull2 = void 0;
+	
+	    _ORNULL2: {
+	      try {
+	        _ornull2 = tuning.tuning.nomenclature.notes[n.key];
+	        break _ORNULL2;
+	      } catch (e) {
+	        _ornull2 = null;
+	        break _ORNULL2;
+	      }
+	    }
+	
+	    // Lookup the note info in the target tuning.
+	    var note = _ornull2;
+	
+	    var _ornull3 = void 0;
+	
+	    _ORNULL3: {
+	      try {
+	        _ornull3 = tuning.tuning.nomenclature.accidentals[n.accidental];
+	        break _ORNULL3;
+	      } catch (e) {
+	        _ornull3 = null;
+	        break _ORNULL3;
+	      }
+	    }
+	
+	    var accidental = _ornull3;
+	    if (note === null) {
+	      console.log('generateMidiTuning: Note ' + n.key + ' not found in tuning ' + tuning.key + '.');
+	      return;
+	    }
+	    if (n.accidental && accidental === null) {
+	      console.log('generateMidiTuning: Accidental ' + n.accidental + ' not found in tuning ' + tuning.key + '.');
+	      return;
+	    }
+	    var name = '' + n.key + (n.accidental || '') + n.octave;
+	
+	    // Get the source MIDI note number that will be tuned to the desired tuning.
+	    // The source MIDI is also what is called by the original sheet note.
+	    var midiName = name;
+	    var midiSource = MidiTuning.offsetOf(midiName);
+	    _map.names[name] = midiSource;
+	
+	    // Lookup the MIDI number and bend of the note in the tuning.
+	    // This gives us the target MIDI tuning.
+	    var freq = G.midi.config.reference.frequency * tuning.tuning.tune(name);
+	
+	    var _freqToMidi = freqToMidi(freq),
+	        _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
+	        midi = _freqToMidi2[0],
+	        pb = _freqToMidi2[1];
+	
+	    if (pb < 0) {
+	      pb += 1.0;
+	      midi--;
+	    }
+	    if (midi < 0 || midi > 127) {
+	      console.log('generateMidiTuning: Note ' + name + ' maps to invalid MIDI note ' + midi + ' under the tuning ' + tuning.key + '.');
+	      return;
+	    }
+	    if (_map.midis[midi] && _map.midis[midi].name != name) {
+	      console.log('generateMidiTuning: Note ' + name + ' clashes with note ' + _map.midis[midi].name + ' for MIDI note ' + midi + ' under the tuning ' + tuning.key + '.');
+	      return;
+	    }
+	    _map.midis[midi] = {
+	      name: name,
+	      midiSource: midiSource,
+	      midi: midi,
+	      pb: pb
+	    };
+	    return _map;
+	  }, { midis: {}, names: {} });
+	
+	  // Iterate through the MIDI notes to create the MIDI tuning.
+	  // We've already built a bunch MIDI notes in the map above,
+	  // don't calculate them again.
+	  var mts = Object.keys(map.midis).map(function (m) {
+	    var midi = map.midis[m].midi;
+	    var midiSource = map.midis[m].midiSource;
+	    var pb = map.midis[m].pb;
+	    var bend = Math.round((pb >= 0 ? pb : pb + 1.0) * 16384 / 2);
+	    var lsb = bend & 0x7F;
+	    var msb = bend >> 7 & 0x7F;
+	    return midiSource == midi && pb == 0 ? [] : [midiSource, midi, msb, lsb];
+	  });
+	
+	  // Send a universal sysex message.
+	  G.midi.output.sendSysex([], // manufacturer is not used
+	  [0x7E, // non-real-time
+	  0x7F, // channel
+	  0x08, // code 8 = MIDI Tuning Standard
+	  0x02].concat(_toConsumableArray(Array.prototype.concat.apply([], mts))));
+	
+	  G.midi.map = map;
+	}
+	
 	// Convert a note to a MIDI message.
 	// Convert microtones into MIDI pitch bends.
 	function playNote(note, time, duration) {
 	  var noteName = '' + note.key + (note.accidental || '') + note.octave;
-	  var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
+	  if (G.midi.config.mts) {
+	    var midi = G.midi.map.names[noteName];
+	    console.log({ noteName: noteName, midi: midi });
+	    if (midi) {
+	      G.midi.output.playNote(midi, G.midi.config.melody.channel, {
+	        time: '+' + time,
+	        duration: duration
+	      });
+	    }
+	  } else {
+	    var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
 	
-	  var _freqToMidi3 = freqToMidi(freq),
-	      _freqToMidi4 = _slicedToArray(_freqToMidi3, 2),
-	      midi = _freqToMidi4[0],
-	      pb = _freqToMidi4[1];
+	    var _freqToMidi3 = freqToMidi(freq),
+	        _freqToMidi4 = _slicedToArray(_freqToMidi3, 2),
+	        _midi = _freqToMidi4[0],
+	        pb = _freqToMidi4[1];
 	
-	  console.log({ noteName: noteName, freq: freq, midi: midi, pb: pb });
-	  if (pb && !G.midi.config.mts) {
-	    G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
-	  }
-	  if (midi) {
-	    G.midi.output.playNote(midi, G.midi.config.melody.channel, {
-	      time: '+' + time,
-	      duration: duration
-	    });
-	  }
-	  if (pb && !G.midi.config.mts) {
-	    var endTime = time + duration - 1; // -1 to help the synth order the events
-	    G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: '+' + endTime });
+	    console.log({ noteName: noteName, freq: freq, midi: _midi, pb: pb });
+	    if (pb) {
+	      G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
+	    }
+	    if (_midi) {
+	      G.midi.output.playNote(_midi, G.midi.config.melody.channel, {
+	        time: '+' + time,
+	        duration: duration
+	      });
+	    }
+	    if (pb) {
+	      var endTime = time + duration - 1; // -1 to help the synth order the events
+	      G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: '+' + endTime });
+	    }
 	  }
 	}
 	
@@ -1379,7 +1453,7 @@
 	
 	  // Tune.
 	  if (G.midi.config.mts) {
-	    generateMidiTuning(G.vf, G.midi.tuning.tuning);
+	    generateMidiTuning(G.vf, G.midi.tuning);
 	  }
 	
 	  // Play.
@@ -1521,7 +1595,7 @@
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
 	
-	    if (G.midi.config.output !== 'local') {
+	    if (G.midi.config.output !== 'local' && _webmidi2.default.enabled) {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', true);
 	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', true);
 	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
@@ -1531,7 +1605,6 @@
 	      G.midi.output = new LocalMidiOutput();
 	    }
 	  });
-	  (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
 	
 	  // MIDI Channel
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
@@ -1693,6 +1766,7 @@
 	  // Enable Web MIDI.
 	  _webmidi2.default.enable(function (err) {
 	    if (err) {
+	      (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
 	      console.log('Web MIDI not enabled: ' + err);
 	      return;
 	    }
@@ -1706,14 +1780,14 @@
 	    _webmidi2.default.addListener('connected', function (event) {
 	      if ((0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').length) return;
 	      (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
+	      (0, _jquery2.default)('#sheet #outputs').change();
 	    });
 	    _webmidi2.default.addListener('disconnected', function (event) {
 	      (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
+	      (0, _jquery2.default)('#sheet #outputs').change();
 	    });
 	
-	    if (G.midi.config.output !== 'local') {
-	      (0, _jquery2.default)('#sheet #outputs').change();
-	    }
+	    (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
 	  }, true /* sysex */);
 	
 	  // Render first sheet.
