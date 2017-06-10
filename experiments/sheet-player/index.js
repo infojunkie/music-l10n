@@ -1083,15 +1083,20 @@ function render(notes) {
   // Enable Web MIDI.
   WebMidi.enable(function (err) {
     if (err) {
-      $('#sheet #outputs').val(G.midi.config.output).change();
+      $('#sheet #outputs').val('local').change();
       console.log(`Web MIDI not enabled: ${err}`);
       return;
     }
 
     // Web MIDI outputs.
+    let midiOutput = 'local';
     WebMidi.outputs.forEach((output) => {
       $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
+      if (G.midi.config.output == output.id) {
+        midiOutput = output.id;
+      }
     });
+    $('#sheet #outputs').val(midiOutput).change();
 
     // Listen to Web MIDI state events.
     WebMidi.addListener('connected', (event) => {
@@ -1103,8 +1108,6 @@ function render(notes) {
       $('#sheet #outputs option[value="' + event.id + '"]').remove();
       $('#sheet #outputs').change();
     });
-
-    $('#sheet #outputs').val(G.midi.config.output).change();
 
   }, true /* sysex */);
 

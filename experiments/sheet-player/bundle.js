@@ -1805,15 +1805,20 @@
 	  // Enable Web MIDI.
 	  _webmidi2.default.enable(function (err) {
 	    if (err) {
-	      (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
+	      (0, _jquery2.default)('#sheet #outputs').val('local').change();
 	      console.log('Web MIDI not enabled: ' + err);
 	      return;
 	    }
 	
 	    // Web MIDI outputs.
+	    var midiOutput = 'local';
 	    _webmidi2.default.outputs.forEach(function (output) {
 	      (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: output.id, text: output.name }));
+	      if (G.midi.config.output == output.id) {
+	        midiOutput = output.id;
+	      }
 	    });
+	    (0, _jquery2.default)('#sheet #outputs').val(midiOutput).change();
 	
 	    // Listen to Web MIDI state events.
 	    _webmidi2.default.addListener('connected', function (event) {
@@ -1825,8 +1830,6 @@
 	      (0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').remove();
 	      (0, _jquery2.default)('#sheet #outputs').change();
 	    });
-	
-	    (0, _jquery2.default)('#sheet #outputs').val(G.midi.config.output).change();
 	  }, true /* sysex */);
 	
 	  // Render first sheet.
