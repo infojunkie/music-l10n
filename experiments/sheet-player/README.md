@@ -64,7 +64,7 @@ The ratio returned by a tuning for a given note is then multiplied by the refere
 
 To support microtonal music during MIDI playback, two approaches are implemented:
 
-- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing on a given track while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can sometimes hear sound fluctuations at note boundaries.
+- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing on that channel while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can sometimes hear sound fluctuations at note boundaries.
 
 - Using [MIDI Tuning "SysEx" message](http://www.microtonal-synthesis.com/MIDItuning.html). It is possible to send a tuning specification for each MIDI note ahead of time, but not all MIDI synths support this feature.
 
