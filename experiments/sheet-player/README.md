@@ -62,11 +62,11 @@ A "tuning" defines a sequence of tones and calculates the ratio of each tone wit
 
 The ratio returned by a tuning for a given note is then multiplied by the reference frequency (e.g. A440) to obtain an absolute frequency to be played. This frequency is then converted to a MIDI key, including a "detuning" factor when the tuning deviates from MIDI's internal 12-tet tuning.
 
-To support microtonal music during MIDI playback, two approaches can be used:
+To support microtonal music during MIDI playback, two approaches are implemented:
 
-- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can sometimes hear sound fluctuations at note boundaries. This is the approach that is currently implemented.
+- Using [MIDI Pitch Bend messages](http://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/). Pitch bend affects a full MIDI channel, so all notes that are playing on a given track while the bend is in effect will be affected. Also, because this message is separate from the Note On and Note Off messages, one can sometimes hear sound fluctuations at note boundaries.
 
-- Using [MIDI Tuning system message](http://www.microtonal-synthesis.com/MIDItuning.html). It should be possible to send a tuning specification for each MIDI note ahead of time, but not all MIDI synths support this feature. Still, it should be implemented here because it's more robust than pitch bends.
+- Using [MIDI Tuning "SysEx" message](http://www.microtonal-synthesis.com/MIDItuning.html). It is possible to send a tuning specification for each MIDI note ahead of time, but not all MIDI synths support this feature.
 
 ## MIDI playback issues
 The Web MIDI API allows to schedule MIDI events "in advance", i.e. by allowing for each event a future timestamp or time difference to wait for before sending the event to the specified port. This is useful because browser tabs that are unfocused throttle the `setTimeout` family of functions, which makes real-time scheduling of events unreliable. [Timers based on Web Workers](https://github.com/chrisguttandin/worker-timers) should solve this but a [regression on Chromium breaks this functionality](https://bugs.chromium.org/p/chromium/issues/detail?id=642321) at the moment.
@@ -104,7 +104,6 @@ options snd-seq-dummy ports=4
 ### MIDI
 - Add options to output to Web MIDI ports in real-time instead of pre-scheduled. Ensure "Stop" button works in this mode.
 - Pre-create full MIDI stream before playback. Take into account looping, grace notes, etc.
-- Support MIDI Tuning system messages
 
 ### I/O
 - Import MusicXML file
