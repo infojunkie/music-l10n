@@ -565,9 +565,11 @@ function generateMidiTuning(vf, tuning) {
         return;
       }
 
-      _map.midis[midi] = name;
       _map.names[name] = { midi, freq, msb, lsb };
-      _map.mts.push(midi, midi, msb, lsb);
+      if (!_map.midis[midi]) {
+        _map.midis[midi] = name;
+        _map.mts.push(midi, midi, msb, lsb);
+      }
       return _map;
     }, { midis: {}, names: {}, mts: [] });
 

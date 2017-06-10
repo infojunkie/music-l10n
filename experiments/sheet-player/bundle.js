@@ -1195,9 +1195,11 @@
 	      return;
 	    }
 	
-	    _map.midis[midi] = name;
 	    _map.names[name] = { midi: midi, freq: freq, msb: msb, lsb: lsb };
-	    _map.mts.push(midi, midi, msb, lsb);
+	    if (!_map.midis[midi]) {
+	      _map.midis[midi] = name;
+	      _map.mts.push(midi, midi, msb, lsb);
+	    }
 	    return _map;
 	  }, { midis: {}, names: {}, mts: [] });
 	
