@@ -635,7 +635,7 @@
 	        on: false
 	      },
 	      tuning: '12tet',
-	      mts: false,
+	      midi_tuning: 'mts',
 	      reference: {
 	        frequency: 440.0,
 	        note: 'A4'
@@ -1078,6 +1078,54 @@
 	xxxxxxx = semitone
 	abcdefghijklmn = fraction of semitone, in .0061-cent units
 	*/
+	/*
+	
+	https://github.com/MarkCWirt/MIDIUtil/blob/master/src/midiutil/MidiFile.py#L1563-L1592
+	
+	def frequencyTransform(freq):
+	    '''
+	    Returns a three-byte transform of a frequency.
+	    '''
+	    resolution = 16384
+	    freq = float(freq)
+	    dollars = 69 + 12 * math.log(freq/(float(440)), 2)
+	    firstByte = int(dollars)
+	    lowerFreq = 440 * pow(2.0, ((float(firstByte) - 69.0)/12.0))
+	    centDif = 1200 * math.log((freq/lowerFreq), 2) if freq != lowerFreq else 0
+	    cents = round(centDif/100 * resolution)  # round?
+	    secondByte = min([int(cents) >> 7, 0x7F])
+	    thirdByte = cents - (secondByte << 7)
+	    thirdByte = min([thirdByte, 0x7f])
+	    if thirdByte == 0x7f and secondByte == 0x7F and firstByte == 0x7F:
+	        thirdByte = 0x7e
+	    thirdByte = int(thirdByte)
+	    return [firstByte,  secondByte,  thirdByte]
+	
+	
+	def returnFrequency(freqBytes):
+	    '''
+	    The reverse of frequencyTransform. Given a byte stream, return a frequency.
+	    '''
+	    resolution = 16384.0
+	    baseFrequency = 440 * pow(2.0, (float(freqBytes[0]-69.0)/12.0))
+	    frac = (float((int(freqBytes[1]) << 7) + int(freqBytes[2]))
+	            * 100.0) / resolution
+	    frequency = baseFrequency * pow(2.0, frac/1200.0)
+	    return frequency
+	
+	*/
+	function freqToMidiTuning(freq) {
+	  var resolution = 16384;
+	  var dollars = 69 + 12 * Math.log2(freq / 440.0);
+	  var firstByte = Math.floor(dollars);
+	  var lowerFreq = 440.0 * Math.pow(2, (firstByte - 69) / 12);
+	  var centDif = 1200 * Math.log2(freq / lowerFreq);
+	  var cents = Math.round(centDif / 100 * resolution);
+	  var secondByte = Math.min(cents >> 7, 0x7F);
+	  var thirdByte = Math.round(cents - (secondByte << 7));
+	  return [firstByte, secondByte, thirdByte];
+	}
+	
 	function generateMidiTuning(vf, tuning) {
 	  // Iterate through the notes to create a map from the tuning's
 	  // notes to MIDI notes.
@@ -1129,61 +1177,38 @@
 	    }
 	    var name = '' + n.key + (n.accidental || '') + n.octave;
 	
-	    // Get the source MIDI note number that will be tuned to the desired tuning.
-	    // The source MIDI is also what is called by the original sheet note.
-	    var midiName = name;
-	    var midiSource = MidiTuning.offsetOf(midiName);
-	    _map.names[name] = midiSource;
-	
-	    // Lookup the MIDI number and bend of the note in the tuning.
-	    // This gives us the target MIDI tuning.
+	    // Lookup the MIDI number and bend of the note given the tuning.
 	    var freq = G.midi.config.reference.frequency * tuning.tuning.tune(name);
 	
-	    var _freqToMidi = freqToMidi(freq),
-	        _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
-	        midi = _freqToMidi2[0],
-	        pb = _freqToMidi2[1];
+	    var _freqToMidiTuning = freqToMidiTuning(freq),
+	        _freqToMidiTuning2 = _slicedToArray(_freqToMidiTuning, 3),
+	        midi = _freqToMidiTuning2[0],
+	        msb = _freqToMidiTuning2[1],
+	        lsb = _freqToMidiTuning2[2];
 	
-	    if (pb < 0) {
-	      pb += 1.0;
-	      midi--;
-	    }
 	    if (midi < 0 || midi > 127) {
 	      console.log('generateMidiTuning: Note ' + name + ' maps to invalid MIDI note ' + midi + ' under the tuning ' + tuning.key + '.');
 	      return;
 	    }
-	    if (_map.midis[midi] && _map.midis[midi].name != name) {
+	    if (_map.midis[midi] && _map.midis[midi] != name) {
 	      console.log('generateMidiTuning: Note ' + name + ' clashes with note ' + _map.midis[midi].name + ' for MIDI note ' + midi + ' under the tuning ' + tuning.key + '.');
 	      return;
 	    }
-	    _map.midis[midi] = {
-	      name: name,
-	      midiSource: midiSource,
-	      midi: midi,
-	      pb: pb
-	    };
-	    return _map;
-	  }, { midis: {}, names: {} });
 	
-	  // Iterate through the MIDI notes to create the MIDI tuning.
-	  // We've already built a bunch MIDI notes in the map above,
-	  // don't calculate them again.
-	  var mts = Object.keys(map.midis).map(function (m) {
-	    var midi = map.midis[m].midi;
-	    var midiSource = map.midis[m].midiSource;
-	    var pb = map.midis[m].pb;
-	    var bend = Math.round((pb >= 0 ? pb : pb + 1.0) * 16384 / 2);
-	    var lsb = bend & 0x7F;
-	    var msb = bend >> 7 & 0x7F;
-	    return midiSource == midi && pb == 0 ? [] : [midiSource, midi, msb, lsb];
-	  });
+	    _map.midis[midi] = name;
+	    _map.names[name] = { midi: midi, freq: freq, msb: msb, lsb: lsb };
+	    _map.mts.push(midi, midi, msb, lsb);
+	    return _map;
+	  }, { midis: {}, names: {}, mts: [] });
 	
 	  // Send a universal sysex message.
 	  G.midi.output.sendSysex([], // manufacturer is not used
 	  [0x7E, // non-real-time
 	  0x7F, // channel
 	  0x08, // code 8 = MIDI Tuning Standard
-	  0x02].concat(_toConsumableArray(Array.prototype.concat.apply([], mts))));
+	  0x02, // subcode 2 = Single Note Tuning Change
+	  0x00, // tuning program
+	  map.mts.length].concat(_toConsumableArray(map.mts)));
 	
 	  G.midi.map = map;
 	}
@@ -1192,9 +1217,14 @@
 	// Convert microtones into MIDI pitch bends.
 	function playNote(note, time, duration) {
 	  var noteName = '' + note.key + (note.accidental || '') + note.octave;
-	  if (G.midi.config.mts) {
-	    var midi = G.midi.map.names[noteName];
-	    console.log({ noteName: noteName, midi: midi });
+	  if (G.midi.config.midi_tuning === 'mts' && G.midi.config.output !== 'local') {
+	    var _G$midi$map$names$not = G.midi.map.names[noteName],
+	        midi = _G$midi$map$names$not.midi,
+	        freq = _G$midi$map$names$not.freq,
+	        msb = _G$midi$map$names$not.msb,
+	        lsb = _G$midi$map$names$not.lsb;
+	
+	    console.log({ noteName: noteName, midi: midi, freq: freq, msb: msb, lsb: lsb });
 	    if (midi) {
 	      G.midi.output.playNote(midi, G.midi.config.melody.channel, {
 	        time: '+' + time,
@@ -1202,14 +1232,14 @@
 	      });
 	    }
 	  } else {
-	    var freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
+	    var _freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
 	
-	    var _freqToMidi3 = freqToMidi(freq),
-	        _freqToMidi4 = _slicedToArray(_freqToMidi3, 2),
-	        _midi = _freqToMidi4[0],
-	        pb = _freqToMidi4[1];
+	    var _freqToMidi = freqToMidi(_freq),
+	        _freqToMidi2 = _slicedToArray(_freqToMidi, 2),
+	        _midi = _freqToMidi2[0],
+	        pb = _freqToMidi2[1];
 	
-	    console.log({ noteName: noteName, freq: freq, midi: _midi, pb: pb });
+	    console.log({ noteName: noteName, freq: _freq, midi: _midi, pb: pb });
 	    if (pb) {
 	      G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
 	    }
@@ -1451,8 +1481,8 @@
 	  G.midi.time = MIDI_START_TIME;
 	  G.midi.timers = [];
 	
-	  // Tune.
-	  if (G.midi.config.mts) {
+	  // Tune MIDI.
+	  if (G.midi.config.midi_tuning === 'mts' && G.midi.config.output !== 'local') {
 	    generateMidiTuning(G.vf, G.midi.tuning);
 	  }
 	
@@ -1589,7 +1619,7 @@
 	  // Read the saved configuration.
 	  G.midi.config = Object.assign({}, G.midi.config, _store2.default.get('G.midi.config'));
 	
-	  // MIDI Output
+	  // MIDI output
 	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
 	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
@@ -1606,7 +1636,7 @@
 	    }
 	  });
 	
-	  // MIDI Channel
+	  // MIDI channel
 	  // [1..16] as per http://stackoverflow.com/a/33352604/209184
 	  Array.from(Array(16)).map(function (e, i) {
 	    return i + 1;
@@ -1618,6 +1648,13 @@
 	    _store2.default.set('G.midi.config', G.midi.config);
 	  });
 	  (0, _jquery2.default)('#sheet #channels').val(G.midi.config.melody.channel).change();
+	
+	  // MIDI tuning
+	  (0, _jquery2.default)('#sheet input[name="midi_tuning"][value=' + G.midi.config.midi_tuning + ']').attr('checked', 'checked');
+	  (0, _jquery2.default)('#sheet input[name="midi_tuning"]').on('change', function () {
+	    G.midi.config.midi_tuning = (0, _jquery2.default)('#sheet input[name="midi_tuning"]:checked').val();
+	    _store2.default.set('G.midi.config', G.midi.config);
+	  });
 	
 	  // Soundfonts and instruments
 	  for (var sf in _soundfonts2.default.data) {
@@ -1923,7 +1960,7 @@
 	  var system = makeSystem(220);
 	  system.addStave({
 	    voices: [voice(notes('d4/q, b4/q/r', { stem: "up" }))]
-	  }).setEndBarType(_vexflow2.default.Flow.Barline.type.REPEAT_END);
+	  });
 	
 	  return vf;
 	}
