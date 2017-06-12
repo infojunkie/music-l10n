@@ -9,6 +9,8 @@ A demo of music localization in action. The sheet player supports the following 
 
 [CHECK OUT THE DEMO!](https://ethereum.karimratib.me:8080/)
 
+![screenshot](screenshot.png)
+
 ## Getting started
 - `git clone git@github.com:infojunkie/music-l10n.git && cd music-l10n/experiments/sheet-player/`
 - Start a local HTTP server, e.g. `npm install -g http-server && http-server -c0`
