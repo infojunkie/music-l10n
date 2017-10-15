@@ -359,19 +359,18 @@ class LocalMidiOutput {
     return url + name + '-' + format + '.js';
   }
   load() {
-    const that = this;
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     G.midi.ac = G.midi.ac || new AudioContext();
     $('#sheet #play').prop('disabled', true);
-    that.instruments = {};
+    this.instruments = {};
     Soundfont.instrument(G.midi.ac, G.midi.config.melody.instrument, { soundfont: G.midi.config.melody.soundfont, nameToUrl: LocalMidiOutput.nameToUrl})
-    .then(function (instrument) {
-      that.instruments[G.midi.config.melody.channel] = { instrument, pb: 0 };
+    .then(instrument => {
+      this.instruments[G.midi.config.melody.channel] = { instrument, pb: 0 };
       $('#sheet #play').prop('disabled', false);
     });
     Soundfont.instrument(G.midi.ac, G.midi.config.percussion.instrument, { soundfont: G.midi.config.percussion.soundfont, nameToUrl: LocalMidiOutput.nameToUrl})
-    .then(function (instrument) {
-      that.instruments[G.midi.config.percussion.channel] = { instrument, pb: 0 };
+    .then(instrument => {
+      this.instruments[G.midi.config.percussion.channel] = { instrument, pb: 0 };
       $('#sheet #play').prop('disabled', false);
     });
   }
@@ -574,6 +573,7 @@ function generateMidiTuning(vf, tuning) {
     }, { midis: {}, names: {}, mts: [] });
 
   // Send a universal sysex message.
+  // http://www.microtonal-synthesis.com/MIDItuning.html
   G.midi.output.sendSysex(
     [], // manufacturer is not used
     [
@@ -608,18 +608,18 @@ function playNote(note, time, duration) {
     const freq = G.midi.config.reference.frequency * G.midi.tuning.tuning.tune(noteName);
     const [ midi, pb ] = freqToMidi(freq);
     console.log({ noteName, freq, midi, pb });
-    if (pb) {
-      G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: `+${time}` });
-    }
     if (midi) {
+      if (pb) {
+        G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: `+${time}` });
+      }
       G.midi.output.playNote(midi, G.midi.config.melody.channel, {
         time: `+${time}`,
         duration: duration
       });
-    }
-    if (pb) {
-      const endTime = time + duration - 1; // -1 to help the synth order the events
-      G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: `+${endTime}` });
+      if (pb) {
+        const endTime = time + duration - 1; // -1 to help the synth order the events
+        G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: `+${endTime}` });
+      }
     }
   }
 }
@@ -861,8 +861,8 @@ const CANVAS_HEIGHT=200;
 
 // Convert an array of notes to a Vex.Flow.Factory structure.
 function notesToVexFlow(notes) {
-  var vf_notes = notes.map((n) => n + '/4').join(', ');
-  var time = '' + notes.length + '/4';
+  var vf_notes = notes.map((n) => `${n}/4`).join(', ');
+  var time = `${notes.length}/4`;
 
   var vf = new Vex.Flow.Factory({
     renderer: {elementId: 'sheet-vexflow', width: CANVAS_WIDTH, height: CANVAS_HEIGHT}
@@ -1100,12 +1100,13 @@ function render(notes) {
 
     // Listen to Web MIDI state events.
     WebMidi.addListener('connected', (event) => {
-      if ($('#sheet #outputs option[value="' + event.id + '"]').length) return;
+      if ($(`#sheet #outputs option[value="${event.id}"]`).length) return;
+      $(`#sheet #outputs option:contains("${event.name}")`).remove();
       $('#sheet #outputs').append($('<option>', { value: event.id, text: event.name }));
       $('#sheet #outputs').change();
     });
     WebMidi.addListener('disconnected', (event) => {
-      $('#sheet #outputs option[value="' + event.id + '"]').remove();
+      $(`#sheet #outputs option[value="${event.id}"]`).remove();
       $('#sheet #outputs').change();
     });
 

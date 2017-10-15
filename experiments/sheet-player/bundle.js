@@ -926,17 +926,18 @@
 	  }, {
 	    key: 'load',
 	    value: function load() {
-	      var that = this;
+	      var _this = this;
+	
 	      var AudioContext = window.AudioContext || window.webkitAudioContext;
 	      G.midi.ac = G.midi.ac || new AudioContext();
 	      (0, _jquery2.default)('#sheet #play').prop('disabled', true);
-	      that.instruments = {};
+	      this.instruments = {};
 	      _soundfontPlayer2.default.instrument(G.midi.ac, G.midi.config.melody.instrument, { soundfont: G.midi.config.melody.soundfont, nameToUrl: LocalMidiOutput.nameToUrl }).then(function (instrument) {
-	        that.instruments[G.midi.config.melody.channel] = { instrument: instrument, pb: 0 };
+	        _this.instruments[G.midi.config.melody.channel] = { instrument: instrument, pb: 0 };
 	        (0, _jquery2.default)('#sheet #play').prop('disabled', false);
 	      });
 	      _soundfontPlayer2.default.instrument(G.midi.ac, G.midi.config.percussion.instrument, { soundfont: G.midi.config.percussion.soundfont, nameToUrl: LocalMidiOutput.nameToUrl }).then(function (instrument) {
-	        that.instruments[G.midi.config.percussion.channel] = { instrument: instrument, pb: 0 };
+	        _this.instruments[G.midi.config.percussion.channel] = { instrument: instrument, pb: 0 };
 	        (0, _jquery2.default)('#sheet #play').prop('disabled', false);
 	      });
 	    }
@@ -957,22 +958,22 @@
 	// Additional method on Vex.Flow.Factory that draws the score without resetting
 	// the info at the end - because we need to keep that info.
 	_vexflow2.default.Flow.Factory.prototype.drawWithoutReset = function () {
-	  var _this = this;
+	  var _this2 = this;
 	
 	  this.systems.forEach(function (i) {
-	    return i.setContext(_this.context).format();
+	    return i.setContext(_this2.context).format();
 	  });
 	  this.staves.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	  this.voices.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	  this.renderQ.forEach(function (i) {
-	    if (!i.isRendered()) i.setContext(_this.context).draw();
+	    if (!i.isRendered()) i.setContext(_this2.context).draw();
 	  });
 	  this.systems.forEach(function (i) {
-	    return i.setContext(_this.context).draw();
+	    return i.setContext(_this2.context).draw();
 	  });
 	};
 	
@@ -1204,6 +1205,7 @@
 	  }, { midis: {}, names: {}, mts: [] });
 	
 	  // Send a universal sysex message.
+	  // http://www.microtonal-synthesis.com/MIDItuning.html
 	  G.midi.output.sendSysex([], // manufacturer is not used
 	  [0x7E, // non-real-time
 	  0x7F, // channel
@@ -1242,18 +1244,18 @@
 	        pb = _freqToMidi2[1];
 	
 	    console.log({ noteName: noteName, freq: _freq, midi: _midi, pb: pb });
-	    if (pb) {
-	      G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
-	    }
 	    if (_midi) {
+	      if (pb) {
+	        G.midi.output.sendPitchBend(pb, G.midi.config.melody.channel, { time: '+' + time });
+	      }
 	      G.midi.output.playNote(_midi, G.midi.config.melody.channel, {
 	        time: '+' + time,
 	        duration: duration
 	      });
-	    }
-	    if (pb) {
-	      var endTime = time + duration - 1; // -1 to help the synth order the events
-	      G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: '+' + endTime });
+	      if (pb) {
+	        var endTime = time + duration - 1; // -1 to help the synth order the events
+	        G.midi.output.sendPitchBend(0, G.midi.config.melody.channel, { time: '+' + endTime });
+	      }
 	    }
 	  }
 	}
@@ -1565,7 +1567,7 @@
 	  var vf_notes = notes.map(function (n) {
 	    return n + '/4';
 	  }).join(', ');
-	  var time = '' + notes.length + '/4';
+	  var time = notes.length + '/4';
 	
 	  var vf = new _vexflow2.default.Flow.Factory({
 	    renderer: { elementId: 'sheet-vexflow', width: CANVAS_WIDTH, height: CANVAS_HEIGHT }
@@ -1823,6 +1825,7 @@
 	    // Listen to Web MIDI state events.
 	    _webmidi2.default.addListener('connected', function (event) {
 	      if ((0, _jquery2.default)('#sheet #outputs option[value="' + event.id + '"]').length) return;
+	      (0, _jquery2.default)('#sheet #outputs option:contains("' + event.name + '")').remove();
 	      (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: event.id, text: event.name }));
 	      (0, _jquery2.default)('#sheet #outputs').change();
 	    });
