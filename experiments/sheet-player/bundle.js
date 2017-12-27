@@ -1635,7 +1635,6 @@
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', true);
 	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', true);
 	      G.midi.output = _webmidi2.default.getOutputById(G.midi.config.output);
-	      console.log(G.midi.config.output);
 	    } else {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', false);
 	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', false);
