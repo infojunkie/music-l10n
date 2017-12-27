@@ -923,7 +923,7 @@ function render(notes) {
   // MIDI output
   $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   $('#sheet #outputs').on('change', () => {
-    if (G.midi.config.output === $('#sheet #outputs').val()) return;
+    const same = G.midi.config.output === $('#sheet #outputs').val()
 
     G.midi.config.output = $('#sheet #outputs').val();
     store.set('G.midi.config', G.midi.config);
@@ -936,7 +936,11 @@ function render(notes) {
     else {
       $('#sheet #soundfonts').prop('disabled', false);
       $('#sheet #instruments').prop('disabled', false);
-      G.midi.output = new LocalMidiOutput();
+
+      // Don't reload everything needlessly.
+      if (!same) {
+        G.midi.output = new LocalMidiOutput();
+      }
     }
   });
 

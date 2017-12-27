@@ -1626,7 +1626,7 @@
 	  // MIDI output
 	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
 	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
-	    if (G.midi.config.output === (0, _jquery2.default)('#sheet #outputs').val()) return;
+	    var same = G.midi.config.output === (0, _jquery2.default)('#sheet #outputs').val();
 	
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
@@ -1638,7 +1638,11 @@
 	    } else {
 	      (0, _jquery2.default)('#sheet #soundfonts').prop('disabled', false);
 	      (0, _jquery2.default)('#sheet #instruments').prop('disabled', false);
-	      G.midi.output = new LocalMidiOutput();
+	
+	      // Don't reload everything needlessly.
+	      if (!same) {
+	        G.midi.output = new LocalMidiOutput();
+	      }
 	    }
 	  });
 	
