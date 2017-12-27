@@ -226,7 +226,7 @@ class Tuning {
       };
     }
     else {
-      console.log(`Could not parse note ${note}. Trying without accidentals...`);
+      console.error(`Could not parse note ${note}. Trying without accidentals...`);
       const match2 = this.regexNoAccidentals.exec(note);
       if (match2) {
         result = {
@@ -543,11 +543,11 @@ function generateMidiTuning(vf, tuning) {
       const note = ORNULL(tuning.tuning.nomenclature.notes[n.key]);
       const accidental = ORNULL(tuning.tuning.nomenclature.accidentals[n.accidental]);
       if (note === null) {
-        console.log(`generateMidiTuning: Note ${n.key} not found in tuning ${tuning.key}.`);
+        console.error(`generateMidiTuning: Note ${n.key} not found in tuning ${tuning.key}.`);
         return;
       }
       if (n.accidental && accidental === null) {
-        console.log(`generateMidiTuning: Accidental ${n.accidental} not found in tuning ${tuning.key}.`);
+        console.error(`generateMidiTuning: Accidental ${n.accidental} not found in tuning ${tuning.key}.`);
         return;
       }
       const name = `${n.key}${n.accidental || ''}${n.octave}`;
@@ -556,11 +556,11 @@ function generateMidiTuning(vf, tuning) {
       const freq = G.midi.config.reference.frequency * tuning.tuning.tune(name);
       const [midi, msb, lsb] = freqToMidiTuning(freq);
       if (midi < 0 || midi > 127) {
-        console.log(`generateMidiTuning: Note ${name} maps to invalid MIDI note ${midi} under the tuning ${tuning.key}.`);
+        console.error(`generateMidiTuning: Note ${name} maps to invalid MIDI note ${midi} under the tuning ${tuning.key}.`);
         return;
       }
       if (_map.midis[midi] && _map.midis[midi] != name) {
-        console.log(`generateMidiTuning: Note ${name} clashes with note ${_map.midis[midi].name} for MIDI note ${midi} under the tuning ${tuning.key}.`);
+        console.error(`generateMidiTuning: Note ${name} clashes with note ${_map.midis[midi].name} for MIDI note ${midi} under the tuning ${tuning.key}.`);
         return;
       }
 
@@ -932,6 +932,7 @@ function render(notes) {
       $('#sheet #soundfonts').prop('disabled', true);
       $('#sheet #instruments').prop('disabled', true);
       G.midi.output = WebMidi.getOutputById(G.midi.config.output);
+      console.log(G.midi.config.output);
     }
     else {
       $('#sheet #soundfonts').prop('disabled', false);
@@ -1086,7 +1087,7 @@ function render(notes) {
   WebMidi.enable(function (err) {
     if (err) {
       $('#sheet #outputs').val('local').change();
-      console.log(`Web MIDI not enabled: ${err}`);
+      console.error(`Web MIDI not enabled: ${err}`);
       return;
     }
 
@@ -1094,7 +1095,7 @@ function render(notes) {
     let midiOutput = 'local';
     WebMidi.outputs.forEach((output) => {
       $('#sheet #outputs').append($('<option>', { value: output.id, text: output.name }));
-      if (G.midi.config.output == output.id) {
+      if (G.midi.config.output === output.id) {
         midiOutput = output.id;
       }
     });
