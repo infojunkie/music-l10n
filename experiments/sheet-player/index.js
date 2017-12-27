@@ -923,6 +923,8 @@ function render(notes) {
   // MIDI output
   $('#sheet #outputs').append($('<option>', { value: 'local', text: "(local synth)" }));
   $('#sheet #outputs').on('change', () => {
+    if (G.midi.config.output === $('#sheet #outputs').val()) return;
+
     G.midi.config.output = $('#sheet #outputs').val();
     store.set('G.midi.config', G.midi.config);
 

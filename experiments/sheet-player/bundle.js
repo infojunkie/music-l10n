@@ -1626,6 +1626,8 @@
 	  // MIDI output
 	  (0, _jquery2.default)('#sheet #outputs').append((0, _jquery2.default)('<option>', { value: 'local', text: "(local synth)" }));
 	  (0, _jquery2.default)('#sheet #outputs').on('change', function () {
+	    if (G.midi.config.output === (0, _jquery2.default)('#sheet #outputs').val()) return;
+	
 	    G.midi.config.output = (0, _jquery2.default)('#sheet #outputs').val();
 	    _store2.default.set('G.midi.config', G.midi.config);
 	
