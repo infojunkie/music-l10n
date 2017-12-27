@@ -87,11 +87,15 @@ VELOCITY = 85
 DURATION = Integer(3000)
 TEMP_FILE = "#{BUILD_DIR}/temp.midi"
 
-def deflate(string, level)
-  z = Zlib::Deflate.new(level)
-  dst = z.deflate(string, Zlib::FINISH)
-  z.close
-  dst
+def deflate(original_filename, compressed_filename)
+  Zlib::GzipWriter.open(compressed_filename) do |gz|
+    File.open(original_filename) do |fp|
+      while chunk = fp.read(16 * 1024) do
+        gz.write chunk
+      end
+    end
+    gz.close
+  end
 end
 
 def note_to_int(note, octave)
@@ -195,13 +199,8 @@ def generate_audio(program)
   close_js_file(ogg_js_file)
   close_js_file(mp3_js_file)
 
-  ogg_js_file = File.read("#{BUILD_DIR}/#{instrument_key}-ogg.js")
-  ojsz = File.open("#{BUILD_DIR}/#{instrument_key}-ogg.js.gz", "w")
-  ojsz.write(deflate(ogg_js_file, 9));
-
-  mp3_js_file = File.read("#{BUILD_DIR}/#{instrument_key}-mp3.js")
-  mjsz = File.open("#{BUILD_DIR}/#{instrument_key}-mp3.js.gz", "w")
-  mjsz.write(deflate(mp3_js_file, 9));
+  deflate("#{BUILD_DIR}/#{instrument_key}-ogg.js", "#{BUILD_DIR}/#{instrument_key}-ogg.js.gz");
+  deflate("#{BUILD_DIR}/#{instrument_key}-mp3.js", "#{BUILD_DIR}/#{instrument_key}-mp3.js.gz");
 
 end
 
