@@ -1,3 +1,5 @@
+const CompressionPlugin = require("compression-webpack-plugin")
+
 module.exports = {
   entry: ['whatwg-fetch', './index.js'],
   output: {
@@ -17,5 +19,10 @@ module.exports = {
         }
       }
     ]
-  }
+  },
+  plugins: [
+    new CompressionPlugin({
+      test: /\.js/
+    })
+  ]
 };
