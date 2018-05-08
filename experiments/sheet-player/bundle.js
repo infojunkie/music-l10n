@@ -1593,6 +1593,8 @@
 	  var vf = Array.isArray(notes) ? notesToVexFlow(notes) : notes();
 	  vf.drawWithoutReset();
 	
+	  console.log(vf);
+	
 	  // Attach UI event handlers.
 	  function colorDescendants(color) {
 	    return function () {
@@ -1776,6 +1778,12 @@
 	  });
 	
 	  // Build sheet list.
+	  G.sheets.unshift({
+	    name: 'Maqsum rhythm مقسوم',
+	    notes: function notes() {
+	      return maqsum();
+	    }
+	  });
 	  G.sheets.push({
 	    name: 'C Lydian',
 	    notes: _tonal2.default.scale('C lydian').map(function (n) {
@@ -1848,6 +1856,42 @@
 	//
 	// SHEETS
 	//
+	
+	// Create a maqsum rhythm http://www.khafif.com/rhy/rhythmg.html
+	function maqsum() {
+	  var vf = new _vexflow2.default.Flow.Factory({
+	    renderer: { elementId: 'sheet-vexflow', width: 1100, height: 900 }
+	  });
+	  var score = vf.EasyScore({ throwOnError: true });
+	
+	  var voice = score.voice.bind(score);
+	  var notes = score.notes.bind(score);
+	  var beam = score.beam.bind(score);
+	
+	  var x = 20,
+	      y = 80;
+	  function makeSystem(width) {
+	    var system = vf.System({ x: x, y: y, width: width, spaceBetweenStaves: 10 });
+	    x += width;
+	    return system;
+	  }
+	
+	  function id(id) {
+	    return registry.getElementById(id);
+	  }
+	
+	  score.set({ time: '4/4' });
+	
+	  /*  Measure 1 */
+	  var system = makeSystem(500);
+	  system.addStave({
+	    voices: [voice(notes('a4, c5, b4/r, c5, a4, b4/r, c5, b4/r', { stem: "up" }))]
+	  }).addClef('percussion').addTimeSignature('4/4').setEndBarType(_vexflow2.default.Flow.Barline.type.REPEAT_END);
+	
+	  system.addConnector('singleLeft');
+	
+	  return vf;
+	}
 	
 	// Create a sheet of https://musescore.com/infojunkie/lamma-bada-yatathanna
 	function yatathanna() {
