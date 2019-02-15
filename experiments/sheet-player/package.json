@@ -8,7 +8,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "http-server -g -S -C /etc/letsencrypt/live/ethereum.karimratib.me/cert.pem -K /etc/letsencrypt/live/ethereum.karimratib.me/privkey.pem"
   },
   "author": "",
   "license": "ISC",
